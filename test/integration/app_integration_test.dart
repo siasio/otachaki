@@ -17,7 +17,7 @@ void main() {
       expect(find.byType(Scaffold), findsAtLeastNWidgets(1));
 
       // Verify we can find the app title
-      expect(find.text('Go Territory Counting'), findsOneWidget);
+      expect(find.text('Go Position Evaluation App'), findsOneWidget);
     });
 
     testWidgets('navigation to settings should work', (WidgetTester tester) async {

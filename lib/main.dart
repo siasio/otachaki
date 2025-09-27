@@ -52,7 +52,7 @@ class _GoCountingAppState extends State<GoCountingApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Go Territory Counting',
+      title: 'Go Position Evaluation App',
       theme: AppTheme.getTheme(_currentSkin),
       home: TrainingScreen(onConfigurationChanged: _onConfigurationChanged),
       debugShowCheckedModeBanner: false,

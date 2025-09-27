@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -17,11 +18,21 @@ class DetailedStatisticsScreen extends StatefulWidget {
   State<DetailedStatisticsScreen> createState() => _DetailedStatisticsScreenState();
 }
 
+enum TimePeriod {
+  week(7, 'Last 7 days'),
+  month(30, 'Last 30 days'),
+  year(365, 'Last year');
+
+  const TimePeriod(this.days, this.label);
+  final int days;
+  final String label;
+}
+
 class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
   StatisticsManager? _statisticsManager;
   List<DailyDatasetStatistics> _historicalStats = [];
   bool _loading = true;
-  int _dayRange = 7; // Default to 7 days
+  TimePeriod _selectedPeriod = TimePeriod.week;
 
   @override
   void initState() {
@@ -36,7 +47,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
 
     try {
       _statisticsManager = await StatisticsManager.getInstance();
-      _historicalStats = _statisticsManager!.getHistoricalStats(widget.datasetType, _dayRange);
+      _historicalStats = _statisticsManager!.getHistoricalStats(widget.datasetType, _selectedPeriod.days);
       setState(() {
         _loading = false;
       });
@@ -54,19 +65,20 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         title: Text(_getDatasetDisplayName(widget.datasetType)),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          PopupMenuButton<int>(
+          PopupMenuButton<TimePeriod>(
             icon: const Icon(Icons.date_range),
-            onSelected: (int value) {
+            onSelected: (TimePeriod period) {
               setState(() {
-                _dayRange = value;
+                _selectedPeriod = period;
               });
               _loadStatistics();
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 7, child: Text('Last 7 days')),
-              const PopupMenuItem(value: 14, child: Text('Last 14 days')),
-              const PopupMenuItem(value: 30, child: Text('Last 30 days')),
-            ],
+            itemBuilder: (context) => TimePeriod.values.map((period) =>
+              PopupMenuItem(
+                value: period,
+                child: Text(period.label),
+              ),
+            ).toList(),
           ),
         ],
       ),
@@ -145,7 +157,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 const Icon(Icons.summarize, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Summary (Last $_dayRange days)',
+                  'Summary (${_selectedPeriod.label})',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -290,11 +302,15 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
       spots.add(FlSpot(i.toDouble(), _historicalStats[i].totalAttempts.toDouble()));
     }
 
+    // Calculate smart interval for y-axis
+    final maxValue = _historicalStats.isEmpty ? 10.0 : _historicalStats.map((s) => s.totalAttempts).reduce((a, b) => a > b ? a : b).toDouble();
+    final yInterval = _calculateSmartInterval(maxValue, 5); // Target ~5 ticks
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: true,
-        horizontalInterval: 1,
+        horizontalInterval: yInterval,
         verticalInterval: 1,
         getDrawingHorizontalLine: (value) {
           return FlLine(
@@ -317,7 +333,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 30,
-            interval: 1,
+            interval: _calculateXAxisInterval(),
             getTitlesWidget: (value, meta) {
               final index = value.toInt();
               if (index >= 0 && index < _historicalStats.length) {
@@ -325,7 +341,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
-                    DateFormat('M/d').format(date),
+                    _formatDateForPeriod(date),
                     style: const TextStyle(
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
@@ -341,7 +357,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 1,
+            interval: yInterval,
             getTitlesWidget: (value, meta) {
               return Text(
                 value.toInt().toString(),
@@ -352,7 +368,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 ),
               );
             },
-            reservedSize: 32,
+            reservedSize: 40,
           ),
         ),
       ),
@@ -363,6 +379,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
       minX: 0,
       maxX: (_historicalStats.length - 1).toDouble(),
       minY: 0,
+      maxY: (maxValue * 1.1).ceilToDouble(), // Add 10% padding at top
       lineBarsData: [
         LineChartBarData(
           spots: spots,
@@ -386,11 +403,14 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
       spots.add(FlSpot(i.toDouble(), _historicalStats[i].accuracyPercentage));
     }
 
+    // For accuracy, use smart interval but ensure we don't go below 10% steps for readability
+    final yInterval = _calculateSmartInterval(100, 5).clamp(10.0, 25.0);
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: true,
-        horizontalInterval: 20,
+        horizontalInterval: yInterval,
         verticalInterval: 1,
         getDrawingHorizontalLine: (value) {
           return FlLine(
@@ -413,7 +433,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 30,
-            interval: 1,
+            interval: _calculateXAxisInterval(),
             getTitlesWidget: (value, meta) {
               final index = value.toInt();
               if (index >= 0 && index < _historicalStats.length) {
@@ -421,7 +441,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
-                    DateFormat('M/d').format(date),
+                    _formatDateForPeriod(date),
                     style: const TextStyle(
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
@@ -437,7 +457,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 20,
+            interval: yInterval,
             getTitlesWidget: (value, meta) {
               return Text(
                 '${value.toInt()}%',
@@ -448,7 +468,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 ),
               );
             },
-            reservedSize: 32,
+            reservedSize: 40,
           ),
         ),
       ),
@@ -483,11 +503,15 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
       spots.add(FlSpot(i.toDouble(), _historicalStats[i].averageTimeSeconds));
     }
 
+    // Calculate smart interval for time chart
+    final maxValue = _historicalStats.isEmpty ? 15.0 : _historicalStats.map((s) => s.averageTimeSeconds).reduce((a, b) => a > b ? a : b);
+    final yInterval = _calculateSmartInterval(maxValue, 5); // Target ~5 ticks
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: true,
-        horizontalInterval: 5,
+        horizontalInterval: yInterval,
         verticalInterval: 1,
         getDrawingHorizontalLine: (value) {
           return FlLine(
@@ -510,7 +534,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 30,
-            interval: 1,
+            interval: _calculateXAxisInterval(),
             getTitlesWidget: (value, meta) {
               final index = value.toInt();
               if (index >= 0 && index < _historicalStats.length) {
@@ -518,7 +542,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
-                    DateFormat('M/d').format(date),
+                    _formatDateForPeriod(date),
                     style: const TextStyle(
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
@@ -534,7 +558,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 5,
+            interval: yInterval,
             getTitlesWidget: (value, meta) {
               return Text(
                 '${value.toInt()}s',
@@ -545,7 +569,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 ),
               );
             },
-            reservedSize: 32,
+            reservedSize: 40,
           ),
         ),
       ),
@@ -556,6 +580,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
       minX: 0,
       maxX: (_historicalStats.length - 1).toDouble(),
       minY: 0,
+      maxY: (maxValue * 1.1).ceilToDouble(), // Add 10% padding at top
       lineBarsData: [
         LineChartBarData(
           spots: spots,
@@ -571,6 +596,63 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         ),
       ],
     );
+  }
+
+  /// Calculate appropriate interval for x-axis based on selected time period
+  double _calculateXAxisInterval() {
+    switch (_selectedPeriod) {
+      case TimePeriod.week:
+        return 1.0; // Show every day for week view
+      case TimePeriod.month:
+        return 5.0; // Show every 5th day for month view
+      case TimePeriod.year:
+        return 30.0; // Show approximately every month for year view
+    }
+  }
+
+  /// Format date labels based on selected time period
+  String _formatDateForPeriod(DateTime date) {
+    switch (_selectedPeriod) {
+      case TimePeriod.week:
+        return DateFormat('M/d').format(date); // Short format for week
+      case TimePeriod.month:
+        return DateFormat('M/d').format(date); // Short format for month
+      case TimePeriod.year:
+        return DateFormat('MMM').format(date); // Month name for year
+    }
+  }
+
+  /// Calculate a smart interval for axis ticks based on max value and target tick count
+  double _calculateSmartInterval(double maxValue, int targetTicks) {
+    if (maxValue <= 0) return 1.0;
+
+    // For small integer ranges, use simple integer intervals
+    if (maxValue <= targetTicks && maxValue == maxValue.floor()) {
+      return 1.0; // Use interval of 1 for small integer ranges
+    }
+
+    final roughInterval = maxValue / targetTicks;
+
+    // Find the appropriate "nice" interval
+    final magnitude = math.pow(10, (math.log(roughInterval) / math.ln10).floor()).toDouble();
+    final normalizedInterval = roughInterval / magnitude;
+
+    // Choose the best "nice" number: 1, 2, 5, or 10
+    double niceInterval;
+    if (normalizedInterval <= 1) {
+      niceInterval = 1;
+    } else if (normalizedInterval <= 2) {
+      niceInterval = 2;
+    } else if (normalizedInterval <= 5) {
+      niceInterval = 5;
+    } else {
+      niceInterval = 10;
+    }
+
+    final result = (niceInterval * magnitude).toDouble();
+
+    // Ensure the interval is at least 1 for integer-based charts
+    return math.max(1.0, result);
   }
 
   String _getDatasetDisplayName(DatasetType datasetType) {

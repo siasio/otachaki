@@ -388,9 +388,9 @@ class _InfoScreenState extends State<InfoScreen> {
       case DatasetType.final9x9Area:
         return 'Final 9x9 Positions';
       case DatasetType.final19x19Area:
-        return '🏟️ Final 19x19 Positions';
+        return 'Final 19x19 Positions';
       case DatasetType.midgame19x19Estimation:
-        return '⚡ Midgame 19x19 Estimation';
+        return 'Midgame 19x19 Estimation';
       case DatasetType.final9x9AreaVars:
         return 'Final 9x9 with Variations';
       case DatasetType.partialArea:
