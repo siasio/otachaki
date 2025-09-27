@@ -6,6 +6,7 @@ import '../models/global_configuration.dart';
 import '../models/timer_type.dart';
 import '../models/layout_type.dart';
 import '../models/app_skin.dart';
+import '../models/auto_advance_mode.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/position_loader.dart';
@@ -305,6 +306,10 @@ class _ConfigScreenState extends State<ConfigScreen> {
     }
   }
 
+  String _getAutoAdvanceModeDisplayName(AutoAdvanceMode mode) {
+    return mode.displayName;
+  }
+
   String _getDatasetDisplayName(DatasetType type) {
     switch (type) {
       case DatasetType.final9x9Area:
@@ -576,6 +581,48 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             _autoSaveGlobalConfiguration(newConfig);
                           }
                         },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Auto Advance Mode
+                      DropdownButtonFormField<AutoAdvanceMode>(
+                        initialValue: _globalConfig?.autoAdvanceMode,
+                        decoration: const InputDecoration(
+                          labelText: 'Auto Advance Mode',
+                          helperText: 'When to auto-advance to the next problem',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: AutoAdvanceMode.values.map((mode) {
+                          return DropdownMenuItem(
+                            value: mode,
+                            child: Text(_getAutoAdvanceModeDisplayName(mode)),
+                          );
+                        }).toList(),
+                        onChanged: (AutoAdvanceMode? newMode) {
+                          if (newMode != null && _globalConfig != null) {
+                            final newConfig = _globalConfig!.copyWith(autoAdvanceMode: newMode);
+                            _autoSaveGlobalConfiguration(newConfig);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Colored Background for Scores
+                      CheckboxListTile(
+                        title: const Text('Colored Background for Scores'),
+                        subtitle: const Text(
+                          'Use black and white colors for score display backgrounds',
+                        ),
+                        value: _globalConfig?.useColoredBackgroundForScores ?? false,
+                        onChanged: (bool? value) {
+                          if (value != null && _globalConfig != null) {
+                            final newConfig = _globalConfig!.copyWith(
+                              useColoredBackgroundForScores: value,
+                            );
+                            _autoSaveGlobalConfiguration(newConfig);
+                          }
+                        },
+                        contentPadding: EdgeInsets.zero,
                       ),
                     ],
                   ),

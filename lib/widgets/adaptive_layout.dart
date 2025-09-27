@@ -73,7 +73,7 @@ class AdaptiveLayout extends StatelessWidget {
 
         // Column 4: Vertical buttons (flex: 2)
         Expanded(
-          flex: 4,
+          flex: 2,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: buttons,

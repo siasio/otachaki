@@ -17,8 +17,8 @@ import '../widgets/adaptive_app_bar.dart';
 import '../themes/app_theme.dart';
 import '../widgets/timer_bar.dart';
 import '../widgets/game_board_container.dart';
-import '../widgets/result_buttons.dart';
-import '../widgets/context_aware_result_buttons.dart';
+import '../widgets/adaptive_result_buttons.dart';
+import '../models/auto_advance_mode.dart';
 import '../widgets/game_status_bar.dart';
 import '../models/game_result_option.dart';
 import './info_screen.dart';
@@ -54,6 +54,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
   bool _loading = true;
   bool _showFeedbackOverlay = false;
   bool _isCorrectAnswer = false;
+  bool _hasAnswered = false;
+  bool _waitingForNext = false;
   final FocusNode _focusNode = FocusNode();
   ConfigurationManager? _configManager;
   DatasetConfiguration? _currentConfig;
@@ -103,9 +105,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _handleKeyEvent(KeyEvent event) {
-    if (!_timerRunning || _showFeedbackOverlay) return;
-
     if (event is KeyDownEvent) {
+      if (_waitingForNext) {
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _onNextPressed();
+        }
+        return;
+      }
+
+      if (!_timerRunning || _showFeedbackOverlay) return;
+
       if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
         final options = GameResultOption.generateOptions(
@@ -138,6 +147,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
     setState(() {
       _timerRunning = false;
       _showFeedbackOverlay = false;
+      _hasAnswered = false;
+      _waitingForNext = false;
     });
   }
 
@@ -218,6 +229,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _onResultSelected(GameResult result) {
     setState(() {
       _timerRunning = false;
+      _hasAnswered = true;
     });
 
     final isCorrect = _checkResultUsingNewSystem(result);
@@ -228,16 +240,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _isCorrectAnswer = isCorrect;
     });
 
-    // Load next position after configured time
-    final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-    Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-      _loadNextPosition();
-    });
+    _handlePostAnswerFlow(isCorrect);
   }
 
   void _onResultOptionSelected(GameResultOption option) {
     setState(() {
       _timerRunning = false;
+      _hasAnswered = true;
     });
 
     _recordAttempt(option.isCorrect, false);
@@ -247,11 +256,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _isCorrectAnswer = option.isCorrect;
     });
 
-    // Load next position after configured time
-    final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-    Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-      _loadNextPosition();
-    });
+    _handlePostAnswerFlow(option.isCorrect);
   }
 
   bool _checkResultUsingNewSystem(GameResult selectedResult) {
@@ -272,21 +277,88 @@ class _TrainingScreenState extends State<TrainingScreen> {
     setState(() {
       _timerRunning = false;
       _showFeedbackOverlay = true;
-      _isCorrectAnswer = false; // Show red cross for timeout
+      _isCorrectAnswer = false;
+      _hasAnswered = true;
     });
 
-    _recordAttempt(false, true); // Record as incorrect with timeout
+    _recordAttempt(false, true);
 
-    final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-    Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-      _loadNextPosition();
-    });
+    _handlePostAnswerFlow(false);
+  }
+
+  void _handlePostAnswerFlow(bool isCorrect) {
+    final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final stateManager = ButtonStateManager(
+      autoAdvanceMode: autoAdvanceMode,
+      isAnswerCorrect: isCorrect,
+      hasAnswered: true,
+    );
+
+    if (stateManager.shouldAutoAdvance()) {
+      final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
+      Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
+        _loadNextPosition();
+      });
+    } else {
+      final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
+      Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
+        setState(() {
+          _showFeedbackOverlay = false;
+          _waitingForNext = true;
+        });
+      });
+    }
+  }
+
+  void _onNextPressed() {
+    _loadNextPosition();
+  }
+
+  Widget _buildButtons() {
+    final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final stateManager = ButtonStateManager(
+      autoAdvanceMode: autoAdvanceMode,
+      isAnswerCorrect: _isCorrectAnswer,
+      hasAnswered: _hasAnswered,
+    );
+
+    final displayMode = stateManager.getDisplayMode();
+
+    if (_waitingForNext || (displayMode == ButtonDisplayMode.scores && _hasAnswered && !_showFeedbackOverlay)) {
+      return AdaptiveResultButtons.forScores(
+        resultString: _positionManager.currentTrainingPosition?.result ?? '',
+        onNextPressed: _onNextPressed,
+        appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+        layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        useColoredBackgroundForScores: _globalConfig?.useColoredBackgroundForScores ?? false,
+      );
+    } else {
+      if (_positionManager.currentDataset != null &&
+          _positionManager.currentTrainingPosition != null) {
+        return AdaptiveResultButtons.forChoices(
+          datasetType: _positionManager.currentDataset!.metadata.datasetType,
+          actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
+          resultString: _positionManager.currentTrainingPosition!.result,
+          onResultOptionSelected: _timerRunning && !_hasAnswered ? _onResultOptionSelected : (_) {},
+          appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        );
+      } else {
+        return AdaptiveResultButtons.forChoices(
+          onResultSelected: _timerRunning && !_hasAnswered ? _onResultSelected : (_) {},
+          appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        );
+      }
+    }
   }
 
   Future<void> _loadNextPosition() async {
     setState(() {
       _loading = true;
       _showFeedbackOverlay = false;
+      _hasAnswered = false;
+      _waitingForNext = false;
     });
 
     try {
@@ -656,21 +728,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       showFeedbackOverlay: _showFeedbackOverlay,
                       feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                     ),
-                    buttons: _positionManager.currentDataset != null &&
-                            _positionManager.currentTrainingPosition != null
-                        ? ContextAwareResultButtons(
-                            datasetType: _positionManager.currentDataset!.metadata.datasetType,
-                            actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
-                            resultString: _positionManager.currentTrainingPosition!.result,
-                            onResultSelected: _timerRunning ? _onResultOptionSelected : (_) {},
-                            appSkin: currentSkin,
-                            layoutType: layoutType,
-                          )
-                        : ResultButtons(
-                            onResultSelected: _timerRunning ? _onResultSelected : (_) {},
-                            appSkin: currentSkin,
-                            layoutType: layoutType,
-                          ),
+                    buttons: _buildButtons(),
                   ),
                 ),
               ),
@@ -725,21 +783,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 showFeedbackOverlay: _showFeedbackOverlay,
                 feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
               ),
-              buttons: _positionManager.currentDataset != null &&
-                      _positionManager.currentTrainingPosition != null
-                  ? ContextAwareResultButtons(
-                      datasetType: _positionManager.currentDataset!.metadata.datasetType,
-                      actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
-                      resultString: _positionManager.currentTrainingPosition!.result,
-                      onResultSelected: _timerRunning ? _onResultOptionSelected : (_) {},
-                      appSkin: currentSkin,
-                      layoutType: layoutType,
-                    )
-                  : ResultButtons(
-                      onResultSelected: _timerRunning ? _onResultSelected : (_) {},
-                      appSkin: currentSkin,
-                      layoutType: layoutType,
-                    ),
+              buttons: _buildButtons(),
             ),
           ),
         ),
