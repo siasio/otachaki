@@ -7,6 +7,7 @@ import '../models/dataset_configuration.dart';
 import '../services/position_manager.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
+import '../services/statistics_manager.dart';
 import '../models/global_configuration.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
@@ -58,6 +59,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
   DatasetConfiguration? _currentConfig;
   GlobalConfigurationManager? _globalConfigManager;
   GlobalConfiguration? _globalConfig;
+  StatisticsManager? _statisticsManager;
+  DateTime? _problemStartTime;
 
   @override
   void initState() {
@@ -76,6 +79,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _configManager = await ConfigurationManager.getInstance();
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
+      _statisticsManager = await StatisticsManager.getInstance();
       _loadInitialPosition();
     } catch (e) {
       // Gracefully handle configuration manager errors
@@ -171,6 +175,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
         _currentPosition = position;
         _loading = false;
       });
+      // Start timing the problem
+      _problemStartTime = DateTime.now();
       // Request focus for keyboard input
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -215,6 +221,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     });
 
     final isCorrect = _checkResultUsingNewSystem(result);
+    _recordAttempt(isCorrect, false);
 
     setState(() {
       _showFeedbackOverlay = true;
@@ -232,6 +239,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
     setState(() {
       _timerRunning = false;
     });
+
+    _recordAttempt(option.isCorrect, false);
 
     setState(() {
       _showFeedbackOverlay = true;
@@ -266,6 +275,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _isCorrectAnswer = false; // Show red cross for timeout
     });
 
+    _recordAttempt(false, true); // Record as incorrect with timeout
+
     final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
     Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
       _loadNextPosition();
@@ -286,6 +297,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
         _timerRunning = true;
         _loading = false;
       });
+      // Start timing the new problem
+      _problemStartTime = DateTime.now();
       // Request focus for keyboard input
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -320,6 +333,32 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _focusNode.requestFocus();
         }
       });
+    }
+  }
+
+  /// Record a problem attempt with the statistics manager
+  Future<void> _recordAttempt(bool isCorrect, bool wasTimeout) async {
+    if (_statisticsManager == null ||
+        _problemStartTime == null ||
+        _positionManager.currentDataset == null) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final timeSpentMs = now.difference(_problemStartTime!).inMilliseconds;
+
+    // Cap the time at 15 seconds (15000ms) for timeouts as specified
+    final cappedTimeMs = wasTimeout ? 15000 : timeSpentMs;
+
+    try {
+      await _statisticsManager!.recordAttempt(
+        datasetType: _positionManager.currentDataset!.metadata.datasetType,
+        isCorrect: isCorrect,
+        timeSpentMs: cappedTimeMs,
+        wasTimeout: wasTimeout,
+      );
+    } catch (e) {
+      debugPrint('Error recording attempt: $e');
     }
   }
 

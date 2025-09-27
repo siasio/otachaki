@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/position_loader.dart';
+import '../services/statistics_manager.dart';
+import '../models/dataset_type.dart';
+import '../models/daily_statistics.dart';
+import './detailed_statistics_screen.dart';
 
 class InfoScreen extends StatefulWidget {
   const InfoScreen({super.key});
@@ -9,8 +12,8 @@ class InfoScreen extends StatefulWidget {
 }
 
 class _InfoScreenState extends State<InfoScreen> {
-  Map<String, dynamic>? _statistics;
-  Map<String, dynamic>? _sourceInfo;
+  StatisticsManager? _statisticsManager;
+  DailyStatistics? _todayStats;
   bool _loading = false;
 
   @override
@@ -19,18 +22,15 @@ class _InfoScreenState extends State<InfoScreen> {
     _loadInfo();
   }
 
-
   Future<void> _loadInfo() async {
     setState(() {
       _loading = true;
     });
 
     try {
-      final stats = await PositionLoader.getStatistics();
-      final source = PositionLoader.getSourceInfo();
+      _statisticsManager = await StatisticsManager.getInstance();
+      _todayStats = _statisticsManager!.getTodayStatistics();
       setState(() {
-        _statistics = stats;
-        _sourceInfo = source;
         _loading = false;
       });
     } catch (e) {
@@ -164,10 +164,10 @@ class _InfoScreenState extends State<InfoScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Current Dataset Statistics
+            // Today's Statistics
             if (_loading)
               const Center(child: CircularProgressIndicator())
-            else if (_statistics != null) ...[
+            else ...[
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -176,10 +176,10 @@ class _InfoScreenState extends State<InfoScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.analytics, size: 20),
+                          const Icon(Icons.today, size: 20),
                           const SizedBox(width: 8),
                           const Text(
-                            'Current Dataset Statistics',
+                            'Today\'s Statistics',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -188,46 +188,21 @@ class _InfoScreenState extends State<InfoScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _buildStatRow('Total Positions', _statistics!['total_positions'].toString()),
-                      _buildStatRow('Version', _statistics!['version'].toString()),
-                      _buildStatRow('Created', _formatDate(_statistics!['created_at'])),
+                      if (_todayStats == null || !_todayStats!.hasAttempts)
+                        const Text(
+                          'No practice sessions yet today. Start training to see your statistics!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                          ),
+                        )
+                      else
+                        ..._buildTodayStatsContent(),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              if (_sourceInfo != null)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.info, size: 20),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Source Information',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildStatRow('Source Type', _sourceInfo!['source']),
-                        _buildStatRow('File', _sourceInfo!['file']),
-                        if (_sourceInfo!['path'] != null)
-                          _buildStatRow('Path', _sourceInfo!['path']),
-                        if (_sourceInfo!['has_bytes'] == true)
-                          _buildStatRow('Loaded from', 'Memory (Web)'),
-                      ],
-                    ),
-                  ),
-                ),
             ],
 
             const SizedBox(height: 32),
@@ -274,19 +249,6 @@ class _InfoScreenState extends State<InfoScreen> {
     );
   }
 
-  Widget _buildStatRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(value, style: TextStyle(color: Colors.grey[600])),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDatasetExplanation(String title, String description) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,12 +273,134 @@ class _InfoScreenState extends State<InfoScreen> {
     );
   }
 
-  String _formatDate(String isoString) {
-    try {
-      final date = DateTime.parse(isoString);
-      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return isoString;
+  List<Widget> _buildTodayStatsContent() {
+    if (_todayStats == null) return [];
+
+    final List<Widget> widgets = [];
+
+    for (final datasetType in _todayStats!.activeDatasetTypes) {
+      final stats = _todayStats!.getStatsForDataset(datasetType);
+      if (stats != null) {
+        widgets.add(_buildDatasetStatCard(datasetType, stats));
+        widgets.add(const SizedBox(height: 12));
+      }
     }
+
+    // Remove the last SizedBox
+    if (widgets.isNotEmpty) {
+      widgets.removeLast();
+    }
+
+    return widgets;
+  }
+
+  Widget _buildDatasetStatCard(DatasetType datasetType, DailyDatasetStatistics stats) {
+    return Container(
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  _getDatasetDisplayName(datasetType),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.analytics_outlined, size: 20),
+                onPressed: () => _navigateToDetailedStats(datasetType),
+                tooltip: 'View detailed statistics',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minHeight: 24, minWidth: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniStat(
+                  'Accuracy',
+                  '${stats.accuracyPercentage.toStringAsFixed(1)}%',
+                  Icons.check_circle_outline,
+                ),
+              ),
+              Expanded(
+                child: _buildMiniStat(
+                  'Problems',
+                  '${stats.totalAttempts}',
+                  Icons.quiz_outlined,
+                ),
+              ),
+              Expanded(
+                child: _buildMiniStat(
+                  'Avg Time',
+                  '${stats.averageTimeSeconds.toStringAsFixed(1)}s',
+                  Icons.timer_outlined,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getDatasetDisplayName(DatasetType datasetType) {
+    switch (datasetType) {
+      case DatasetType.final9x9Area:
+        return 'Final 9x9 Positions';
+      case DatasetType.final19x19Area:
+        return '🏟️ Final 19x19 Positions';
+      case DatasetType.midgame19x19Estimation:
+        return '⚡ Midgame 19x19 Estimation';
+      case DatasetType.final9x9AreaVars:
+        return 'Final 9x9 with Variations';
+      case DatasetType.partialArea:
+        return 'Partial Area Analysis';
+    }
+  }
+
+  Future<void> _navigateToDetailedStats(DatasetType datasetType) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailedStatisticsScreen(datasetType: datasetType),
+      ),
+    );
   }
 }
