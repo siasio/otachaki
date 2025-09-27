@@ -1,4 +1,4 @@
-# Go Territory Trainer - Flutter App
+# Go Position Evaluation Trainer - Flutter App
 
 Cross-platform mobile and web application for training Go territory counting skills.
 
@@ -112,7 +112,7 @@ The app supports multiple ways to load Go position datasets:
 
 ### Keyboard Shortcuts
 - **← Left Arrow**: Select White Wins
-- **↓ Down Arrow**: Select Draw/Tie
+- **↓ Down Arrow**: Select Draw/Close
 - **→ Right Arrow**: Select Black Wins
 
 ### Configurable Options
