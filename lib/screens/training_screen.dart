@@ -500,7 +500,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
     if (_loading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Go Territory Counting'),
           actions: [
             IconButton(
               icon: const Icon(Icons.info_outline),
@@ -536,7 +535,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Go Territory Counting'),
         leading: layoutType == LayoutType.horizontal ? Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -619,10 +617,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadNextPosition,
-        child: const Icon(Icons.refresh),
       ),
     );
   }

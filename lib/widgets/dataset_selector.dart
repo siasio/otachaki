@@ -115,15 +115,6 @@ class _DatasetSelectorState extends State<DatasetSelector> {
         // Notify parent about the change
         widget.onDatasetChanged?.call();
         widget.onDatasetTypeChanged?.call(datasetType);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Switched to ${fileInfo['displayName']}'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
       }
     } catch (e) {
       setState(() {
