@@ -12,6 +12,7 @@ import '../models/app_skin.dart';
 import '../models/layout_type.dart';
 import '../models/timer_type.dart';
 import '../widgets/adaptive_layout.dart';
+import '../widgets/adaptive_app_bar.dart';
 import '../themes/app_theme.dart';
 import '../widgets/timer_bar.dart';
 import '../widgets/game_board_container.dart';
@@ -497,127 +498,200 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
+    final layoutType = _globalConfig?.layoutType ?? LayoutType.vertical;
+
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: _navigateToInfo,
-              tooltip: 'App Information',
+      if (layoutType == LayoutType.horizontal) {
+        // Horizontal layout with vertical app bar on the left
+        return Scaffold(
+          body: Row(
+            children: [
+              AdaptiveAppBar(
+                layoutType: layoutType,
+                onInfoPressed: _navigateToInfo,
+                onSettingsPressed: _navigateToConfig,
+              ),
+              Expanded(
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(strokeWidth: 3),
+                      SizedBox(height: 24),
+                      Text('Loading next position...', style: TextStyle(fontSize: 16)),
+                      SizedBox(height: 8),
+                      Text('Get ready to analyze the board!', style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Vertical layout with horizontal app bar at the top
+        return Scaffold(
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(AdaptiveAppBar.getHorizontalHeight()),
+            child: AdaptiveAppBar(
+              layoutType: layoutType,
+              onInfoPressed: _navigateToInfo,
+              onSettingsPressed: _navigateToConfig,
             ),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: _navigateToConfig,
-              tooltip: 'Settings',
+          ),
+          body: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(strokeWidth: 3),
+                SizedBox(height: 24),
+                Text('Loading next position...', style: TextStyle(fontSize: 16)),
+                SizedBox(height: 8),
+                Text('Get ready to analyze the board!', style: TextStyle(fontSize: 13)),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
+    final timerType = _globalConfig?.timerType ?? TimerType.smooth;
+    final shouldShowGameInfo = _currentConfig != null ? !_currentConfig!.hideGameInfoBar : true;
+
+    if (layoutType == LayoutType.horizontal) {
+      // Horizontal layout with vertical app bar on the left
+      return Scaffold(
+        body: Row(
+          children: [
+            AdaptiveAppBar(
+              layoutType: layoutType,
+              onInfoPressed: _navigateToInfo,
+              onSettingsPressed: _navigateToConfig,
+            ),
+            Expanded(
+              child: KeyboardListener(
+                focusNode: _focusNode,
+                onKeyEvent: _handleKeyEvent,
+                autofocus: true,
+                child: SafeArea(
+                  child: AdaptiveLayout(
+                    layoutType: layoutType,
+                    timerBar: _timerRunning
+                        ? TimerBar(
+                            duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
+                            onComplete: _onTimerComplete,
+                            timerType: timerType,
+                            appSkin: currentSkin,
+                            isVertical: layoutType == LayoutType.horizontal,
+                            barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
+                            segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
+                          )
+                        : Container(
+                            height: layoutType == LayoutType.horizontal ? 200 : 8.0,
+                            width: layoutType == LayoutType.horizontal ? 16 : null,
+                            margin: const EdgeInsets.all(16)
+                          ),
+                    gameInfoBar: shouldShowGameInfo
+                        ? GameStatusBar(
+                            position: _positionManager.currentTrainingPosition,
+                            appSkin: currentSkin,
+                          )
+                        : null,
+                    board: GameBoardContainer(
+                      position: _currentPosition,
+                      trainingPosition: _positionManager.currentTrainingPosition,
+                      appSkin: currentSkin,
+                      showFeedbackOverlay: _showFeedbackOverlay,
+                      feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+                    ),
+                    buttons: _positionManager.currentDataset != null &&
+                            _positionManager.currentTrainingPosition != null
+                        ? ContextAwareResultButtons(
+                            datasetType: _positionManager.currentDataset!.metadata.datasetType,
+                            actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
+                            resultString: _positionManager.currentTrainingPosition!.result,
+                            onResultSelected: _timerRunning ? _onResultOptionSelected : (_) {},
+                            appSkin: currentSkin,
+                            layoutType: layoutType,
+                          )
+                        : ResultButtons(
+                            onResultSelected: _timerRunning ? _onResultSelected : (_) {},
+                            appSkin: currentSkin,
+                            layoutType: layoutType,
+                          ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(strokeWidth: 3),
-              SizedBox(height: 24),
-              Text('Loading next position...', style: TextStyle(fontSize: 16)),
-              SizedBox(height: 8),
-              Text('Get ready to analyze the board!', style: TextStyle(fontSize: 13)),
-            ],
+      );
+    } else {
+      // Vertical layout with horizontal app bar at the top
+      return Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(AdaptiveAppBar.getHorizontalHeight()),
+          child: AdaptiveAppBar(
+            layoutType: layoutType,
+            onInfoPressed: _navigateToInfo,
+            onSettingsPressed: _navigateToConfig,
+          ),
+        ),
+        body: KeyboardListener(
+          focusNode: _focusNode,
+          onKeyEvent: _handleKeyEvent,
+          autofocus: true,
+          child: SafeArea(
+            child: AdaptiveLayout(
+              layoutType: layoutType,
+              timerBar: _timerRunning
+                  ? TimerBar(
+                      duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
+                      onComplete: _onTimerComplete,
+                      timerType: timerType,
+                      appSkin: currentSkin,
+                      isVertical: layoutType == LayoutType.horizontal,
+                      barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
+                      segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
+                    )
+                  : Container(
+                      height: layoutType == LayoutType.horizontal ? 200 : 8.0,
+                      width: layoutType == LayoutType.horizontal ? 16 : null,
+                      margin: const EdgeInsets.all(16)
+                    ),
+              gameInfoBar: shouldShowGameInfo
+                  ? GameStatusBar(
+                      position: _positionManager.currentTrainingPosition,
+                      appSkin: currentSkin,
+                    )
+                  : null,
+              board: GameBoardContainer(
+                position: _currentPosition,
+                trainingPosition: _positionManager.currentTrainingPosition,
+                appSkin: currentSkin,
+                showFeedbackOverlay: _showFeedbackOverlay,
+                feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+              ),
+              buttons: _positionManager.currentDataset != null &&
+                      _positionManager.currentTrainingPosition != null
+                  ? ContextAwareResultButtons(
+                      datasetType: _positionManager.currentDataset!.metadata.datasetType,
+                      actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
+                      resultString: _positionManager.currentTrainingPosition!.result,
+                      onResultSelected: _timerRunning ? _onResultOptionSelected : (_) {},
+                      appSkin: currentSkin,
+                      layoutType: layoutType,
+                    )
+                  : ResultButtons(
+                      onResultSelected: _timerRunning ? _onResultSelected : (_) {},
+                      appSkin: currentSkin,
+                      layoutType: layoutType,
+                    ),
+            ),
           ),
         ),
       );
     }
-
-    final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
-    final layoutType = _globalConfig?.layoutType ?? LayoutType.vertical;
-    final timerType = _globalConfig?.timerType ?? TimerType.smooth;
-    final shouldShowGameInfo = _currentConfig != null ? !_currentConfig!.hideGameInfoBar : true;
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: layoutType == LayoutType.horizontal ? Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: _navigateToInfo,
-              tooltip: 'App Information',
-            ),
-          ],
-        ) : null,
-        leadingWidth: layoutType == LayoutType.horizontal ? 56 : null,
-        actions: layoutType == LayoutType.horizontal ? [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _navigateToConfig,
-            tooltip: 'Settings',
-          ),
-        ] : [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: _navigateToInfo,
-            tooltip: 'App Information',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _navigateToConfig,
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
-      body: KeyboardListener(
-        focusNode: _focusNode,
-        onKeyEvent: _handleKeyEvent,
-        autofocus: true,
-        child: SafeArea(
-          child: AdaptiveLayout(
-            layoutType: layoutType,
-            timerBar: _timerRunning
-                ? TimerBar(
-                    duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
-                    onComplete: _onTimerComplete,
-                    timerType: timerType,
-                    appSkin: currentSkin,
-                    isVertical: layoutType == LayoutType.horizontal,
-                    barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
-                    segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
-                  )
-                : Container(
-                    height: layoutType == LayoutType.horizontal ? 200 : 8.0,
-                    width: layoutType == LayoutType.horizontal ? 16 : null,
-                    margin: const EdgeInsets.all(16)
-                  ),
-            gameInfoBar: shouldShowGameInfo
-                ? GameStatusBar(
-                    position: _positionManager.currentTrainingPosition,
-                    appSkin: currentSkin,
-                  )
-                : null,
-            board: GameBoardContainer(
-              position: _currentPosition,
-              trainingPosition: _positionManager.currentTrainingPosition,
-              appSkin: currentSkin,
-              showFeedbackOverlay: _showFeedbackOverlay,
-              feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
-            ),
-            buttons: _positionManager.currentDataset != null &&
-                    _positionManager.currentTrainingPosition != null
-                ? ContextAwareResultButtons(
-                    datasetType: _positionManager.currentDataset!.metadata.datasetType,
-                    actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
-                    resultString: _positionManager.currentTrainingPosition!.result,
-                    onResultSelected: _timerRunning ? _onResultOptionSelected : (_) {},
-                    appSkin: currentSkin,
-                    layoutType: layoutType,
-                  )
-                : ResultButtons(
-                    onResultSelected: _timerRunning ? _onResultSelected : (_) {},
-                    appSkin: currentSkin,
-                    layoutType: layoutType,
-                  ),
-          ),
-        ),
-      ),
-    );
   }
 }
