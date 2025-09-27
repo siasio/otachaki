@@ -76,14 +76,14 @@ class _InfoScreenState extends State<InfoScreen> {
                     _buildDatasetExplanation(
                       'Final 9x9 Positions',
                       'Komi = 7 points. '
-                      'You can use both area and territory scoring methods. They will give the same result. '
+                      'Positions are picked so that both area and territory scoring give the same result. '
                       'After some practice, you can be able to count the score within 5s!',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'Final 19x19 Positions',
                       'Komi = 7 points. '
-                      'You can use both area and territory scoring methods. They will give the same result. '
+                      'Positions are picked so that both area and territory scoring give the same result. '
                       'Practice until you can count the score within 30s (typical byo-yomi period)!',
                     ),
                     const SizedBox(height: 12),

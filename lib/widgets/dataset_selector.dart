@@ -31,15 +31,15 @@ class _DatasetSelectorState extends State<DatasetSelector> {
       'filename': 'final_9x9_katago.json',
       'displayName': '9x9 Final Positions',
     },
+    DatasetType.final19x19Area: {
+      'filename': 'final_19x19_katago.json',
+      'displayName': '19x19 Final Positions',
+    },
     DatasetType.midgame19x19Estimation: {
       'filename': 'fox_mid150_19x19.json',
       'displayName': '19x19 Midgame Estimation',
     },
     // Add more mappings as needed
-    // DatasetType.final19x19Area: {
-    //   'filename': 'final_19x19_katago.json',
-    //   'displayName': '19x19 Final Positions',
-    // },
   };
 
   @override

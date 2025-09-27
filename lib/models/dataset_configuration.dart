@@ -19,20 +19,20 @@ class DatasetConfiguration {
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
-          timePerProblemSeconds: 7,
+          timePerProblemSeconds: 15,
           hideGameInfoBar: true,
         );
       case DatasetType.final19x19Area:
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
-          timePerProblemSeconds: 30,
-          hideGameInfoBar: false,
+          timePerProblemSeconds: 60,
+          hideGameInfoBar: true,
         );
       case DatasetType.midgame19x19Estimation:
         return const DatasetConfiguration(
           thresholdGood: 1.5,
-          thresholdClose: 4.0,
+          thresholdClose: 5.0,
           timePerProblemSeconds: 15,
           hideGameInfoBar: false,
         );

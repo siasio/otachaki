@@ -27,9 +27,9 @@ class GameResultOption {
 
       case DatasetType.final9x9Area:
       case DatasetType.final9x9AreaVars:
+      case DatasetType.final19x19Area:
         return _generateFinalOptions(actualScore, true);
 
-      case DatasetType.final19x19Area:
       case DatasetType.partialArea:
         return _generateScoreOptions(actualScore, resultString);
     }
