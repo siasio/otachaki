@@ -34,12 +34,12 @@ class AdaptiveAppBar extends StatelessWidget {
       foregroundColor: foregroundColor,
       elevation: elevation,
       automaticallyImplyLeading: false,
+      leading: IconButton(
+        icon: const Icon(Icons.info_outline),
+        onPressed: onInfoPressed,
+        tooltip: 'App Information',
+      ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.info_outline),
-          onPressed: onInfoPressed,
-          tooltip: 'App Information',
-        ),
         IconButton(
           icon: const Icon(Icons.settings),
           onPressed: onSettingsPressed,
@@ -70,7 +70,7 @@ class AdaptiveAppBar extends StatelessWidget {
             // Settings icon at the top
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: IconButton(Icon
+              child: IconButton(
                 icon: Icon(
                   Icons.settings,
                   color: effectiveForegroundColor,
