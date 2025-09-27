@@ -75,23 +75,29 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 16),
                     _buildDatasetExplanation(
                       'Final 9x9 Positions',
-                      'Game-ending positions on 9x9 boards analyzed with KataGo\'s AI ownership maps. '
-                      'These positions show clear territorial outcomes where stones are mostly settled. '
-                      'Good for beginners to learn basic territory evaluation.',
+                      'Komi = 7 points. '
+                      'You can use both area and territory scoring methods. They will give the same result. '
+                      'After some practice, you can be able to count the score within 5s!',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
-                      '🏟️ Final 19x19 Positions',
-                      'Game-ending positions on full 19x19 boards with AI-based territory analysis. '
-                      'More complex than 9x9 with larger-scale territorial judgments. '
-                      'Ideal for intermediate players.',
+                      'Final 19x19 Positions',
+                      'Komi = 7 points. '
+                      'You can use both area and territory scoring methods. They will give the same result. '
+                      'Practice until you can count the score within 30s (typical byo-yomi period)!',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
-                      '⚡ Midgame 19x19 Estimation',
-                      'Mid-game positions where the outcome is not yet decided. '
-                      'Requires evaluating potential territory, influence, and fighting outcomes. '
-                      'Challenging positions for advanced players to test territorial intuition.',
+                      'Midgame 19x19 Estimation',
+                      'Positions at move 150. '
+                      'Komi and number of prisoners are shown. '
+                      'Train your quick middle game judgment!',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDatasetExplanation(
+                      'In preparation:',
+                      'Datasets with variations shown by numbers (train like MuZero!). '
+                      'Dataset of board patches (train your area scoring skills!).',
                     ),
                   ],
                 ),
@@ -127,9 +133,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '• View Go positions from actual games and predict the winner\n'
-                      '• Choose from different datasets (9x9 final, 19x19 midgame, etc.)\n'
-                      '• Get immediate feedback on your predictions\n'
-                      '• Track your accuracy with built-in scoring',
+                      '• Choose from different datasets (9x9, 19x19 final positions, 19x19 midgame, etc.)\n'
+                      '• Get immediate feedback on your predictions and track your accuracy with built-in scoring',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),
@@ -140,9 +145,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '• ← Left Arrow: Select White Wins\n'
-                      '• ↓ Down Arrow: Select Draw\n'
-                      '• → Right Arrow: Select Black Wins\n'
-                      '• Look for arrow icons on the buttons for quick reference',
+                      '• ↓ Down Arrow: Select Draw/Close\n'
+                      '• → Right Arrow: Select Black Wins',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),
@@ -153,9 +157,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '• Use the gear icon in the training screen to access settings\n'
-                      '• Customize scoring thresholds for each dataset type\n'
-                      '• Adjust timer settings and display preferences\n'
-                      '• Choose from different themes and layouts',
+                      '• Customize timer settings and scoring thresholds (especially useful for midgame dataset) for each dataset type\n'
+                      '• Choose from different themes and layouts. Horizontal layout is specifically designed for tablets. On e-ink devices, use the e-ink theme and segmented timer',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                   ],
@@ -229,14 +232,14 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Go Territory Counting Training App',
+                      'Go Position Evaluation Training App',
                       style: TextStyle(fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'This app helps you practice predicting game outcomes from Go positions. '
-                      'You can load different datasets containing positions from actual games '
-                      'and test your ability to determine who is winning.',
+                      'Designed by Stanisław Frejlak, 2p. '
+                      'Written by ClaudeCode. '
+                      'Inspiration taken from antonTobi: https://count.antontobi.com/',
                       style: TextStyle(color: Colors.grey),
                     ),
                   ],
