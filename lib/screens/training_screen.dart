@@ -19,7 +19,8 @@ import '../widgets/result_buttons.dart';
 import '../widgets/context_aware_result_buttons.dart';
 import '../widgets/game_status_bar.dart';
 import '../models/game_result_option.dart';
-import './settings_screen.dart';
+import './info_screen.dart';
+import './config_screen.dart';
 
 class ResultDisplayColors {
   final Color backgroundColor;
@@ -128,10 +129,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
   }
 
-  Future<void> _navigateToSettings() async {
+  Future<void> _navigateToInfo() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+      MaterialPageRoute(builder: (context) => const InfoScreen()),
+    );
+  }
+
+  Future<void> _navigateToConfig() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ConfigScreen()),
     );
     // Reload position in case dataset changed
     _loadInitialPosition();
@@ -288,7 +296,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             action: SnackBarAction(
               label: 'Settings',
               textColor: Colors.white,
-              onPressed: _navigateToSettings,
+              onPressed: _navigateToConfig,
             ),
           ),
         );
@@ -495,8 +503,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
           title: const Text('Go Territory Counting'),
           actions: [
             IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: _navigateToInfo,
+              tooltip: 'App Information',
+            ),
+            IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: _navigateToSettings,
+              onPressed: _navigateToConfig,
+              tooltip: 'Settings',
             ),
           ],
         ),
@@ -523,14 +537,33 @@ class _TrainingScreenState extends State<TrainingScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Go Territory Counting'),
-        leading: layoutType == LayoutType.horizontal ? IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: _navigateToSettings,
+        leading: layoutType == LayoutType.horizontal ? Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: _navigateToInfo,
+              tooltip: 'App Information',
+            ),
+          ],
         ) : null,
-        actions: layoutType == LayoutType.horizontal ? [] : [
+        leadingWidth: layoutType == LayoutType.horizontal ? 56 : null,
+        actions: layoutType == LayoutType.horizontal ? [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: _navigateToSettings,
+            onPressed: _navigateToConfig,
+            tooltip: 'Settings',
+          ),
+        ] : [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: _navigateToInfo,
+            tooltip: 'App Information',
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _navigateToConfig,
+            tooltip: 'Settings',
           ),
         ],
       ),

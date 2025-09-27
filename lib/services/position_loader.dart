@@ -19,6 +19,7 @@ class PositionLoader {
   static DatasetSource _datasetSource = DatasetSource.asset;
   static String? _filePath;
   static Uint8List? _fileBytes;
+  static String? _currentDatasetType;
 
   /// Set which dataset file to load from assets
   static void setDatasetFile(String filename) {
@@ -27,6 +28,7 @@ class PositionLoader {
     _filePath = null;
     _fileBytes = null;
     _cachedDataset = null; // Clear cache when switching datasets
+    _currentDatasetType = null; // Clear dataset type when switching
   }
 
   /// Load dataset from a file path (mobile/desktop)
@@ -36,6 +38,7 @@ class PositionLoader {
     _filePath = filePath;
     _fileBytes = null;
     _cachedDataset = null;
+    _currentDatasetType = null;
     return await loadDataset();
   }
 
@@ -46,6 +49,7 @@ class PositionLoader {
     _filePath = null;
     _fileBytes = bytes;
     _cachedDataset = null;
+    _currentDatasetType = null;
     return await loadDataset();
   }
 
@@ -97,8 +101,13 @@ class PositionLoader {
 
       _cachedDataset = TrainingDataset.fromJson(jsonData);
 
+      // Extract and store dataset type from metadata
+      final metadata = jsonData['metadata'] as Map<String, dynamic>?;
+      _currentDatasetType = metadata?['dataset_type'] as String?;
+
       print('Loaded dataset from $_datasetFile: ${_cachedDataset!.metadata.totalPositions} positions');
       print('Dataset name: ${_cachedDataset!.metadata.name}');
+      print('Dataset type: $_currentDatasetType');
 
       return _cachedDataset!;
     } catch (e) {
@@ -122,6 +131,7 @@ class PositionLoader {
       'total_positions': dataset.metadata.totalPositions,
       'created_at': dataset.metadata.createdAt.toIso8601String(),
       'version': dataset.metadata.version,
+      'dataset_type': _currentDatasetType,
     };
   }
 
@@ -133,6 +143,7 @@ class PositionLoader {
   /// Clear the cached dataset (useful for testing)
   static void clearCache() {
     _cachedDataset = null;
+    _currentDatasetType = null;
   }
 
   /// Get current dataset source information

@@ -1,21 +1,18 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../services/position_loader.dart';
 import '../services/dataset_preference_manager.dart';
 import '../models/dataset_type.dart';
 import '../models/app_skin.dart';
-import '../core/dataset_parser.dart' as parser;
-import 'dart:convert';
-import 'package:flutter/services.dart';
 
 class DatasetSelector extends StatefulWidget {
   final VoidCallback? onDatasetChanged;
+  final Function(DatasetType)? onDatasetTypeChanged;
   final AppSkin appSkin;
 
   const DatasetSelector({
     super.key,
     this.onDatasetChanged,
+    this.onDatasetTypeChanged,
     this.appSkin = AppSkin.classic,
   });
 
@@ -24,182 +21,109 @@ class DatasetSelector extends StatefulWidget {
 }
 
 class _DatasetSelectorState extends State<DatasetSelector> {
-  String _currentDataset = 'Default';
+  DatasetType? _currentDatasetType;
   bool _loading = false;
   DatasetPreferenceManager? _preferenceManager;
-  Map<DatasetType, List<DatasetInfo>> _groupedDatasets = {};
-  List<DatasetInfo> _validPresetDatasets = [];
-  List<DatasetInfo> _userDatasets = [];
 
-  // Preset datasets with their expected types
-  final List<Map<String, dynamic>> _presetDatasetConfigs = [
-    // {
-    //   'filename': 'dataset1_9x9_final.json',
-    //   'displayName': '9x9 Final Positions',
-    //   'expectedType': DatasetType.final9x9Area,
-    // },
-    // {
-    //   'filename': 'dataset3_19x19_final.json',
-    //   'displayName': '19x19 Final Positions',
-    //   'expectedType': DatasetType.final19x19Area,
-    // },
-    {
-      'filename': 'fox_mid150_19x19.json',
-      'displayName': 'Fox Positions (move 150)',
-      'expectedType': DatasetType.midgame19x19Estimation,
-    },
-    {
+  // Predefined mapping of dataset types to their files
+  final Map<DatasetType, Map<String, String>> _datasetTypeToFile = {
+    DatasetType.final9x9Area: {
       'filename': 'final_9x9_katago.json',
       'displayName': '9x9 Final Positions',
-      'expectedType': DatasetType.final9x9Area,
     },
-  ];
+    DatasetType.midgame19x19Estimation: {
+      'filename': 'fox_mid150_19x19.json',
+      'displayName': '19x19 Midgame Estimation',
+    },
+    // Add more mappings as needed
+    // DatasetType.final19x19Area: {
+    //   'filename': 'final_19x19_katago.json',
+    //   'displayName': '19x19 Final Positions',
+    // },
+  };
 
   @override
   void initState() {
     super.initState();
-    _initializeDatasets();
+    _initializeDataset();
   }
 
-  Future<void> _initializeDatasets() async {
+  Future<void> _initializeDataset() async {
     _preferenceManager = await DatasetPreferenceManager.getInstance();
-    await _loadAndValidateDatasets();
-    await _loadLastSessionDataset();
-    _updateCurrentDataset();
+    await _loadCurrentDatasetType();
   }
 
-  Future<void> _loadAndValidateDatasets() async {
-    final List<DatasetInfo> allValidDatasets = [];
-
-    // Load and validate preset datasets
-    for (final config in _presetDatasetConfigs) {
-      final filename = config['filename'] as String;
-      final displayName = config['displayName'] as String;
-      final expectedType = config['expectedType'] as DatasetType?;
-
-      try {
-        // Try to get the actual dataset type by parsing
-        DatasetType? actualType = expectedType;
-        if (actualType == null) {
-          actualType = await _getDatasetTypeFromAsset('assets/$filename');
-        }
-
-        if (actualType != null) {
-          final datasetInfo = DatasetInfo(
-            name: filename,
-            path: 'assets/$filename',
-            datasetType: actualType,
-            isPreset: true,
-            displayName: displayName,
-          );
-          allValidDatasets.add(datasetInfo);
-          _validPresetDatasets.add(datasetInfo);
-        }
-      } catch (e) {
-        print('Preset dataset $filename is invalid: $e');
-      }
-    }
-
-    // Load user datasets
-    _userDatasets = _preferenceManager?.getUserDatasets() ?? [];
-    allValidDatasets.addAll(_userDatasets);
-
-    // Group datasets by type
-    _groupedDatasets = _preferenceManager?.getDatasetsByType(allValidDatasets) ?? {};
-
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  Future<DatasetType?> _getDatasetTypeFromAsset(String assetPath) async {
+  Future<void> _loadCurrentDatasetType() async {
     try {
-      final jsonString = await rootBundle.loadString(assetPath);
-      final jsonData = jsonDecode(jsonString);
-
-      // Validate dataset structure first
-      final validationErrors = parser.DatasetParser.validateDataset(jsonData);
-      if (validationErrors.isNotEmpty) {
-        return null; // Invalid dataset
-      }
-
-      final metadata = jsonData['metadata'] as Map<String, dynamic>?;
-      if (metadata != null) {
-        final datasetTypeString = metadata['dataset_type'] as String?;
-        return DatasetType.fromString(datasetTypeString);
-      }
-    } catch (e) {
-      print('Error parsing asset $assetPath: $e');
-    }
-    return null;
-  }
-
-  Future<void> _loadLastSessionDataset() async {
-    final lastDataset = _preferenceManager?.getLastSessionDataset();
-    if (lastDataset != null) {
-      // Validate that the last dataset is still available
-      final allDatasets = [..._validPresetDatasets, ..._userDatasets];
-      final datasetExists = allDatasets.any((d) => d.path == lastDataset);
-      if (datasetExists) {
-        try {
-          if (lastDataset.startsWith('assets/')) {
-            PositionLoader.setDatasetFile(lastDataset.substring(7));
-          } else {
-            await PositionLoader.loadFromFile(lastDataset);
-          }
-          await _preferenceManager?.setSelectedDataset(lastDataset);
-        } catch (e) {
-          print('Failed to load last session dataset: $e');
+      // Get current dataset from PositionLoader
+      final stats = await PositionLoader.getStatistics();
+      final datasetTypeString = stats['dataset_type'] as String?;
+      if (datasetTypeString != null) {
+        final detectedType = DatasetType.fromString(datasetTypeString);
+        if (detectedType != null) {
+          setState(() {
+            _currentDatasetType = detectedType;
+          });
+          // Notify parent of the initial dataset type
+          widget.onDatasetTypeChanged?.call(detectedType);
+          return;
         }
       }
+
+      // Fallback to first available dataset
+      final defaultType = _datasetTypeToFile.keys.first;
+      setState(() {
+        _currentDatasetType = defaultType;
+      });
+      // Notify parent of the default dataset type
+      widget.onDatasetTypeChanged?.call(defaultType);
+    } catch (e) {
+      // If no dataset is loaded, default to first available
+      final defaultType = _datasetTypeToFile.keys.first;
+      setState(() {
+        _currentDatasetType = defaultType;
+      });
+      // Notify parent of the default dataset type
+      widget.onDatasetTypeChanged?.call(defaultType);
     }
   }
 
-  void _updateCurrentDataset() {
-    final currentFile = PositionLoader.datasetFile;
-    final allDatasets = [..._validPresetDatasets, ..._userDatasets];
-    final currentDatasetInfo = allDatasets.firstWhere(
-      (d) => d.path == currentFile || d.path == 'assets/$currentFile',
-      orElse: () => DatasetInfo(
-        name: currentFile.contains('/') ? currentFile.split('/').last : currentFile,
-        path: currentFile,
-        datasetType: null,
-        isPreset: false,
-        displayName: currentFile.contains('/') ? currentFile.split('/').last : currentFile,
-      ),
-    );
+  Future<void> _selectDatasetType(DatasetType datasetType) async {
+    if (_currentDatasetType == datasetType) return;
 
-    setState(() {
-      _currentDataset = currentDatasetInfo.displayName;
-    });
-  }
-
-  Future<void> _selectDataset(DatasetInfo datasetInfo) async {
     setState(() {
       _loading = true;
     });
 
     try {
-      if (datasetInfo.path.startsWith('assets/')) {
-        PositionLoader.setDatasetFile(datasetInfo.path.substring(7));
-      } else {
-        await PositionLoader.loadFromFile(datasetInfo.path);
-      }
-      await PositionLoader.preloadDataset();
-      await _preferenceManager?.setSelectedDataset(datasetInfo.path);
+      final fileInfo = _datasetTypeToFile[datasetType];
+      if (fileInfo != null) {
+        final filename = fileInfo['filename']!;
 
-      setState(() {
-        _currentDataset = datasetInfo.displayName;
-        _loading = false;
-      });
-      widget.onDatasetChanged?.call();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Switched to ${datasetInfo.displayName}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        // Load the dataset file
+        PositionLoader.setDatasetFile(filename);
+        await PositionLoader.preloadDataset();
+
+        // Save the preference
+        await _preferenceManager?.setSelectedDataset('assets/$filename');
+
+        setState(() {
+          _currentDatasetType = datasetType;
+          _loading = false;
+        });
+
+        // Notify parent about the change
+        widget.onDatasetChanged?.call();
+        widget.onDatasetTypeChanged?.call(datasetType);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Switched to ${fileInfo['displayName']}'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     } catch (e) {
       setState(() {
@@ -216,140 +140,9 @@ class _DatasetSelectorState extends State<DatasetSelector> {
     }
   }
 
-  Future<void> _pickCustomFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        withData: kIsWeb,
-        withReadStream: !kIsWeb,
-      );
-
-      if (result != null) {
-        setState(() {
-          _loading = true;
-        });
-
-        PlatformFile file = result.files.first;
-
-        try {
-          DatasetType? datasetType;
-
-          // First, try to determine dataset type and validate
-          if (kIsWeb) {
-            // Web: Load from bytes
-            if (file.bytes != null) {
-              datasetType = await _validateAndGetDatasetType(file.bytes!, file.name);
-              if (datasetType == null) {
-                throw Exception('Invalid dataset: missing or invalid dataset_type');
-              }
-              await PositionLoader.loadFromBytes(file.bytes!, file.name);
-            } else {
-              throw Exception('Failed to read file data');
-            }
-          } else {
-            // Mobile/Desktop: Load from path
-            if (file.path != null) {
-              datasetType = await DatasetPreferenceManager.getDatasetType(file.path!);
-              if (datasetType == null) {
-                throw Exception('Invalid dataset: missing or invalid dataset_type');
-              }
-              await PositionLoader.loadFromFile(file.path!);
-            } else {
-              throw Exception('Failed to get file path');
-            }
-          }
-
-          // Add to user datasets
-          await _preferenceManager?.addUserDataset(
-            name: file.name,
-            path: kIsWeb ? file.name : file.path!,
-            datasetType: datasetType,
-            displayName: file.name.replaceAll('.json', '').replaceAll('_', ' '),
-          );
-
-          // Reload datasets to include the new one
-          await _loadAndValidateDatasets();
-          await _preferenceManager?.setSelectedDataset(kIsWeb ? file.name : file.path!);
-
-          setState(() {
-            _currentDataset = file.name.replaceAll('.json', '').replaceAll('_', ' ');
-            _loading = false;
-          });
-          widget.onDatasetChanged?.call();
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Added dataset: ${file.name}'),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          }
-        } catch (e) {
-          setState(() {
-            _loading = false;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error loading file: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error picking file: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<DatasetType?> _validateAndGetDatasetType(Uint8List bytes, String filename) async {
-    try {
-      final jsonString = String.fromCharCodes(bytes);
-      final jsonData = jsonDecode(jsonString);
-
-      // Validate dataset structure first
-      final validationErrors = parser.DatasetParser.validateDataset(jsonData);
-      if (validationErrors.isNotEmpty) {
-        return null;
-      }
-
-      final metadata = jsonData['metadata'] as Map<String, dynamic>?;
-      if (metadata != null) {
-        final datasetTypeString = metadata['dataset_type'] as String?;
-        return DatasetType.fromString(datasetTypeString);
-      }
-    } catch (e) {
-      print('Error validating dataset $filename: $e');
-    }
-    return null;
-  }
-
   String _getDatasetTypeDisplayName(DatasetType type) {
-    switch (type) {
-      case DatasetType.final9x9Area:
-        return '9x9 Final Positions';
-      case DatasetType.final19x19Area:
-        return '19x19 Final Positions';
-      case DatasetType.midgame19x19Estimation:
-        return '19x19 Midgame Estimation';
-      case DatasetType.final9x9AreaVars:
-        return '9x9 Final Variations';
-      case DatasetType.partialArea:
-        return 'Partial Area Analysis';
-    }
+    final fileInfo = _datasetTypeToFile[type];
+    return fileInfo?['displayName'] ?? type.value;
   }
 
   Color _getDatasetTypeColor(DatasetType type) {
@@ -382,58 +175,6 @@ class _DatasetSelectorState extends State<DatasetSelector> {
     }
   }
 
-  Widget _buildDatasetGroup(DatasetType type, List<DatasetInfo> datasets) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: _getDatasetTypeColor(type),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _getDatasetTypeDisplayName(type),
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: datasets.map((dataset) {
-            final isSelected = _currentDataset == dataset.displayName;
-            return ChoiceChip(
-              label: Text(
-                dataset.displayName,
-                style: const TextStyle(fontSize: 11),
-              ),
-              selected: isSelected,
-              selectedColor: widget.appSkin == AppSkin.eink
-                  ? Colors.grey.shade200
-                  : _getDatasetTypeColor(type).withOpacity(0.3),
-              onSelected: _loading ? null : (selected) {
-                if (selected && !isSelected) {
-                  _selectDataset(dataset);
-                }
-              },
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -464,36 +205,66 @@ class _DatasetSelectorState extends State<DatasetSelector> {
               ],
             ),
             const SizedBox(height: 8),
+            if (_currentDatasetType != null)
+              Text(
+                'Current: ${_getDatasetTypeDisplayName(_currentDatasetType!)}',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+            const SizedBox(height: 16),
+
+            // Dataset type buttons
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _datasetTypeToFile.keys.map((datasetType) {
+                final isSelected = _currentDatasetType == datasetType;
+                final displayName = _getDatasetTypeDisplayName(datasetType);
+                final color = _getDatasetTypeColor(datasetType);
+
+                return ElevatedButton.icon(
+                  onPressed: _loading ? null : () => _selectDatasetType(datasetType),
+                  icon: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  label: Text(displayName),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isSelected
+                        ? (widget.appSkin == AppSkin.eink
+                            ? Colors.grey.shade200
+                            : color.withOpacity(0.2))
+                        : null,
+                    foregroundColor: isSelected
+                        ? (widget.appSkin == AppSkin.eink
+                            ? Colors.black
+                            : color.withOpacity(0.8))
+                        : null,
+                    side: isSelected
+                        ? BorderSide(
+                            color: widget.appSkin == AppSkin.eink
+                                ? Colors.black
+                                : color,
+                            width: 2,
+                          )
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 12),
             Text(
-              'Current: $_currentDataset',
+              'Select a dataset type to train on. Each type focuses on different aspects of Go territory evaluation.',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_groupedDatasets.isNotEmpty) ...
-              _groupedDatasets.entries.map((entry) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: _buildDatasetGroup(entry.key, entry.value),
-                );
-              }).toList()
-            else
-              const Text(
-                'No valid datasets found',
-                style: TextStyle(color: Colors.grey),
-              ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _loading ? null : _pickCustomFile,
-                icon: const Icon(Icons.folder_open, size: 18),
-                label: const Text('Add Custom JSON Dataset'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
               ),
             ),
           ],

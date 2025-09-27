@@ -1,45 +1,24 @@
 import 'package:flutter/material.dart';
-import '../widgets/dataset_selector.dart';
 import '../services/position_loader.dart';
-import '../services/global_configuration_manager.dart';
-import '../models/global_configuration.dart';
-import '../models/app_skin.dart';
-import 'configuration_screen.dart';
-import 'global_configuration_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+class InfoScreen extends StatefulWidget {
+  const InfoScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<InfoScreen> createState() => _InfoScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _InfoScreenState extends State<InfoScreen> {
   Map<String, dynamic>? _statistics;
   Map<String, dynamic>? _sourceInfo;
   bool _loading = false;
-  GlobalConfiguration? _globalConfig;
 
   @override
   void initState() {
     super.initState();
     _loadInfo();
-    _loadGlobalConfig();
   }
 
-  Future<void> _loadGlobalConfig() async {
-    try {
-      final manager = await GlobalConfigurationManager.getInstance();
-      setState(() {
-        _globalConfig = manager.getConfiguration();
-      });
-    } catch (e) {
-      // Use default config if loading fails
-      setState(() {
-        _globalConfig = GlobalConfiguration.defaultConfig;
-      });
-    }
-  }
 
   Future<void> _loadInfo() async {
     setState(() {
@@ -61,15 +40,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _onDatasetChanged() {
-    _loadInfo(); // Refresh info when dataset changes
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('App Information'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -77,12 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DatasetSelector(
-              onDatasetChanged: _onDatasetChanged,
-              appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
-            ),
-            const SizedBox(height: 24),
-
+            // Dataset Types Explained
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -123,115 +93,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'Requires evaluating potential territory, influence, and fighting outcomes. '
                       'Challenging positions for advanced players to test territorial intuition.',
                     ),
-                    // Tip badge removed as requested
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // Global Configuration Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.settings, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Global Settings',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Configure app theme, layout, timer type, and other global settings.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const GlobalConfigurationScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.palette),
-                        label: const Text('Global Settings'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Dataset Configuration Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.tune, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Dataset Configuration',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Configure thresholds, timing, and display settings for each dataset type.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ConfigurationScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.settings),
-                        label: const Text('Dataset Settings'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
+            // How to Use the App
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -284,10 +152,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• Use the "Dataset Configuration" section above to customize:\n'
-                      '  - Scoring thresholds for each dataset type\n'
-                      '  - Timer settings and display preferences\n'
-                      '  - Advanced training parameters',
+                      '• Use the gear icon in the training screen to access settings\n'
+                      '• Customize scoring thresholds for each dataset type\n'
+                      '• Adjust timer settings and display preferences\n'
+                      '• Choose from different themes and layouts',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                   ],
@@ -296,6 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Current Dataset Statistics
             if (_loading)
               const Center(child: CircularProgressIndicator())
             else if (_statistics != null) ...[
@@ -310,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const Icon(Icons.analytics, size: 20),
                           const SizedBox(width: 8),
                           const Text(
-                            'Dataset Statistics',
+                            'Current Dataset Statistics',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -362,6 +231,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
 
             const SizedBox(height: 32),
+
+            // About Section
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -439,7 +310,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
-
 
   String _formatDate(String isoString) {
     try {
