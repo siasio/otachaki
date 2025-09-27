@@ -130,26 +130,37 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
   }
 
+  void _resetTrainingState() {
+    setState(() {
+      _timerRunning = false;
+      _showFeedbackOverlay = false;
+    });
+  }
+
   Future<void> _navigateToInfo() async {
+    _resetTrainingState();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const InfoScreen()),
     );
+    // Load fresh position when returning
+    _loadNextPosition();
   }
 
   Future<void> _navigateToConfig() async {
+    _resetTrainingState();
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ConfigScreen()),
     );
-    // Reload position in case dataset changed
-    _loadInitialPosition();
     // Reload global configuration in case it changed
     if (_globalConfigManager != null) {
       _globalConfig = _globalConfigManager!.getConfiguration();
     }
     // Notify parent app of configuration changes
     widget.onConfigurationChanged?.call();
+    // Load fresh position when returning (dataset may have changed)
+    _loadNextPosition();
   }
 
   Future<void> _loadInitialPosition() async {
