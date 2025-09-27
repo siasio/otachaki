@@ -607,6 +607,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                         ? GameStatusBar(
                             position: _positionManager.currentTrainingPosition,
                             appSkin: currentSkin,
+                            layoutType: layoutType,
                           )
                         : null,
                     board: GameBoardContainer(
@@ -675,6 +676,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   ? GameStatusBar(
                       position: _positionManager.currentTrainingPosition,
                       appSkin: currentSkin,
+                      layoutType: layoutType,
                     )
                   : null,
               board: GameBoardContainer(

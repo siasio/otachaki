@@ -120,7 +120,7 @@ class ResultButtons extends StatelessWidget {
                       Text(
                         label,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
                           fontWeight: FontWeight.bold,
                           color: textColor,
                         ),

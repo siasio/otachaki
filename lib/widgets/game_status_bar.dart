@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
+import '../models/layout_type.dart';
 import '../themes/app_theme.dart';
 
 class GameStatusBar extends StatelessWidget {
   final TrainingPosition? position;
   final AppSkin appSkin;
+  final LayoutType layoutType;
 
   const GameStatusBar({
     super.key,
     required this.position,
     this.appSkin = AppSkin.classic,
+    this.layoutType = LayoutType.vertical,
   });
 
   @override
@@ -34,6 +37,40 @@ class GameStatusBar extends StatelessWidget {
 
     final gameInfo = position!.gameInfo;
 
+    // Build the info widgets
+    final blackCapturesWidget = _buildCaptureInfo(
+      'Black stones dead',
+      gameInfo?.whiteCaptured ?? 0, // White captured black stones
+      Colors.black,
+    );
+
+    final komiWidget = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Komi',
+          style: TextStyle(
+            fontSize: layoutType == LayoutType.horizontal ? 14 : 10,
+            color: textColor.withOpacity(0.6),
+          ),
+        ),
+        Text(
+          '${gameInfo?.komi ?? 0}',
+          style: TextStyle(
+            fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+      ],
+    );
+
+    final whiteCapturesWidget = _buildCaptureInfo(
+      'White stones dead',
+      gameInfo?.blackCaptured ?? 0, // Black captured white stones
+      Colors.white,
+    );
+
     return Container(
       height: 60,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -48,52 +85,23 @@ class GameStatusBar extends StatelessWidget {
           ),
         ] : [],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Black captures
-          Expanded(
-            child: _buildCaptureInfo(
-              'Black stones dead',
-              gameInfo?.whiteCaptured ?? 0, // White captured black stones
-              Colors.black,
-            ),
-          ),
-
-          // Komi
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      child: layoutType == LayoutType.horizontal
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Text(
-                  'Komi',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: textColor.withOpacity(0.6),
-                  ),
-                ),
-                Text(
-                  '${gameInfo?.komi ?? 0}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
+                Expanded(child: blackCapturesWidget),
+                Expanded(child: komiWidget),
+                Expanded(child: whiteCapturesWidget),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(child: blackCapturesWidget),
+                Expanded(child: komiWidget),
+                Expanded(child: whiteCapturesWidget),
               ],
             ),
-          ),
-
-          // White captures
-          Expanded(
-            child: _buildCaptureInfo(
-              'White stones dead',
-              gameInfo?.blackCaptured ?? 0, // Black captured white stones
-              Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -107,8 +115,8 @@ class GameStatusBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 16,
-              height: 16,
+              width: layoutType == LayoutType.horizontal ? 20 : 16,
+              height: layoutType == LayoutType.horizontal ? 20 : 16,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: stoneColor,
@@ -122,7 +130,7 @@ class GameStatusBar extends StatelessWidget {
             Text(
               '$count',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
                 fontWeight: FontWeight.bold,
                 color: textColor,
               ),
@@ -132,7 +140,7 @@ class GameStatusBar extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 9,
+            fontSize: layoutType == LayoutType.horizontal ? 12 : 9,
             color: textColor.withOpacity(0.6),
           ),
           textAlign: TextAlign.center,

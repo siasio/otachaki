@@ -74,7 +74,7 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 16),
                     _buildDatasetExplanation(
-                      '🎯 Final 9x9 Positions',
+                      'Final 9x9 Positions',
                       'Game-ending positions on 9x9 boards analyzed with KataGo\'s AI ownership maps. '
                       'These positions show clear territorial outcomes where stones are mostly settled. '
                       'Good for beginners to learn basic territory evaluation.',

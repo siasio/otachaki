@@ -57,16 +57,13 @@ class AdaptiveLayout extends StatelessWidget {
             flex: 2,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: RotatedBox(
-                quarterTurns: 3, // Rotate for vertical display
-                child: gameInfoBar!,
-              ),
+              child: gameInfoBar!,
             ),
           ),
 
         // Column 3: Main board area (largest, flex: 6)
         Expanded(
-          flex: 6,
+          flex: 12,
           child: Container(
             alignment: Alignment.center,
             padding: const EdgeInsets.all(8.0),
@@ -76,7 +73,7 @@ class AdaptiveLayout extends StatelessWidget {
 
         // Column 4: Vertical buttons (flex: 2)
         Expanded(
-          flex: 2,
+          flex: 4,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: buttons,

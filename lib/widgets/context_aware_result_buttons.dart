@@ -118,7 +118,7 @@ class ContextAwareResultButtons extends StatelessWidget {
                       Text(
                         option.displayText,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
                           fontWeight: FontWeight.bold,
                           color: textColor,
                         ),
