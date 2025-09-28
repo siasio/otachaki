@@ -363,7 +363,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         onNextPressed: _onNextPressed,
         appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
         layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
-        useColoredBackgroundForScores: _globalConfig?.useColoredBackgroundForScores ?? false,
+        useColoredBackgroundForScores: true,
       );
     } else {
       if (_positionManager.currentDataset != null &&

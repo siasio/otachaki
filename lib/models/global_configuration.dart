@@ -9,7 +9,6 @@ class GlobalConfiguration {
   final LayoutType layoutType;
   final AppSkin appSkin;
   final AutoAdvanceMode autoAdvanceMode;
-  final bool useColoredBackgroundForScores;
 
   const GlobalConfiguration({
     required this.markDisplayTimeSeconds,
@@ -17,7 +16,6 @@ class GlobalConfiguration {
     required this.layoutType,
     required this.appSkin,
     required this.autoAdvanceMode,
-    required this.useColoredBackgroundForScores,
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(
@@ -26,7 +24,6 @@ class GlobalConfiguration {
     layoutType: LayoutType.vertical,
     appSkin: AppSkin.classic,
     autoAdvanceMode: AutoAdvanceMode.always,
-    useColoredBackgroundForScores: true,
   );
 
   GlobalConfiguration copyWith({
@@ -35,7 +32,6 @@ class GlobalConfiguration {
     LayoutType? layoutType,
     AppSkin? appSkin,
     AutoAdvanceMode? autoAdvanceMode,
-    bool? useColoredBackgroundForScores,
   }) {
     return GlobalConfiguration(
       markDisplayTimeSeconds: markDisplayTimeSeconds ?? this.markDisplayTimeSeconds,
@@ -43,7 +39,6 @@ class GlobalConfiguration {
       layoutType: layoutType ?? this.layoutType,
       appSkin: appSkin ?? this.appSkin,
       autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
-      useColoredBackgroundForScores: useColoredBackgroundForScores ?? this.useColoredBackgroundForScores,
     );
   }
 
@@ -54,7 +49,6 @@ class GlobalConfiguration {
       'layoutType': layoutType.value,
       'appSkin': appSkin.value,
       'autoAdvanceMode': autoAdvanceMode.value,
-      'useColoredBackgroundForScores': useColoredBackgroundForScores,
     };
   }
 
@@ -65,7 +59,6 @@ class GlobalConfiguration {
       layoutType: LayoutType.fromString(json['layoutType'] as String?) ?? defaultConfig.layoutType,
       appSkin: AppSkin.fromString(json['appSkin'] as String?) ?? defaultConfig.appSkin,
       autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?) ?? defaultConfig.autoAdvanceMode,
-      useColoredBackgroundForScores: json['useColoredBackgroundForScores'] as bool? ?? defaultConfig.useColoredBackgroundForScores,
     );
   }
 

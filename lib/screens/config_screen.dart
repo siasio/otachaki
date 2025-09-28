@@ -605,25 +605,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           }
                         },
                       ),
-                      const SizedBox(height: 16),
-
-                      // Colored Background for Scores
-                      CheckboxListTile(
-                        title: const Text('Colored Background for Scores'),
-                        subtitle: const Text(
-                          'Use black and white colors for score display backgrounds',
-                        ),
-                        value: _globalConfig?.useColoredBackgroundForScores ?? false,
-                        onChanged: (bool? value) {
-                          if (value != null && _globalConfig != null) {
-                            final newConfig = _globalConfig!.copyWith(
-                              useColoredBackgroundForScores: value,
-                            );
-                            _autoSaveGlobalConfiguration(newConfig);
-                          }
-                        },
-                        contentPadding: EdgeInsets.zero,
-                      ),
                     ],
                   ),
                 ),

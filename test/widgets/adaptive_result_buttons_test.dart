@@ -129,7 +129,6 @@ void main() {
       expect(widget.resultString, 'W+5.5');
       expect(widget.appSkin, AppSkin.modern);
       expect(widget.layoutType, LayoutType.horizontal);
-      expect(widget.useColoredBackgroundForScores, true);
     });
 
     testWidgets('should render when in scores mode', (WidgetTester tester) async {

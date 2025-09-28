@@ -15,7 +15,6 @@ void main() {
       expect(config.layoutType, LayoutType.vertical);
       expect(config.appSkin, AppSkin.classic);
       expect(config.autoAdvanceMode, AutoAdvanceMode.always);
-      expect(config.useColoredBackgroundForScores, false);
     });
 
     test('should create valid configuration', () {
@@ -25,7 +24,6 @@ void main() {
         layoutType: LayoutType.horizontal,
         appSkin: AppSkin.eink,
         autoAdvanceMode: AutoAdvanceMode.never,
-        useColoredBackgroundForScores: true,
       );
 
       expect(config.markDisplayTimeSeconds, 2.0);
@@ -33,7 +31,6 @@ void main() {
       expect(config.layoutType, LayoutType.horizontal);
       expect(config.appSkin, AppSkin.eink);
       expect(config.autoAdvanceMode, AutoAdvanceMode.never);
-      expect(config.useColoredBackgroundForScores, true);
     });
 
     test('copyWith should preserve unchanged values', () {
@@ -48,7 +45,6 @@ void main() {
       expect(modified.layoutType, original.layoutType);
       expect(modified.appSkin, original.appSkin);
       expect(modified.autoAdvanceMode, original.autoAdvanceMode);
-      expect(modified.useColoredBackgroundForScores, original.useColoredBackgroundForScores);
     });
 
     test('should serialize to JSON correctly', () {
@@ -58,7 +54,6 @@ void main() {
         layoutType: LayoutType.horizontal,
         appSkin: AppSkin.modern,
         autoAdvanceMode: AutoAdvanceMode.onCorrectOnly,
-        useColoredBackgroundForScores: true,
       );
 
       final json = config.toJson();
@@ -68,7 +63,6 @@ void main() {
       expect(json['layoutType'], 'horizontal');
       expect(json['appSkin'], 'modern');
       expect(json['autoAdvanceMode'], 'on_correct_only');
-      expect(json['useColoredBackgroundForScores'], true);
     });
 
     test('should deserialize from JSON correctly', () {
@@ -78,7 +72,6 @@ void main() {
         'layoutType': 'horizontal',
         'appSkin': 'ocean',
         'autoAdvanceMode': 'never',
-        'useColoredBackgroundForScores': false,
       };
 
       final config = GlobalConfiguration.fromJson(json);
@@ -88,7 +81,6 @@ void main() {
       expect(config.layoutType, LayoutType.horizontal);
       expect(config.appSkin, AppSkin.ocean);
       expect(config.autoAdvanceMode, AutoAdvanceMode.never);
-      expect(config.useColoredBackgroundForScores, false);
     });
 
     test('should use defaults for missing JSON fields', () {
@@ -101,7 +93,6 @@ void main() {
       expect(config.layoutType, GlobalConfiguration.defaultConfig.layoutType);
       expect(config.appSkin, GlobalConfiguration.defaultConfig.appSkin);
       expect(config.autoAdvanceMode, GlobalConfiguration.defaultConfig.autoAdvanceMode);
-      expect(config.useColoredBackgroundForScores, GlobalConfiguration.defaultConfig.useColoredBackgroundForScores);
     });
 
     test('isValidConfiguration should validate mark display time', () {
@@ -111,7 +102,6 @@ void main() {
         layoutType: LayoutType.vertical,
         appSkin: AppSkin.classic,
         autoAdvanceMode: AutoAdvanceMode.always,
-        useColoredBackgroundForScores: false,
       );
 
       const invalidConfig = GlobalConfiguration(
@@ -120,7 +110,6 @@ void main() {
         layoutType: LayoutType.vertical,
         appSkin: AppSkin.classic,
         autoAdvanceMode: AutoAdvanceMode.always,
-        useColoredBackgroundForScores: false,
       );
 
       expect(validConfig.isValidConfiguration(), isTrue);
