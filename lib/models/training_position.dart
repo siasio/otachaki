@@ -10,6 +10,9 @@ class TrainingPosition {
   final double score;
   final String result;
   final GameInfo? gameInfo;
+  final String? movesBase64;
+  final int numberOfMoves;
+  final String? ownershipBase64;
 
   const TrainingPosition({
     required this.id,
@@ -18,6 +21,9 @@ class TrainingPosition {
     required this.score,
     required this.result,
     this.gameInfo,
+    this.movesBase64,
+    this.numberOfMoves = 0,
+    this.ownershipBase64,
   });
 
   factory TrainingPosition.fromJson(Map<String, dynamic> json) {
@@ -31,6 +37,9 @@ class TrainingPosition {
       gameInfo: parsed['game_info'] != null
           ? GameInfo.fromJson(parsed['game_info'] as Map<String, dynamic>)
           : null,
+      movesBase64: parsed['moves'] as String?,
+      numberOfMoves: parsed['number_of_moves'] as int? ?? 0,
+      ownershipBase64: parsed['ownership'] as String?,
     );
   }
 
@@ -39,6 +48,18 @@ class TrainingPosition {
   List<List<int>> decodeStones() {
     return GoLogic.decodeStones(stonesBase64, boardSize);
   }
+
+  /// Decode the base64 ownership to a 2D array of doubles
+  /// Returns boardSize x boardSize array where ownership values range from -1.0 to 1.0
+  /// Negative values indicate white ownership, positive indicate black ownership
+  /// Returns null if no ownership data is available
+  List<List<double>>? decodeOwnership() {
+    if (ownershipBase64 == null) return null;
+    return GoLogic.decodeOwnership(ownershipBase64!, boardSize);
+  }
+
+  /// Check if this position has ownership data
+  bool get hasOwnership => ownershipBase64 != null;
 
   /// Get a human-readable description of the position
   String get description {
@@ -53,6 +74,38 @@ class TrainingPosition {
   /// Get the margin of victory
   String get margin {
     return GameResultParser.parseMargin(result);
+  }
+
+  /// Extract recent move sequence for display
+  /// Returns list of moves to show as numbers, ordered from most recent
+  List<MoveSequenceData> extractMoveSequence(int sequenceLength) {
+    if (movesBase64 == null || sequenceLength <= 0) {
+      return [];
+    }
+    return GoLogic.extractRecentMoves(
+      movesBase64!,
+      boardSize,
+      numberOfMoves,
+      sequenceLength,
+    );
+  }
+
+  /// Get position of last move before sequence (for last move marker)
+  Position? getLastMoveBeforeSequence(int sequenceLength) {
+    if (movesBase64 == null || sequenceLength <= 0) {
+      return null;
+    }
+    return GoLogic.findLastMoveBeforeSequence(
+      movesBase64!,
+      boardSize,
+      numberOfMoves,
+      sequenceLength,
+    );
+  }
+
+  /// Check if this position has enough moves for the given sequence length
+  bool hasEnoughMovesForSequence(int sequenceLength) {
+    return numberOfMoves >= sequenceLength + 1; // +1 for last move marker
   }
 }
 

@@ -23,6 +23,9 @@ import '../models/auto_advance_mode.dart';
 import '../widgets/game_status_bar.dart';
 import '../widgets/pause_button.dart';
 import '../models/game_result_option.dart';
+import '../models/sequence_display_mode.dart';
+import '../models/board_view_mode.dart';
+import '../models/ownership_display_mode.dart';
 import './info_screen.dart';
 import './config_screen.dart';
 
@@ -695,6 +698,43 @@ class _TrainingScreenState extends State<TrainingScreen> {
     );
   }
 
+  /// Get the sequence length from current configuration
+  int get _currentSequenceLength {
+    return _currentConfig?.sequenceLength ?? 0;
+  }
+
+  /// Determine the sequence display mode based on view mode
+  SequenceDisplayMode get _currentSequenceDisplayMode {
+    if (_currentSequenceLength <= 0) {
+      return SequenceDisplayMode.numbersOnly; // Default when no sequence
+    }
+
+    // Use view mode to determine sequence display
+    return _currentViewMode.defaultSequenceDisplayMode;
+  }
+
+  /// Determine the current board view mode based on game state
+  BoardViewMode get _currentViewMode {
+    // Problem view: timer running, user solving
+    if (_timerRunning && !_hasAnswered) {
+      return BoardViewMode.problem;
+    }
+
+    // Review view: after answering, during feedback, or waiting for next
+    if (_hasAnswered || _showFeedbackOverlay || _waitingForNext) {
+      return BoardViewMode.review;
+    }
+
+    // Default to problem view
+    return BoardViewMode.problem;
+  }
+
+  /// Get the ownership display mode from current configuration
+  OwnershipDisplayMode get _currentOwnershipDisplayMode {
+    return _currentConfig?.ownershipDisplayMode ?? OwnershipDisplayMode.none;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
@@ -804,6 +844,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       appSkin: currentSkin,
                       layoutType: layoutType,
                       showFeedbackOverlay: _showFeedbackOverlay,
+                      sequenceLength: _currentSequenceLength,
+                      sequenceDisplayMode: _currentSequenceDisplayMode,
+                      viewMode: _currentViewMode,
+                      ownershipDisplayMode: _currentOwnershipDisplayMode,
                       feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                     ),
                     buttons: _buildButtons(),
@@ -860,6 +904,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 appSkin: currentSkin,
                 layoutType: layoutType,
                 showFeedbackOverlay: _showFeedbackOverlay,
+                sequenceLength: _currentSequenceLength,
+                sequenceDisplayMode: _currentSequenceDisplayMode,
+                viewMode: _currentViewMode,
+                ownershipDisplayMode: _currentOwnershipDisplayMode,
                 feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
               ),
               buttons: _buildButtons(),

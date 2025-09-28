@@ -62,6 +62,8 @@ class DatasetParser {
       'game_info': json['game_info'] != null
           ? parseGameInfoToMap(json['game_info'] as Map<String, dynamic>)
           : null,
+      'moves': json['moves'] as String?,
+      'number_of_moves': json['number_of_moves'] as int? ?? 0,
     };
   }
 

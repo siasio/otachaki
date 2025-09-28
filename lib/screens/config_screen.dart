@@ -7,6 +7,7 @@ import '../models/timer_type.dart';
 import '../models/layout_type.dart';
 import '../models/app_skin.dart';
 import '../models/auto_advance_mode.dart';
+import '../models/ownership_display_mode.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/position_loader.dart';
@@ -35,6 +36,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   late TextEditingController _thresholdGoodController;
   late TextEditingController _thresholdCloseController;
   late TextEditingController _timeProblemController;
+  late TextEditingController _sequenceLengthController;
 
   @override
   void initState() {
@@ -52,10 +54,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdGoodController = TextEditingController();
     _thresholdCloseController = TextEditingController();
     _timeProblemController = TextEditingController();
+    _sequenceLengthController = TextEditingController();
 
     _thresholdGoodController.addListener(_onDatasetConfigurationChanged);
     _thresholdCloseController.addListener(_onDatasetConfigurationChanged);
     _timeProblemController.addListener(_onDatasetConfigurationChanged);
+    _sequenceLengthController.addListener(_onDatasetConfigurationChanged);
   }
 
   @override
@@ -64,6 +68,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdGoodController.dispose();
     _thresholdCloseController.dispose();
     _timeProblemController.dispose();
+    _sequenceLengthController.dispose();
     super.dispose();
   }
 
@@ -137,12 +142,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdGoodController.removeListener(_onDatasetConfigurationChanged);
     _thresholdCloseController.removeListener(_onDatasetConfigurationChanged);
     _timeProblemController.removeListener(_onDatasetConfigurationChanged);
+    _sequenceLengthController.removeListener(_onDatasetConfigurationChanged);
 
     setState(() {
       _currentDatasetConfig = config;
       _thresholdGoodController.text = config.thresholdGood.toString();
       _thresholdCloseController.text = config.thresholdClose.toString();
       _timeProblemController.text = config.timePerProblemSeconds.toString();
+      _sequenceLengthController.text = config.sequenceLength.toString();
     });
 
 
@@ -150,6 +157,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdGoodController.addListener(_onDatasetConfigurationChanged);
     _thresholdCloseController.addListener(_onDatasetConfigurationChanged);
     _timeProblemController.addListener(_onDatasetConfigurationChanged);
+    _sequenceLengthController.addListener(_onDatasetConfigurationChanged);
   }
 
   void _onGlobalConfigurationChanged() {
@@ -170,17 +178,22 @@ class _ConfigScreenState extends State<ConfigScreen> {
     final thresholdGood = double.tryParse(_thresholdGoodController.text);
     final thresholdClose = double.tryParse(_thresholdCloseController.text);
     final timeProblem = int.tryParse(_timeProblemController.text);
+    final sequenceLength = int.tryParse(_sequenceLengthController.text);
 
     if (thresholdGood != null &&
         thresholdClose != null &&
         timeProblem != null &&
+        sequenceLength != null &&
         thresholdClose >= thresholdGood &&
-        timeProblem > 0) {
+        timeProblem > 0 &&
+        sequenceLength >= 0 &&
+        sequenceLength <= 50) {
 
       final newConfig = _currentDatasetConfig!.copyWith(
         thresholdGood: thresholdGood,
         thresholdClose: thresholdClose,
         timePerProblemSeconds: timeProblem,
+        sequenceLength: sequenceLength,
       );
 
       _autoSaveDatasetConfiguration(newConfig);
@@ -447,6 +460,47 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                           ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Sequence Length
+                        TextFormField(
+                          controller: _sequenceLengthController,
+                          decoration: const InputDecoration(
+                            labelText: 'Move Sequence Length',
+                            helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
+                            border: OutlineInputBorder(),
+                            suffix: Text('moves'),
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Ownership Display Mode
+                        DropdownButtonFormField<OwnershipDisplayMode>(
+                          initialValue: _currentDatasetConfig!.ownershipDisplayMode,
+                          decoration: const InputDecoration(
+                            labelText: 'Ownership Display Mode',
+                            helperText: 'How ownership information is shown in review view',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: OwnershipDisplayMode.values.map((mode) {
+                            return DropdownMenuItem<OwnershipDisplayMode>(
+                              value: mode,
+                              child: Text(mode.displayName),
+                            );
+                          }).toList(),
+                          onChanged: (OwnershipDisplayMode? value) {
+                            if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                              final newConfig = _currentDatasetConfig!.copyWith(
+                                ownershipDisplayMode: value,
+                              );
+                              _autoSaveDatasetConfiguration(newConfig);
+                            }
+                          },
                         ),
                         const SizedBox(height: 16),
 

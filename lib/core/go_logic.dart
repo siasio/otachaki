@@ -18,6 +18,27 @@ class GoLogic {
     return board;
   }
 
+  /// Decode base64 ownership to a 2D array of doubles
+  /// Returns boardSize x boardSize array where ownership values range from -1.0 to 1.0
+  /// Negative values indicate white ownership, positive indicate black ownership
+  static List<List<double>> decodeOwnership(String ownershipBase64, int boardSize) {
+    final bytes = base64Decode(ownershipBase64);
+    final ownership = List.generate(boardSize, (_) => List.generate(boardSize, (_) => 0.0));
+
+    for (int i = 0; i < bytes.length && i < boardSize * boardSize; i++) {
+      final row = i ~/ boardSize;
+      final col = i % boardSize;
+      // Convert byte (0-255) to ownership value (-1.0 to 1.0)
+      // Assuming byte values: 0 = -1.0 (white), 128 = 0.0 (neutral), 255 = 1.0 (black)
+      final rawValue = bytes[i];
+      ownership[row][col] = (rawValue - 128.0) / 128.0;
+      // Clamp to valid range
+      ownership[row][col] = ownership[row][col].clamp(-1.0, 1.0);
+    }
+
+    return ownership;
+  }
+
   /// Encode a 2D board array to base64 string
   static String encodeStones(List<List<int>> board) {
     final boardSize = board.length;
@@ -126,6 +147,88 @@ class GoLogic {
     }
     return buffer.toString();
   }
+
+  /// Decode base64 moves to a 2D array of move numbers
+  /// Returns boardSize x boardSize array where 0=no move, 1-50=move order (1=most recent)
+  static List<List<int>> decodeMoves(String movesBase64, int boardSize) {
+    final bytes = base64Decode(movesBase64);
+    final board = List.generate(boardSize, (_) => List.generate(boardSize, (_) => 0));
+
+    for (int i = 0; i < bytes.length && i < boardSize * boardSize; i++) {
+      final row = i ~/ boardSize;
+      final col = i % boardSize;
+      board[row][col] = bytes[i];
+    }
+
+    return board;
+  }
+
+  /// Extract recent move sequence from moves data
+  /// Returns list of MoveSequenceData for display (1 = oldest in sequence, sequenceLength = newest)
+  static List<MoveSequenceData> extractRecentMoves(
+    String movesBase64,
+    int boardSize,
+    int numberOfMoves,
+    int sequenceLength
+  ) {
+    if (sequenceLength <= 0 || numberOfMoves < sequenceLength) {
+      return [];
+    }
+
+    final movesBoard = decodeMoves(movesBase64, boardSize);
+    final movesList = <MoveSequenceData>[];
+
+    // Calculate the range of moves to extract (last sequenceLength moves)
+    final startMoveNum = numberOfMoves - sequenceLength + 1; // e.g., for 5 moves out of 37: 37-5+1 = 33
+    final endMoveNum = numberOfMoves; // e.g., 37
+
+    // Find moves in the range [startMoveNum, endMoveNum]
+    for (int moveNum = startMoveNum; moveNum <= endMoveNum; moveNum++) {
+      for (int row = 0; row < boardSize; row++) {
+        for (int col = 0; col < boardSize; col++) {
+          if (movesBoard[row][col] == moveNum) {
+            // Display number: 1 for oldest in sequence, sequenceLength for newest
+            final displayNumber = moveNum - startMoveNum + 1;
+            movesList.add(MoveSequenceData(
+              row: row,
+              col: col,
+              moveNumber: displayNumber,
+            ));
+            break; // Found this move number, continue to next
+          }
+        }
+      }
+    }
+
+    return movesList;
+  }
+
+  /// Find the last move before sequence (for last move marker)
+  /// Returns position of move that should have the last move marker
+  static Position? findLastMoveBeforeSequence(
+    String movesBase64,
+    int boardSize,
+    int numberOfMoves,
+    int sequenceLength
+  ) {
+    if (sequenceLength <= 0 || numberOfMoves <= sequenceLength) {
+      return null;
+    }
+
+    final movesBoard = decodeMoves(movesBase64, boardSize);
+    // The move before the sequence is the one just before the range we're showing
+    final targetMoveNum = numberOfMoves - sequenceLength; // e.g., for 5 moves out of 37: 37-5 = 32
+
+    for (int row = 0; row < boardSize; row++) {
+      for (int col = 0; col < boardSize; col++) {
+        if (movesBoard[row][col] == targetMoveNum) {
+          return Position(row, col);
+        }
+      }
+    }
+
+    return null;
+  }
 }
 
 /// Simple position class for coordinates
@@ -148,4 +251,32 @@ class Position {
 
   @override
   String toString() => 'Position($row, $col)';
+}
+
+/// Move sequence data for display
+class MoveSequenceData {
+  final int row;
+  final int col;
+  final int moveNumber;
+
+  const MoveSequenceData({
+    required this.row,
+    required this.col,
+    required this.moveNumber,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MoveSequenceData &&
+          runtimeType == other.runtimeType &&
+          row == other.row &&
+          col == other.col &&
+          moveNumber == other.moveNumber;
+
+  @override
+  int get hashCode => row.hashCode ^ col.hashCode ^ moveNumber.hashCode;
+
+  @override
+  String toString() => 'MoveSequenceData($row, $col, move: $moveNumber)';
 }

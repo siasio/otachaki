@@ -3,6 +3,9 @@ import '../models/go_position.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
+import '../models/sequence_display_mode.dart';
+import '../models/board_view_mode.dart';
+import '../models/ownership_display_mode.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import 'go_board.dart';
@@ -16,6 +19,10 @@ class GameBoardContainer extends StatefulWidget {
   final LayoutType layoutType;
   final bool showFeedbackOverlay;
   final Widget? feedbackWidget;
+  final int sequenceLength;
+  final SequenceDisplayMode sequenceDisplayMode;
+  final BoardViewMode viewMode;
+  final OwnershipDisplayMode ownershipDisplayMode;
 
   const GameBoardContainer({
     super.key,
@@ -25,6 +32,10 @@ class GameBoardContainer extends StatefulWidget {
     this.layoutType = LayoutType.vertical,
     this.showFeedbackOverlay = false,
     this.feedbackWidget,
+    this.sequenceLength = 0,
+    this.sequenceDisplayMode = SequenceDisplayMode.numbersOnly,
+    this.viewMode = BoardViewMode.problem,
+    this.ownershipDisplayMode = OwnershipDisplayMode.none,
   });
 
   @override
@@ -69,12 +80,20 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                           position: widget.position,
                           trainingPosition: widget.trainingPosition,
                           appSkin: widget.appSkin,
+                          layoutType: widget.layoutType,
+                          sequenceLength: widget.sequenceLength,
+                          sequenceDisplayMode: widget.sequenceDisplayMode,
                         ),
                       )
                     : GoBoard(
                         position: widget.position,
                         trainingPosition: widget.trainingPosition,
                         appSkin: widget.appSkin,
+                        layoutType: widget.layoutType,
+                        sequenceLength: widget.sequenceLength,
+                        sequenceDisplayMode: widget.sequenceDisplayMode,
+                        viewMode: widget.viewMode,
+                        ownershipDisplayMode: widget.ownershipDisplayMode,
                       ),
                 // Overlay for feedback widget only (no background color)
                 if (widget.showFeedbackOverlay && widget.feedbackWidget != null)

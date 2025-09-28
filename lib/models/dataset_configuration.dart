@@ -1,16 +1,21 @@
 import 'dataset_type.dart';
+import 'ownership_display_mode.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
   final double thresholdClose;
   final int timePerProblemSeconds;
   final bool hideGameInfoBar;
+  final int sequenceLength;
+  final OwnershipDisplayMode ownershipDisplayMode;
 
   const DatasetConfiguration({
     required this.thresholdGood,
     required this.thresholdClose,
     required this.timePerProblemSeconds,
     required this.hideGameInfoBar,
+    this.sequenceLength = 0,
+    this.ownershipDisplayMode = OwnershipDisplayMode.none,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
@@ -58,12 +63,16 @@ class DatasetConfiguration {
     double? thresholdClose,
     int? timePerProblemSeconds,
     bool? hideGameInfoBar,
+    int? sequenceLength,
+    OwnershipDisplayMode? ownershipDisplayMode,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
       thresholdClose: thresholdClose ?? this.thresholdClose,
       timePerProblemSeconds: timePerProblemSeconds ?? this.timePerProblemSeconds,
       hideGameInfoBar: hideGameInfoBar ?? this.hideGameInfoBar,
+      sequenceLength: sequenceLength ?? this.sequenceLength,
+      ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
     );
   }
 
@@ -73,20 +82,34 @@ class DatasetConfiguration {
       'thresholdClose': thresholdClose,
       'timePerProblemSeconds': timePerProblemSeconds,
       'hideGameInfoBar': hideGameInfoBar,
+      'sequenceLength': sequenceLength,
+      'ownershipDisplayMode': ownershipDisplayMode.name,
     };
   }
 
   static DatasetConfiguration fromJson(Map<String, dynamic> json) {
+    OwnershipDisplayMode ownershipDisplayMode = OwnershipDisplayMode.none;
+    if (json['ownershipDisplayMode'] != null) {
+      try {
+        ownershipDisplayMode = OwnershipDisplayMode.values.byName(json['ownershipDisplayMode'] as String);
+      } catch (_) {
+        ownershipDisplayMode = OwnershipDisplayMode.none;
+      }
+    }
+
     return DatasetConfiguration(
       thresholdGood: (json['thresholdGood'] as num?)?.toDouble() ?? 0.0,
       thresholdClose: (json['thresholdClose'] as num?)?.toDouble() ?? 0.0,
       timePerProblemSeconds: json['timePerProblemSeconds'] as int? ?? 30,
       hideGameInfoBar: json['hideGameInfoBar'] as bool? ?? false,
+      sequenceLength: json['sequenceLength'] as int? ?? 0,
+      ownershipDisplayMode: ownershipDisplayMode,
     );
   }
 
   bool isValidConfiguration() {
     return thresholdClose >= thresholdGood &&
-           timePerProblemSeconds > 0;
+           timePerProblemSeconds > 0 &&
+           sequenceLength >= 0;
   }
 }

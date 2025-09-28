@@ -3,14 +3,22 @@ import '../models/go_position.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
+import '../models/sequence_display_mode.dart';
+import '../models/board_view_mode.dart';
+import '../models/ownership_display_mode.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
+import '../core/go_logic.dart';
 
 class GoBoard extends StatelessWidget {
   final GoPosition position;
   final TrainingPosition? trainingPosition;
   final AppSkin appSkin;
   final LayoutType layoutType;
+  final int sequenceLength;
+  final SequenceDisplayMode sequenceDisplayMode;
+  final BoardViewMode viewMode;
+  final OwnershipDisplayMode ownershipDisplayMode;
 
   const GoBoard({
     super.key,
@@ -18,6 +26,10 @@ class GoBoard extends StatelessWidget {
     this.trainingPosition,
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
+    this.sequenceLength = 0,
+    this.sequenceDisplayMode = SequenceDisplayMode.numbersOnly,
+    this.viewMode = BoardViewMode.problem,
+    this.ownershipDisplayMode = OwnershipDisplayMode.none,
   });
 
   @override
@@ -31,7 +43,15 @@ class GoBoard extends StatelessWidget {
         margin: boardStyle.margin,
         decoration: themeProvider.getContainerDecoration(UIElement.boardBackground),
         child: CustomPaint(
-          painter: GoBoardPainter(position, trainingPosition, themeProvider),
+          painter: GoBoardPainter(
+            position,
+            trainingPosition,
+            themeProvider,
+            sequenceLength,
+            sequenceDisplayMode,
+            viewMode,
+            ownershipDisplayMode,
+          ),
           size: Size.infinite,
         ),
       ),
@@ -43,8 +63,20 @@ class GoBoardPainter extends CustomPainter {
   final GoPosition position;
   final TrainingPosition? trainingPosition;
   final UnifiedThemeProvider themeProvider;
+  final int sequenceLength;
+  final SequenceDisplayMode sequenceDisplayMode;
+  final BoardViewMode viewMode;
+  final OwnershipDisplayMode ownershipDisplayMode;
 
-  GoBoardPainter(this.position, this.trainingPosition, this.themeProvider);
+  GoBoardPainter(
+    this.position,
+    this.trainingPosition,
+    this.themeProvider,
+    this.sequenceLength,
+    this.sequenceDisplayMode,
+    this.viewMode,
+    this.ownershipDisplayMode,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -95,13 +127,44 @@ class GoBoardPainter extends CustomPainter {
       }
     }
 
+    // Get sequence moves if available
+    final List<MoveSequenceData> sequenceMoves = sequenceLength > 0 && trainingPosition != null
+        ? trainingPosition!.extractMoveSequence(sequenceLength)
+        : [];
+
+    // Get last move before sequence for marker
+    final Position? lastMovePosition = sequenceLength > 0 && trainingPosition != null
+        ? trainingPosition!.getLastMoveBeforeSequence(sequenceLength)
+        : null;
+
+    // Create a set of sequence positions for quick lookup
+    final Set<String> sequencePositions = sequenceMoves
+        .map((move) => '${move.row},${move.col}')
+        .toSet();
+
     // Draw stones
     final double stoneRadius = cellSize * 0.4;
 
     for (int row = displayStartRow; row < displayStartRow + displayHeight && row < position.size; row++) {
       for (int col = displayStartCol; col < displayStartCol + displayWidth && col < position.size; col++) {
         final stone = position.board[row][col];
-        if (stone != StoneColor.empty) {
+        final positionKey = '$row,$col';
+        final isSequencePosition = sequencePositions.contains(positionKey);
+
+        // Determine if we should draw the stone based on view mode
+        bool shouldDrawStone = stone != StoneColor.empty;
+
+        // In problem view, hide stones where sequence numbers should appear
+        if (viewMode == BoardViewMode.problem &&
+            isSequencePosition &&
+            sequenceDisplayMode == SequenceDisplayMode.numbersOnly) {
+          shouldDrawStone = false;
+        }
+
+        // In review view, always show stones (they can have numbers overlaid)
+        // No additional logic needed for review view stone visibility
+
+        if (shouldDrawStone) {
           final double x = boardStart + (col - displayStartCol) * cellSize;
           final double y = boardStart + (row - displayStartRow) * cellSize;
 
@@ -177,24 +240,65 @@ class GoBoardPainter extends CustomPainter {
             );
           }
 
-          // Draw last move marker (triangle)
-          if (trainingPosition?.gameInfo?.lastMoveRow == row &&
-              trainingPosition?.gameInfo?.lastMoveCol == col) {
+          // Draw last move marker (triangle) - either from game_info or sequence logic
+          bool shouldDrawLastMoveMarker = false;
+          if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col) {
+            shouldDrawLastMoveMarker = true; // From sequence logic
+          } else if (sequenceLength == 0 &&
+                     trainingPosition?.gameInfo?.lastMoveRow == row &&
+                     trainingPosition?.gameInfo?.lastMoveCol == col) {
+            shouldDrawLastMoveMarker = true; // From game_info (when no sequence)
+          }
+
+          if (shouldDrawLastMoveMarker) {
             _drawLastMoveMarker(canvas, x, y, stoneRadius, stone);
+          }
+
+          // Draw sequence numbers on stones (for stonesWithNumbers mode)
+          if (isSequencePosition && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers) {
+            final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
+            _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, stone);
           }
         }
 
-        // Draw move sequence numbers
-        if (trainingPosition?.gameInfo?.moveSequence != null) {
+        // Draw sequence numbers based on view mode and sequence display mode
+        if (isSequencePosition) {
+          final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
+          final double x = boardStart + (col - displayStartCol) * cellSize;
+          final double y = boardStart + (row - displayStartRow) * cellSize;
+
+          if (viewMode == BoardViewMode.problem && sequenceDisplayMode == SequenceDisplayMode.numbersOnly) {
+            // Problem view: numbers with background blobs (stones are hidden)
+            _drawMoveNumberOnEmptyIntersection(canvas, x, y, sequenceMove.moveNumber, stoneRadius);
+          } else if (viewMode == BoardViewMode.review && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers) {
+            // Review view: numbers overlaid on stones
+            if (position.board[row][col] != StoneColor.empty) {
+              _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, position.board[row][col]);
+            } else {
+              _drawMoveNumberOnEmptyIntersection(canvas, x, y, sequenceMove.moveNumber, stoneRadius);
+            }
+          }
+        }
+
+        // Legacy: Draw old move sequence numbers for backward compatibility
+        if (sequenceLength == 0 && trainingPosition?.gameInfo?.moveSequence != null) {
           for (final move in trainingPosition!.gameInfo!.moveSequence!) {
             if (move.row == row && move.col == col && position.board[row][col] == StoneColor.empty) {
               final double x = boardStart + (col - displayStartCol) * cellSize;
               final double y = boardStart + (row - displayStartRow) * cellSize;
-              _drawMoveNumber(canvas, x, y, move.moveNumber, stoneRadius);
+              _drawMoveNumberOnEmptyIntersection(canvas, x, y, move.moveNumber, stoneRadius);
             }
           }
         }
       }
+    }
+
+    // Draw ownership information (only in review view)
+    if (viewMode == BoardViewMode.review &&
+        ownershipDisplayMode.showOwnership &&
+        trainingPosition?.hasOwnership == true) {
+      _drawOwnership(canvas, size, boardStart, cellSize, displayStartRow, displayStartCol,
+                    displayWidth, displayHeight);
     }
 
     // Draw focus area highlighting (gray out everything except focus area)
@@ -331,7 +435,7 @@ class GoBoardPainter extends CustomPainter {
         text: '$moveNumber',
         style: TextStyle(
           color: moveNumberStyle.color,
-          fontSize: moveNumberStyle.fontSize ?? (stoneRadius * 0.8),
+          fontSize: moveNumberStyle.fontSize ?? (stoneRadius * 1.2),
           fontWeight: moveNumberStyle.fontWeight,
         ),
       ),
@@ -348,8 +452,141 @@ class GoBoardPainter extends CustomPainter {
     );
   }
 
+  void _drawMoveNumberOnEmptyIntersection(Canvas canvas, double x, double y, int moveNumber, double stoneRadius) {
+    // Draw background circle to hide grid lines
+    final boardStyle = themeProvider.getElementStyle(UIElement.boardBackground);
+    final backgroundPaint = Paint()
+      ..color = boardStyle.color!
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(x, y), stoneRadius * 0.7, backgroundPaint);
+
+    // Draw the number with black text
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: '$moveNumber',
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: stoneRadius * 1.2,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        x - textPainter.width / 2,
+        y - textPainter.height / 2,
+      ),
+    );
+  }
+
+  void _drawSequenceNumberOnStone(Canvas canvas, double x, double y, int moveNumber,
+                                   double stoneRadius, StoneColor stoneColor) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: moveNumber.toString(),
+        style: TextStyle(
+          color: stoneColor == StoneColor.black ? Colors.white : Colors.black,
+          fontSize: stoneRadius * 1.2,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        x - textPainter.width / 2,
+        y - textPainter.height / 2,
+      ),
+    );
+  }
+
+  void _drawOwnership(Canvas canvas, Size size, double boardStart, double cellSize,
+                     int displayStartRow, int displayStartCol, int displayWidth, int displayHeight) {
+    final ownership = trainingPosition!.decodeOwnership()!;
+
+    for (int row = displayStartRow; row < displayStartRow + displayHeight && row < position.size; row++) {
+      for (int col = displayStartCol; col < displayStartCol + displayWidth && col < position.size; col++) {
+        final ownershipValue = ownership[row][col];
+        if (ownershipValue.abs() < 0.01) continue; // Skip nearly neutral intersections
+
+        final double x = boardStart + (col - displayStartCol) * cellSize;
+        final double y = boardStart + (row - displayStartRow) * cellSize;
+
+        if (ownershipDisplayMode.useSquares) {
+          _drawOwnershipSquare(canvas, x, y, ownershipValue, cellSize);
+        } else if (ownershipDisplayMode.useOverlay) {
+          _drawOwnershipOverlay(canvas, x, y, ownershipValue, cellSize);
+        }
+      }
+    }
+  }
+
+  void _drawOwnershipSquare(Canvas canvas, double x, double y, double ownership, double cellSize) {
+    final isBlackOwnership = ownership > 0;
+    final strength = ownership.abs();
+
+    // Square size based on ownership strength (0.125 increments from 0 to 1)
+    final quantizedStrength = (strength * 8).round() / 8.0; // Quantize to 0.125 increments
+    final squareSize = cellSize * 0.15 * quantizedStrength.clamp(0.125, 1.0);
+
+    final paint = Paint()
+      ..color = isBlackOwnership ? Colors.black : Colors.white
+      ..style = PaintingStyle.fill;
+
+    // Add border for white squares for visibility
+    if (!isBlackOwnership) {
+      final borderPaint = Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, y), width: squareSize, height: squareSize),
+        borderPaint,
+      );
+    }
+
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(x, y), width: squareSize, height: squareSize),
+      paint,
+    );
+  }
+
+  void _drawOwnershipOverlay(Canvas canvas, double x, double y, double ownership, double cellSize) {
+    final isBlackOwnership = ownership > 0;
+    final strength = ownership.abs();
+
+    // Overlay opacity: max 0.5, scaled by ownership strength
+    final maxOpacity = 0.5;
+    final opacity = (strength * maxOpacity).clamp(0.0, maxOpacity);
+
+    final paint = Paint()
+      ..color = (isBlackOwnership ? Colors.black : Colors.white).withOpacity(opacity)
+      ..style = PaintingStyle.fill;
+
+    // Cover the entire intersection area
+    final overlaySize = cellSize * 0.9;
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(x, y), width: overlaySize, height: overlaySize),
+      paint,
+    );
+  }
+
   @override
   bool shouldRepaint(GoBoardPainter oldDelegate) {
-    return oldDelegate.position != position || oldDelegate.trainingPosition != trainingPosition;
+    return oldDelegate.position != position ||
+           oldDelegate.trainingPosition != trainingPosition ||
+           oldDelegate.sequenceLength != sequenceLength ||
+           oldDelegate.sequenceDisplayMode != sequenceDisplayMode ||
+           oldDelegate.viewMode != viewMode ||
+           oldDelegate.ownershipDisplayMode != ownershipDisplayMode;
   }
 }
