@@ -20,6 +20,7 @@ import '../widgets/game_board_container.dart';
 import '../widgets/adaptive_result_buttons.dart';
 import '../models/auto_advance_mode.dart';
 import '../widgets/game_status_bar.dart';
+import '../widgets/pause_button.dart';
 import '../models/game_result_option.dart';
 import './info_screen.dart';
 import './config_screen.dart';
@@ -56,6 +57,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   bool _isCorrectAnswer = false;
   bool _hasAnswered = false;
   bool _waitingForNext = false;
+  bool _pausePressed = false;
   final FocusNode _focusNode = FocusNode();
   ConfigurationManager? _configManager;
   DatasetConfiguration? _currentConfig;
@@ -149,6 +151,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _showFeedbackOverlay = false;
       _hasAnswered = false;
       _waitingForNext = false;
+      _pausePressed = false;
     });
   }
 
@@ -297,15 +300,20 @@ class _TrainingScreenState extends State<TrainingScreen> {
     if (stateManager.shouldAutoAdvance()) {
       final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
       Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-        _loadNextPosition();
+        // Check if pause was pressed during the delay
+        if (!_pausePressed && mounted) {
+          _loadNextPosition();
+        }
       });
     } else {
       final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
       Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-        setState(() {
-          _showFeedbackOverlay = false;
-          _waitingForNext = true;
-        });
+        if (mounted) {
+          setState(() {
+            _showFeedbackOverlay = false;
+            _waitingForNext = true;
+          });
+        }
       });
     }
   }
@@ -314,12 +322,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
     _loadNextPosition();
   }
 
+  void _onPausePressed() {
+    setState(() {
+      _pausePressed = true;
+      _showFeedbackOverlay = false;
+      _waitingForNext = true;
+    });
+  }
+
   Widget _buildButtons() {
     final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
     final stateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
       isAnswerCorrect: _isCorrectAnswer,
       hasAnswered: _hasAnswered,
+      pausePressed: _pausePressed,
     );
 
     final displayMode = stateManager.getDisplayMode();
@@ -359,6 +376,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _showFeedbackOverlay = false;
       _hasAnswered = false;
       _waitingForNext = false;
+      _pausePressed = false;
     });
 
     try {
@@ -443,6 +461,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final correctColor = SkinConfig.getCorrectColor(currentSkin);
     final incorrectColor = SkinConfig.getIncorrectColor(currentSkin);
     final shouldAnimate = SkinConfig.shouldAnimate(currentSkin);
+
+    // Check if pause button should be shown
+    final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final stateManager = ButtonStateManager(
+      autoAdvanceMode: autoAdvanceMode,
+      isAnswerCorrect: _isCorrectAnswer,
+      hasAnswered: _hasAnswered,
+      pausePressed: _pausePressed,
+    );
+    final shouldShowPauseButton = stateManager.shouldAutoAdvance() && !_pausePressed;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -563,6 +591,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
               ),
             ),
           ),
+        // Pause button appears below the result text when auto-advance is enabled
+        if (shouldShowPauseButton) ...[
+          const SizedBox(height: 20),
+          PauseButton(
+            onPressed: _onPausePressed,
+            appSkin: currentSkin,
+          ),
+        ],
       ],
     );
   }

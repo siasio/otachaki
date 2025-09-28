@@ -131,16 +131,23 @@ class ButtonStateManager {
   final AutoAdvanceMode autoAdvanceMode;
   final bool isAnswerCorrect;
   final bool hasAnswered;
+  final bool pausePressed;
 
   ButtonStateManager({
     required this.autoAdvanceMode,
     required this.isAnswerCorrect,
     required this.hasAnswered,
+    this.pausePressed = false,
   });
 
   ButtonDisplayMode getDisplayMode() {
     if (!hasAnswered) {
       return ButtonDisplayMode.choices;
+    }
+
+    // If pause was pressed, always show scores (Next button)
+    if (pausePressed) {
+      return ButtonDisplayMode.scores;
     }
 
     switch (autoAdvanceMode) {

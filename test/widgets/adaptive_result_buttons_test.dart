@@ -60,6 +60,47 @@ void main() {
       expect(managerIncorrect.getDisplayMode(), ButtonDisplayMode.scores);
       expect(managerIncorrect.shouldAutoAdvance(), false);
     });
+
+    test('should handle pause state correctly', () {
+      // When pause is pressed, should always show scores regardless of auto-advance mode
+      final managerAlwaysPaused = ButtonStateManager(
+        autoAdvanceMode: AutoAdvanceMode.always,
+        isAnswerCorrect: true,
+        hasAnswered: true,
+        pausePressed: true,
+      );
+      expect(managerAlwaysPaused.getDisplayMode(), ButtonDisplayMode.scores);
+      expect(managerAlwaysPaused.shouldAutoAdvance(), true); // auto-advance logic unchanged
+
+      final managerCorrectOnlyPaused = ButtonStateManager(
+        autoAdvanceMode: AutoAdvanceMode.onCorrectOnly,
+        isAnswerCorrect: true,
+        hasAnswered: true,
+        pausePressed: true,
+      );
+      expect(managerCorrectOnlyPaused.getDisplayMode(), ButtonDisplayMode.scores);
+      expect(managerCorrectOnlyPaused.shouldAutoAdvance(), true);
+
+      final managerNeverPaused = ButtonStateManager(
+        autoAdvanceMode: AutoAdvanceMode.never,
+        isAnswerCorrect: true,
+        hasAnswered: true,
+        pausePressed: true,
+      );
+      expect(managerNeverPaused.getDisplayMode(), ButtonDisplayMode.scores);
+      expect(managerNeverPaused.shouldAutoAdvance(), false);
+    });
+
+    test('should not auto-advance when pause is not pressed', () {
+      final manager = ButtonStateManager(
+        autoAdvanceMode: AutoAdvanceMode.always,
+        isAnswerCorrect: true,
+        hasAnswered: true,
+        pausePressed: false,
+      );
+      expect(manager.getDisplayMode(), ButtonDisplayMode.choices);
+      expect(manager.shouldAutoAdvance(), true);
+    });
   });
 
   group('AdaptiveResultButtons', () {
