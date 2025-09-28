@@ -114,6 +114,7 @@ The app supports multiple ways to load Go position datasets:
 - **← Left Arrow**: Select White Wins
 - **↓ Down Arrow**: Select Draw/Close
 - **→ Right Arrow**: Select Black Wins
+- **␣ Space Bar**: Pause Auto-Advance to Next Problem
 
 ### Configurable Options
 - **Timer Duration**: Per-dataset customizable (default varies by type)

@@ -146,7 +146,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     Text(
                       '• ← Left Arrow: Select White Wins\n'
                       '• ↓ Down Arrow: Select Draw/Close\n'
-                      '• → Right Arrow: Select Black Wins',
+                      '• → Right Arrow: Select Black Wins\n'
+                      '• ␣ Space Bar: Pause Auto-Advance to Next Problem',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),

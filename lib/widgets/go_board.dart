@@ -109,53 +109,78 @@ class GoBoardPainter extends CustomPainter {
           final double x = boardStart + (col - displayStartCol) * cellSize;
           final double y = boardStart + (row - displayStartRow) * cellSize;
 
-          // Stone shadow
-          final shadowPaint = Paint()
-            ..color = Colors.black.withOpacity(0.3)
-            ..style = PaintingStyle.fill;
-          canvas.drawCircle(
-            Offset(x + 1, y + 1),
-            stoneRadius,
-            shadowPaint,
-          );
+          if (appSkin == AppSkin.eink) {
+            // E-ink style: solid colors with borders for white stones
+            final stonePaint = Paint()
+              ..style = PaintingStyle.fill;
 
-          // Stone body
-          final stonePaint = Paint()
-            ..style = PaintingStyle.fill;
+            if (stone == StoneColor.black) {
+              stonePaint.color = Colors.black;
+            } else {
+              stonePaint.color = Colors.white;
+            }
 
-          if (stone == StoneColor.black) {
-            stonePaint.shader = RadialGradient(
-              colors: [
-                const Color(0xFF4A4A4A),
-                const Color(0xFF1A1A1A),
-              ],
-            ).createShader(Rect.fromCircle(
-              center: Offset(x, y),
-              radius: stoneRadius,
-            ));
+            canvas.drawCircle(Offset(x, y), stoneRadius, stonePaint);
+
+            // Add thick black border for white stones in e-ink mode
+            if (stone == StoneColor.white) {
+              final borderPaint = Paint()
+                ..color = Colors.black
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 2.0;
+              canvas.drawCircle(Offset(x, y), stoneRadius, borderPaint);
+            }
           } else {
-            stonePaint.shader = RadialGradient(
-              colors: [
-                const Color(0xFFFFFFF0),
-                const Color(0xFFE8E8E8),
-              ],
-            ).createShader(Rect.fromCircle(
-              center: Offset(x, y),
-              radius: stoneRadius,
-            ));
+            // Traditional style with shadows, gradients, and highlights
+
+            // Stone shadow
+            final shadowPaint = Paint()
+              ..color = Colors.black.withOpacity(0.3)
+              ..style = PaintingStyle.fill;
+            canvas.drawCircle(
+              Offset(x + 1, y + 1),
+              stoneRadius,
+              shadowPaint,
+            );
+
+            // Stone body
+            final stonePaint = Paint()
+              ..style = PaintingStyle.fill;
+
+            if (stone == StoneColor.black) {
+              stonePaint.shader = RadialGradient(
+                colors: [
+                  const Color(0xFF4A4A4A),
+                  const Color(0xFF1A1A1A),
+                ],
+              ).createShader(Rect.fromCircle(
+                center: Offset(x, y),
+                radius: stoneRadius,
+              ));
+            } else {
+              stonePaint.shader = RadialGradient(
+                colors: [
+                  const Color(0xFFFFFFF0),
+                  const Color(0xFFE8E8E8),
+                ],
+              ).createShader(Rect.fromCircle(
+                center: Offset(x, y),
+                radius: stoneRadius,
+              ));
+            }
+
+            canvas.drawCircle(Offset(x, y), stoneRadius, stonePaint);
+
+            // Stone highlight
+            final highlightPaint = Paint()
+              ..color = Colors.white.withOpacity(stone == StoneColor.black ? 0.3 : 0.6)
+              ..style = PaintingStyle.fill;
+            canvas.drawCircle(
+              Offset(x - stoneRadius * 0.3, y - stoneRadius * 0.3),
+              stoneRadius * 0.2,
+              highlightPaint,
+            );
           }
-
-          canvas.drawCircle(Offset(x, y), stoneRadius, stonePaint);
-
-          // Stone highlight
-          final highlightPaint = Paint()
-            ..color = Colors.white.withOpacity(stone == StoneColor.black ? 0.3 : 0.6)
-            ..style = PaintingStyle.fill;
-          canvas.drawCircle(
-            Offset(x - stoneRadius * 0.3, y - stoneRadius * 0.3),
-            stoneRadius * 0.2,
-            highlightPaint,
-          );
 
           // Draw last move marker (triangle)
           if (trainingPosition?.gameInfo?.lastMoveRow == row &&

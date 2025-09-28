@@ -127,9 +127,9 @@ class ScoreDisplayButtons extends StatelessWidget {
   }
 
   Widget _buildNextButton() {
-    final color = SkinConfig.getButtonColor(appSkin, 'draw');
-    final textColor = SkinConfig.getButtonTextColor(appSkin, 'draw');
-    final borderColor = SkinConfig.getBorderColor(appSkin);
+    final color = SkinConfig.getButtonColor(appSkin, 'next');
+    final textColor = SkinConfig.getButtonTextColor(appSkin, 'next');
+    // final borderColor = SkinConfig.getBorderColor(appSkin);
     final isVertical = layoutType == LayoutType.horizontal;
 
     return Material(
@@ -143,9 +143,9 @@ class ScoreDisplayButtons extends StatelessWidget {
           width: isVertical ? double.infinity : null,
           constraints: isVertical ? const BoxConstraints(minHeight: 80) : null,
           decoration: BoxDecoration(
-            color: Colors.green, //color,
+            color: color,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.green, width: 2),
+            border: Border.all(color: color, width: 2),
             boxShadow: appSkin == AppSkin.eink ? [] : [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -164,8 +164,8 @@ class ScoreDisplayButtons extends StatelessWidget {
                         Icons.keyboard_arrow_down,
                         size: 20,
                         color: appSkin == AppSkin.eink
-                            ? Colors.black
-                            : Colors.black.withOpacity(0.7),
+                            ? textColor
+                            : textColor.withOpacity(0.7),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -173,7 +173,7 @@ class ScoreDisplayButtons extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: textColor,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -187,8 +187,8 @@ class ScoreDisplayButtons extends StatelessWidget {
                         Icons.keyboard_arrow_down,
                         size: 18,
                         color: appSkin == AppSkin.eink
-                            ? Colors.black
-                            : Colors.black.withOpacity(0.7),
+                            ? textColor
+                            : textColor.withOpacity(0.7),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -196,7 +196,7 @@ class ScoreDisplayButtons extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: textColor,
                         ),
                       ),
                     ],

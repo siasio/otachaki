@@ -115,6 +115,22 @@ class _TrainingScreenState extends State<TrainingScreen> {
         return;
       }
 
+      // Handle space key for pause during feedback overlay
+      if (_showFeedbackOverlay && event.logicalKey == LogicalKeyboardKey.space) {
+        final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+        final stateManager = ButtonStateManager(
+          autoAdvanceMode: autoAdvanceMode,
+          isAnswerCorrect: _isCorrectAnswer,
+          hasAnswered: _hasAnswered,
+          pausePressed: _pausePressed,
+        );
+        // Only allow pause if the pause button would be visible
+        if (stateManager.shouldAutoAdvance() && !_pausePressed) {
+          _onPausePressed();
+        }
+        return;
+      }
+
       if (!_timerRunning || _showFeedbackOverlay) return;
 
       if (_positionManager.currentDataset != null &&
@@ -597,6 +613,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
           PauseButton(
             onPressed: _onPausePressed,
             appSkin: currentSkin,
+            backgroundColor: colors.backgroundColor,
           ),
         ],
       ],

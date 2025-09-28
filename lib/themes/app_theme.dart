@@ -217,6 +217,15 @@ class SkinConfig {
           case AppSkin.eink:
             return Colors.black;
         }
+      case 'next':
+        switch (skin) {
+          case AppSkin.classic:
+          case AppSkin.modern:
+          case AppSkin.ocean:
+            return Colors.green;
+          case AppSkin.eink:
+            return Colors.grey.shade400;
+        }
       case 'draw':
       default:
         switch (skin) {
@@ -238,6 +247,8 @@ class SkinConfig {
         return Colors.black; // Black text on white background for all themes
       case 'black':
         return Colors.white; // White text on dark background for all themes
+      case 'next':
+        return Colors.black; // Black text on green background for all themes
       case 'draw':
       default:
         switch (skin) {

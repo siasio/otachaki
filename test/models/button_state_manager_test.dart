@@ -88,5 +88,27 @@ void main() {
       expect(manager.getDisplayMode(), ButtonDisplayMode.choices);
       expect(manager.shouldAutoAdvance(), true);
     });
+
+    test('should handle pause state transitions correctly', () {
+      // Test that pause can be activated during auto-advance
+      final managerBeforePause = ButtonStateManager(
+        autoAdvanceMode: AutoAdvanceMode.always,
+        isAnswerCorrect: true,
+        hasAnswered: true,
+        pausePressed: false,
+      );
+      expect(managerBeforePause.shouldAutoAdvance(), true);
+      expect(managerBeforePause.getDisplayMode(), ButtonDisplayMode.choices);
+
+      // After pause is pressed, display mode changes but auto-advance logic unchanged
+      final managerAfterPause = ButtonStateManager(
+        autoAdvanceMode: AutoAdvanceMode.always,
+        isAnswerCorrect: true,
+        hasAnswered: true,
+        pausePressed: true,
+      );
+      expect(managerAfterPause.shouldAutoAdvance(), true); // Logic unchanged
+      expect(managerAfterPause.getDisplayMode(), ButtonDisplayMode.scores); // But shows Next button
+    });
   });
 }
