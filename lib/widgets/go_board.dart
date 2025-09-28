@@ -241,13 +241,23 @@ class GoBoardPainter extends CustomPainter {
           }
 
           // Draw last move marker (triangle) - either from game_info or sequence logic
+          // In review view, don't show last move marker when sequence length > 0 (move numbers are shown)
           bool shouldDrawLastMoveMarker = false;
-          if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col) {
-            shouldDrawLastMoveMarker = true; // From sequence logic
-          } else if (sequenceLength == 0 &&
-                     trainingPosition?.gameInfo?.lastMoveRow == row &&
-                     trainingPosition?.gameInfo?.lastMoveCol == col) {
-            shouldDrawLastMoveMarker = true; // From game_info (when no sequence)
+          if (viewMode == BoardViewMode.problem) {
+            // Always show in problem view
+            if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col) {
+              shouldDrawLastMoveMarker = true; // From sequence logic
+            } else if (sequenceLength == 0 &&
+                       trainingPosition?.gameInfo?.lastMoveRow == row &&
+                       trainingPosition?.gameInfo?.lastMoveCol == col) {
+              shouldDrawLastMoveMarker = true; // From game_info (when no sequence)
+            }
+          } else if (viewMode == BoardViewMode.review && sequenceLength == 0) {
+            // Only show in review view when no sequence is displayed
+            if (trainingPosition?.gameInfo?.lastMoveRow == row &&
+                trainingPosition?.gameInfo?.lastMoveCol == col) {
+              shouldDrawLastMoveMarker = true; // From game_info (when no sequence)
+            }
           }
 
           if (shouldDrawLastMoveMarker) {
@@ -519,9 +529,10 @@ class GoBoardPainter extends CustomPainter {
 
         final double x = boardStart + (col - displayStartCol) * cellSize;
         final double y = boardStart + (row - displayStartRow) * cellSize;
+        final StoneColor stoneAtPosition = position.board[row][col];
 
         if (ownershipDisplayMode.useSquares) {
-          _drawOwnershipSquare(canvas, x, y, ownershipValue, cellSize);
+          _drawOwnershipSquare(canvas, x, y, ownershipValue, cellSize, stoneAtPosition);
         } else if (ownershipDisplayMode.useOverlay) {
           _drawOwnershipOverlay(canvas, x, y, ownershipValue, cellSize);
         }
@@ -529,9 +540,18 @@ class GoBoardPainter extends CustomPainter {
     }
   }
 
-  void _drawOwnershipSquare(Canvas canvas, double x, double y, double ownership, double cellSize) {
+  void _drawOwnershipSquare(Canvas canvas, double x, double y, double ownership, double cellSize, StoneColor stoneAtPosition) {
     final isBlackOwnership = ownership > 0;
     final strength = ownership.abs();
+
+    // Only show Black squares over empty intersections and White stones
+    // Only show White squares over empty intersections and Black stones
+    if (isBlackOwnership && stoneAtPosition == StoneColor.black) {
+      return; // Don't show Black square over Black stone
+    }
+    if (!isBlackOwnership && stoneAtPosition == StoneColor.white) {
+      return; // Don't show White square over White stone
+    }
 
     // Square size based on ownership strength (0.125 increments from 0 to 1)
     final quantizedStrength = (strength * 8).round() / 8.0; // Quantize to 0.125 increments
@@ -576,12 +596,12 @@ class GoBoardPainter extends CustomPainter {
     final isBlackOwnership = ownership > 0;
     final strength = ownership.abs();
 
-    // Cover the entire intersection area
-    final overlaySize = cellSize * 0.9;
+    // Cover the entire intersection area with no gaps between neighboring overlays
+    final overlaySize = cellSize;
 
     if (isBlackOwnership) {
-      // Black ownership: black overlay
-      final maxOpacity = 0.5;
+      // Black ownership: black overlay with reduced opacity
+      final maxOpacity = 0.3; // Reduced from 0.5
       final opacity = (strength * maxOpacity).clamp(0.0, maxOpacity);
 
       final paint = Paint()
@@ -593,9 +613,9 @@ class GoBoardPainter extends CustomPainter {
         paint,
       );
     } else {
-      // White ownership: use a light gray overlay for better visibility than pure white
-      final maxOpacity = 0.6;
-      final opacity = (strength * maxOpacity).clamp(0.2, maxOpacity); // Minimum opacity for visibility
+      // White ownership: use a light gray overlay with reduced opacity
+      final maxOpacity = 0.4; // Reduced from 0.6
+      final opacity = (strength * maxOpacity).clamp(0.1, maxOpacity); // Reduced minimum from 0.2
 
       final paint = Paint()
         ..color = const Color(0xFFE0E0E0).withValues(alpha: opacity) // Light gray instead of white
@@ -606,16 +626,6 @@ class GoBoardPainter extends CustomPainter {
         paint,
       );
 
-      // Add a subtle border for even better visibility
-      final borderPaint = Paint()
-        ..color = Colors.grey.withValues(alpha: 0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0;
-
-      canvas.drawRect(
-        Rect.fromCenter(center: Offset(x, y), width: overlaySize, height: overlaySize),
-        borderPaint,
-      );
     }
   }
 
