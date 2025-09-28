@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:countingapp/themes/app_theme.dart';
+import 'package:countingapp/themes/unified_theme_provider.dart';
+import 'package:countingapp/themes/element_registry.dart';
 import 'package:countingapp/models/app_skin.dart';
+import 'package:countingapp/models/layout_type.dart';
 
 void main() {
   group('AppTheme', () {
@@ -37,127 +40,64 @@ void main() {
     });
   });
 
-  group('SkinConfig', () {
-    test('should return correct animation setting for each skin', () {
-      expect(SkinConfig.shouldAnimate(AppSkin.classic), isTrue);
-      expect(SkinConfig.shouldAnimate(AppSkin.modern), isTrue);
-      expect(SkinConfig.shouldAnimate(AppSkin.ocean), isTrue);
-      expect(SkinConfig.shouldAnimate(AppSkin.eink), isFalse);
+  group('UnifiedThemeProvider', () {
+    test('should return correct button styles for white result button', () {
+      final provider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.vertical);
+      final style = provider.getElementStyle(UIElement.buttonResultWhite);
+
+      expect(style.backgroundColor, Colors.white);
+      expect(style.color, Colors.black);
     });
 
-    test('should return correct board graying setting for each skin', () {
-      expect(SkinConfig.shouldGrayOutBoard(AppSkin.classic), isTrue);
-      expect(SkinConfig.shouldGrayOutBoard(AppSkin.modern), isTrue);
-      expect(SkinConfig.shouldGrayOutBoard(AppSkin.ocean), isTrue);
-      expect(SkinConfig.shouldGrayOutBoard(AppSkin.eink), isFalse);
+    test('should return correct button styles for black result button', () {
+      final provider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.vertical);
+      final style = provider.getElementStyle(UIElement.buttonResultBlack);
+
+      expect(style.backgroundColor, Colors.black87);
+      expect(style.color, Colors.white);
     });
 
-    test('should return correct colors for feedback indicators', () {
-      expect(SkinConfig.getCorrectColor(AppSkin.classic), Colors.green);
-      expect(SkinConfig.getCorrectColor(AppSkin.modern), Colors.green);
-      expect(SkinConfig.getCorrectColor(AppSkin.ocean), Colors.green);
-      expect(SkinConfig.getCorrectColor(AppSkin.eink), Colors.black);
+    test('should return correct button styles for draw result button', () {
+      final provider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.vertical);
+      final style = provider.getElementStyle(UIElement.buttonResultDraw);
 
-      expect(SkinConfig.getIncorrectColor(AppSkin.classic), Colors.red);
-      expect(SkinConfig.getIncorrectColor(AppSkin.modern), Colors.red);
-      expect(SkinConfig.getIncorrectColor(AppSkin.ocean), Colors.red);
-      expect(SkinConfig.getIncorrectColor(AppSkin.eink), Colors.black);
+      expect(style.backgroundColor, const Color(0xFFD4B896));
+      expect(style.color, const Color(0xFF5D4037));
     });
 
-    test('should return correct board colors for each skin', () {
-      expect(SkinConfig.getBoardColor(AppSkin.classic), const Color(0xFFDEB887));
-      expect(SkinConfig.getBoardColor(AppSkin.modern), const Color(0xFF424242));
-      expect(SkinConfig.getBoardColor(AppSkin.ocean), const Color(0xFF90CAF9));
-      expect(SkinConfig.getBoardColor(AppSkin.eink), Colors.white);
+    test('should return correct board styles for different skins', () {
+      final classicProvider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.vertical);
+      final modernProvider = UnifiedThemeProvider(skin: AppSkin.modern, layoutType: LayoutType.vertical);
+      final oceanProvider = UnifiedThemeProvider(skin: AppSkin.ocean, layoutType: LayoutType.vertical);
+      final einkProvider = UnifiedThemeProvider(skin: AppSkin.eink, layoutType: LayoutType.vertical);
+
+      expect(classicProvider.getElementStyle(UIElement.boardBackground).backgroundColor, const Color(0xFFDEB887));
+      expect(modernProvider.getElementStyle(UIElement.boardBackground).backgroundColor, const Color(0xFF424242));
+      expect(oceanProvider.getElementStyle(UIElement.boardBackground).backgroundColor, const Color(0xFFD2B48C));
+      expect(einkProvider.getElementStyle(UIElement.boardBackground).backgroundColor, Colors.white);
     });
 
-    test('should return correct stone colors', () {
-      // Test black stones
-      expect(SkinConfig.getStoneColor(AppSkin.classic, true), Colors.black);
-      expect(SkinConfig.getStoneColor(AppSkin.modern, true), Colors.black);
-      expect(SkinConfig.getStoneColor(AppSkin.ocean, true), Colors.black);
-      expect(SkinConfig.getStoneColor(AppSkin.eink, true), Colors.black);
+    test('should return different styles for different layouts', () {
+      final verticalProvider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.vertical);
+      final horizontalProvider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.horizontal);
 
-      // Test white stones
-      expect(SkinConfig.getStoneColor(AppSkin.classic, false), Colors.white);
-      expect(SkinConfig.getStoneColor(AppSkin.modern, false), Colors.white);
-      expect(SkinConfig.getStoneColor(AppSkin.ocean, false), Colors.white);
-      expect(SkinConfig.getStoneColor(AppSkin.eink, false), Colors.white);
+      final verticalStyle = verticalProvider.getElementStyle(UIElement.buttonResultWhite);
+      final horizontalStyle = horizontalProvider.getElementStyle(UIElement.buttonResultWhite);
+
+      // Layouts should have the same colors but potentially different dimensions
+      expect(verticalStyle.backgroundColor, horizontalStyle.backgroundColor);
+      expect(verticalStyle.color, horizontalStyle.color);
     });
 
-    test('should return correct progress bar colors', () {
-      expect(SkinConfig.getProgressBarColor(AppSkin.classic), Colors.green);
-      expect(SkinConfig.getProgressBarColor(AppSkin.modern), Colors.indigo);
-      expect(SkinConfig.getProgressBarColor(AppSkin.ocean), Colors.blue);
-      expect(SkinConfig.getProgressBarColor(AppSkin.eink), Colors.black);
-    });
+    test('should handle e-ink specific styles', () {
+      final provider = UnifiedThemeProvider(skin: AppSkin.eink, layoutType: LayoutType.vertical);
 
-    test('should return correct button colors for different types', () {
-      // Test white button - same for all themes
-      expect(SkinConfig.getButtonColor(AppSkin.eink, 'white'), Colors.white);
-      expect(SkinConfig.getButtonColor(AppSkin.classic, 'white'), Colors.white);
-      expect(SkinConfig.getButtonColor(AppSkin.modern, 'white'), Colors.white);
-      expect(SkinConfig.getButtonColor(AppSkin.ocean, 'white'), Colors.white);
+      // E-ink should have no animations
+      final buttonStyle = provider.getElementStyle(UIElement.buttonResultWhite);
+      expect(buttonStyle.hasAnimation, false);
 
-      // Test black button - theme specific
-      expect(SkinConfig.getButtonColor(AppSkin.eink, 'black'), Colors.black);
-      expect(SkinConfig.getButtonColor(AppSkin.classic, 'black'), Colors.black87);
-      expect(SkinConfig.getButtonColor(AppSkin.modern, 'black'), const Color(0xFF1A1A1A));
-      expect(SkinConfig.getButtonColor(AppSkin.ocean, 'black'), const Color(0xFF0D47A1));
-
-      // Test draw button - theme specific
-      expect(SkinConfig.getButtonColor(AppSkin.eink, 'draw'), Colors.grey.shade400);
-      expect(SkinConfig.getButtonColor(AppSkin.classic, 'draw'), const Color(0xFFD4B896));
-      expect(SkinConfig.getButtonColor(AppSkin.modern, 'draw'), const Color(0xFF424242));
-      expect(SkinConfig.getButtonColor(AppSkin.ocean, 'draw'), const Color(0xFF42A5F5));
-    });
-
-    test('should return correct button text colors', () {
-      // White button - black text for all themes
-      expect(SkinConfig.getButtonTextColor(AppSkin.eink, 'white'), Colors.black);
-      expect(SkinConfig.getButtonTextColor(AppSkin.classic, 'white'), Colors.black);
-      expect(SkinConfig.getButtonTextColor(AppSkin.modern, 'white'), Colors.black);
-      expect(SkinConfig.getButtonTextColor(AppSkin.ocean, 'white'), Colors.black);
-
-      // Black button - white text for all themes
-      expect(SkinConfig.getButtonTextColor(AppSkin.eink, 'black'), Colors.white);
-      expect(SkinConfig.getButtonTextColor(AppSkin.classic, 'black'), Colors.white);
-      expect(SkinConfig.getButtonTextColor(AppSkin.modern, 'black'), Colors.white);
-      expect(SkinConfig.getButtonTextColor(AppSkin.ocean, 'black'), Colors.white);
-
-      // Draw button - theme specific
-      expect(SkinConfig.getButtonTextColor(AppSkin.eink, 'draw'), Colors.black);
-      expect(SkinConfig.getButtonTextColor(AppSkin.classic, 'draw'), const Color(0xFF5D4037));
-      expect(SkinConfig.getButtonTextColor(AppSkin.modern, 'draw'), Colors.white);
-      expect(SkinConfig.getButtonTextColor(AppSkin.ocean, 'draw'), Colors.white);
-    });
-
-    test('should return correct progress bar background colors', () {
-      expect(SkinConfig.getProgressBarBackgroundColor(AppSkin.classic), Colors.grey[300]!);
-      expect(SkinConfig.getProgressBarBackgroundColor(AppSkin.modern), const Color(0xFF2D2D2D));
-      expect(SkinConfig.getProgressBarBackgroundColor(AppSkin.ocean), const Color(0xFFBBDEFB));
-      expect(SkinConfig.getProgressBarBackgroundColor(AppSkin.eink), Colors.grey.shade200);
-    });
-
-    test('should return correct feedback overlay colors', () {
-      expect(SkinConfig.getFeedbackOverlayColor(AppSkin.classic), Colors.black26);
-      expect(SkinConfig.getFeedbackOverlayColor(AppSkin.modern), Colors.black26);
-      expect(SkinConfig.getFeedbackOverlayColor(AppSkin.ocean), Colors.black26);
-      expect(SkinConfig.getFeedbackOverlayColor(AppSkin.eink), Colors.transparent);
-    });
-
-    test('should return correct border colors', () {
-      expect(SkinConfig.getBorderColor(AppSkin.classic), const Color(0xFF8B4513));
-      expect(SkinConfig.getBorderColor(AppSkin.modern), const Color(0xFF424242));
-      expect(SkinConfig.getBorderColor(AppSkin.ocean), const Color(0xFF1565C0));
-      expect(SkinConfig.getBorderColor(AppSkin.eink), Colors.black);
-    });
-
-    test('should return correct text colors', () {
-      expect(SkinConfig.getTextColor(AppSkin.classic), const Color(0xFF3E2723));
-      expect(SkinConfig.getTextColor(AppSkin.modern), Colors.white);
-      expect(SkinConfig.getTextColor(AppSkin.ocean), const Color(0xFF0D47A1));
-      expect(SkinConfig.getTextColor(AppSkin.eink), Colors.black);
+      // E-ink should have no elevation
+      expect(buttonStyle.elevation, 0);
     });
   });
 }

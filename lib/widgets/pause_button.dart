@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/app_skin.dart';
-import '../themes/app_theme.dart';
+import '../models/layout_type.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 
 /// A pause button widget that appears during auto-advance feedback overlay
 /// to allow users to interrupt the automatic progression to the next problem.
@@ -18,11 +20,12 @@ class PauseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shouldAnimate = SkinConfig.shouldAnimate(appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: LayoutType.vertical);
+    final buttonStyle = themeProvider.getElementStyle(UIElement.buttonPause);
     final buttonColor = backgroundColor ?? _getDefaultButtonColor();
     final iconColor = _getIconColor(buttonColor);
 
-    if (shouldAnimate) {
+    if (buttonStyle.hasAnimation ?? false) {
       return TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
         duration: const Duration(milliseconds: 500),
@@ -53,7 +56,7 @@ class PauseButton extends StatelessWidget {
             shape: BoxShape.circle,
             border: appSkin == AppSkin.eink
                 ? Border.all(color: Colors.black, width: 2)
-                : Border.all(color: SkinConfig.getResultBorderColor(appSkin), width: 2),
+                : Border.all(color: Colors.black, width: 2),
             boxShadow: appSkin != AppSkin.eink
                 ? [
                     BoxShadow(
@@ -103,7 +106,8 @@ class PauseButton extends StatelessWidget {
 
   Color _getDefaultButtonColor() {
     // Fallback colors when no backgroundColor is provided
-    return SkinConfig.getResultBackgroundColor(appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: LayoutType.vertical);
+    return themeProvider.getElementStyle(UIElement.gameStatusBar).backgroundColor!;
   }
 
   Color _getIconColor(Color buttonColor) {

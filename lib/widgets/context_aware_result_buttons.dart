@@ -3,7 +3,8 @@ import '../models/dataset_type.dart';
 import '../models/game_result_option.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
-import '../themes/app_theme.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 
 class ContextAwareResultButtons extends StatelessWidget {
   final DatasetType datasetType;
@@ -73,13 +74,29 @@ class ContextAwareResultButtons extends StatelessWidget {
         ? 'black'
         : 'draw';
 
-    final color = SkinConfig.getButtonColor(appSkin, buttonTypeKey);
-    final textColor = SkinConfig.getButtonTextColor(appSkin, buttonTypeKey);
-    final borderColor = SkinConfig.getBorderColor(appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
+
+    // Map the button type to UIElement
+    final UIElement element;
+    switch (buttonTypeKey) {
+      case 'white':
+        element = UIElement.buttonResultWhite;
+        break;
+      case 'black':
+        element = UIElement.buttonResultBlack;
+        break;
+      case 'draw':
+        element = UIElement.buttonResultDraw;
+        break;
+      default:
+        element = UIElement.buttonNext;
+    }
+
+    final style = themeProvider.getElementStyle(element);
 
     return Material(
-      elevation: appSkin == AppSkin.eink ? 0 : 4,
-      borderRadius: BorderRadius.circular(12),
+      elevation: style.elevation ?? 0,
+      borderRadius: style.borderRadius,
       child: InkWell(
         onTap: () => onResultSelected(option),
         borderRadius: BorderRadius.circular(12),
@@ -87,18 +104,7 @@ class ContextAwareResultButtons extends StatelessWidget {
           height: isVertical ? null : 60,
           width: isVertical ? double.infinity : null,
           constraints: isVertical ? const BoxConstraints(minHeight: 80) : null,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: appSkin == AppSkin.eink ? [] : [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          decoration: themeProvider.getContainerDecoration(element),
           child: Center(
             child: isVertical
                 ? Column(
@@ -109,18 +115,17 @@ class ContextAwareResultButtons extends StatelessWidget {
                         Icon(
                           _getKeyboardIcon(option.buttonType),
                           size: 20,
-                          color: appSkin == AppSkin.eink
-                              ? textColor
-                              : textColor.withOpacity(0.7),
+                          color: style.hasAnimation == true
+                              ? style.color?.withOpacity(0.7)
+                              : style.color,
                         ),
                         const SizedBox(height: 8),
                       ],
                       Text(
                         option.displayText,
-                        style: TextStyle(
-                          fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                        style: themeProvider.getTextStyle(element).copyWith(
+                          fontSize: themeProvider.getElementStyle(UIElement.textButtonLabel).fontSize,
+                          fontWeight: themeProvider.getElementStyle(UIElement.textButtonLabel).fontWeight,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -134,18 +139,17 @@ class ContextAwareResultButtons extends StatelessWidget {
                         Icon(
                           _getKeyboardIcon(option.buttonType),
                           size: 16,
-                          color: appSkin == AppSkin.eink
-                              ? textColor
-                              : textColor.withOpacity(0.7),
+                          color: style.hasAnimation == true
+                              ? style.color?.withOpacity(0.7)
+                              : style.color,
                         ),
                         const SizedBox(width: 6),
                       ],
                       Text(
                         option.displayText,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                        style: themeProvider.getTextStyle(element).copyWith(
+                          fontSize: themeProvider.getElementStyle(UIElement.textButtonLabel).fontSize,
+                          fontWeight: themeProvider.getElementStyle(UIElement.textButtonLabel).fontWeight,
                         ),
                       ),
                     ],

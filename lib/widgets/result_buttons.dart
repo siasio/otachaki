@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/scoring_config.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
-import '../themes/app_theme.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
+import '../themes/theme_enforcement.dart';
 
 class ResultButtons extends StatelessWidget {
   final Function(GameResult) onResultSelected;
@@ -18,33 +20,47 @@ class ResultButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ThemeEnforcement.enforceThemeUsage(
+      widgetName: 'ResultButtons',
+      skin: appSkin,
+      layoutType: layoutType,
+    );
+
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
+
     final buttons = [
       _buildResultButton(
         label: 'White Wins',
-        buttonTypeKey: 'white',
+        element: UIElement.buttonResultWhite,
         result: GameResult.whiteWins,
+        themeProvider: themeProvider,
       ),
       _buildResultButton(
         label: 'Draw',
-        buttonTypeKey: 'draw',
+        element: UIElement.buttonResultDraw,
         result: GameResult.draw,
+        themeProvider: themeProvider,
       ),
       _buildResultButton(
         label: 'Black Wins',
-        buttonTypeKey: 'black',
+        element: UIElement.buttonResultBlack,
         result: GameResult.blackWins,
+        themeProvider: themeProvider,
       ),
     ];
+
+    final containerPadding = themeProvider.getElementStyle(UIElement.cardContainer).padding!;
 
     if (layoutType == LayoutType.horizontal) {
       // Vertical arrangement: White (top), Draw (middle), Black (bottom)
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: containerPadding,
         child: Column(
           children: buttons.map((button) {
+            final buttonPadding = themeProvider.getElementStyle(UIElement.buttonResultWhite).padding!;
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: buttonPadding,
                 child: button,
               ),
             );
@@ -54,12 +70,13 @@ class ResultButtons extends StatelessWidget {
     } else {
       // Horizontal arrangement
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: containerPadding,
         child: Row(
           children: buttons.map((button) {
+            final buttonPadding = themeProvider.getElementStyle(UIElement.buttonResultWhite).padding!;
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
+                padding: buttonPadding,
                 child: button,
               ),
             );
@@ -71,36 +88,28 @@ class ResultButtons extends StatelessWidget {
 
   Widget _buildResultButton({
     required String label,
-    required String buttonTypeKey,
+    required UIElement element,
     required GameResult result,
+    required UnifiedThemeProvider themeProvider,
   }) {
-    final color = SkinConfig.getButtonColor(appSkin, buttonTypeKey);
-    final textColor = SkinConfig.getButtonTextColor(appSkin, buttonTypeKey);
-    final borderColor = SkinConfig.getBorderColor(appSkin);
+    final style = ThemeEnforcement.enforceElementUsage(
+      'ResultButtons',
+      element.toString(),
+      () => themeProvider.getElementStyle(element),
+    );
     final isVertical = layoutType == LayoutType.horizontal;
 
     return Material(
-      elevation: appSkin == AppSkin.eink ? 0 : 4,
-      borderRadius: BorderRadius.circular(12),
+      elevation: style.elevation ?? 0,
+      borderRadius: style.borderRadius,
       child: InkWell(
         onTap: () => onResultSelected(result),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: style.borderRadius,
         child: Container(
           height: isVertical ? null : 60,
           width: isVertical ? double.infinity : null,
           constraints: isVertical ? const BoxConstraints(minHeight: 80) : null,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: appSkin == AppSkin.eink ? [] : [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          decoration: themeProvider.getContainerDecoration(element),
           child: Center(
             child: isVertical
                 ? Column(
@@ -110,19 +119,18 @@ class ResultButtons extends StatelessWidget {
                       if (_getKeyboardIcon(result) != null) ...[
                         Icon(
                           _getKeyboardIcon(result),
-                          size: 20,
-                          color: appSkin == AppSkin.eink
-                              ? textColor
-                              : textColor.withOpacity(0.7),
+                          size: themeProvider.getElementStyle(element).fontSize?.clamp(16, 24) ?? 20,
+                          color: style.hasAnimation == true
+                              ? style.color?.withOpacity(0.7)
+                              : style.color,
                         ),
                         const SizedBox(height: 8),
                       ],
                       Text(
                         label,
-                        style: TextStyle(
-                          fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                        style: themeProvider.getTextStyle(element).copyWith(
+                          fontSize: themeProvider.getElementStyle(UIElement.textButtonLabel).fontSize,
+                          fontWeight: themeProvider.getElementStyle(UIElement.textButtonLabel).fontWeight,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -135,19 +143,18 @@ class ResultButtons extends StatelessWidget {
                       if (_getKeyboardIcon(result) != null) ...[
                         Icon(
                           _getKeyboardIcon(result),
-                          size: 16,
-                          color: appSkin == AppSkin.eink
-                              ? textColor
-                              : textColor.withOpacity(0.7),
+                          size: themeProvider.getElementStyle(element).fontSize?.clamp(14, 20) ?? 16,
+                          color: style.hasAnimation == true
+                              ? style.color?.withOpacity(0.7)
+                              : style.color,
                         ),
                         const SizedBox(width: 6),
                       ],
                       Text(
                         label,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
+                        style: themeProvider.getTextStyle(element).copyWith(
+                          fontSize: themeProvider.getElementStyle(UIElement.textButtonLabel).fontSize,
+                          fontWeight: themeProvider.getElementStyle(UIElement.textButtonLabel).fontWeight,
                         ),
                       ),
                     ],

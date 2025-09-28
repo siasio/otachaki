@@ -58,7 +58,7 @@ class GlobalConfiguration {
       timerType: TimerType.fromString(json['timerType'] as String?) ?? defaultConfig.timerType,
       layoutType: LayoutType.fromString(json['layoutType'] as String?) ?? defaultConfig.layoutType,
       appSkin: AppSkin.fromString(json['appSkin'] as String?) ?? defaultConfig.appSkin,
-      autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?) ?? defaultConfig.autoAdvanceMode,
+      autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
     );
   }
 

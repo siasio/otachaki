@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/go_position.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
-import '../themes/app_theme.dart';
+import '../models/layout_type.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 import 'go_board.dart';
 
 /// A container widget that encapsulates the Go board with consistent overlay behavior
@@ -11,6 +13,7 @@ class GameBoardContainer extends StatefulWidget {
   final GoPosition position;
   final TrainingPosition? trainingPosition;
   final AppSkin appSkin;
+  final LayoutType layoutType;
   final bool showFeedbackOverlay;
   final Widget? feedbackWidget;
 
@@ -19,6 +22,7 @@ class GameBoardContainer extends StatefulWidget {
     required this.position,
     this.trainingPosition,
     this.appSkin = AppSkin.classic,
+    this.layoutType = LayoutType.vertical,
     this.showFeedbackOverlay = false,
     this.feedbackWidget,
   });
@@ -32,7 +36,9 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
 
   @override
   Widget build(BuildContext context) {
-    final shouldGrayOutBoard = SkinConfig.shouldGrayOutBoard(widget.appSkin);
+    final shouldGrayOutBoard = true;
+    final themeProvider = UnifiedThemeProvider(skin: widget.appSkin, layoutType: widget.layoutType);
+    final overlayColor = themeProvider.getElementStyle(UIElement.boardOverlay).backgroundColor!;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -53,25 +59,31 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
             height: _cachedBoardSize!,
             child: Stack(
               children: [
-                // The Go board itself
-                GoBoard(
-                  position: widget.position,
-                  trainingPosition: widget.trainingPosition,
-                  appSkin: widget.appSkin,
-                ),
-                // Overlay that only covers the board area
-                if (widget.showFeedbackOverlay)
+                // The Go board itself with optional theme-aware overlay
+                shouldGrayOutBoard && widget.showFeedbackOverlay
+                    ? ColorFiltered(
+                        colorFilter: widget.appSkin == AppSkin.eink
+                            ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply)
+                            : ColorFilter.mode(overlayColor.withOpacity(0.3), BlendMode.multiply),
+                        child: GoBoard(
+                          position: widget.position,
+                          trainingPosition: widget.trainingPosition,
+                          appSkin: widget.appSkin,
+                        ),
+                      )
+                    : GoBoard(
+                        position: widget.position,
+                        trainingPosition: widget.trainingPosition,
+                        appSkin: widget.appSkin,
+                      ),
+                // Overlay for feedback widget only (no background color)
+                if (widget.showFeedbackOverlay && widget.feedbackWidget != null)
                   Positioned.fill(
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: shouldGrayOutBoard
-                            ? SkinConfig.getFeedbackOverlayColor(widget.appSkin)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent,
                       ),
-                      child: widget.feedbackWidget != null
-                          ? Center(child: widget.feedbackWidget!)
-                          : null,
+                      child: Center(child: widget.feedbackWidget!),
                     ),
                   ),
               ],

@@ -2,42 +2,36 @@ import 'package:flutter/material.dart';
 import '../models/go_position.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
-import '../themes/app_theme.dart';
+import '../models/layout_type.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 
 class GoBoard extends StatelessWidget {
   final GoPosition position;
   final TrainingPosition? trainingPosition;
   final AppSkin appSkin;
+  final LayoutType layoutType;
 
   const GoBoard({
     super.key,
     required this.position,
     this.trainingPosition,
     this.appSkin = AppSkin.classic,
+    this.layoutType = LayoutType.vertical,
   });
 
   @override
   Widget build(BuildContext context) {
-    final boardColor = SkinConfig.getBoardColor(appSkin);
-    final shouldAnimate = SkinConfig.shouldAnimate(appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
+    final boardStyle = themeProvider.getElementStyle(UIElement.boardBackground);
 
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: boardColor,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: shouldAnimate ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ] : [], // No shadow for e-ink
-        ),
+        margin: boardStyle.margin,
+        decoration: themeProvider.getContainerDecoration(UIElement.boardBackground),
         child: CustomPaint(
-          painter: GoBoardPainter(position, trainingPosition, appSkin),
+          painter: GoBoardPainter(position, trainingPosition, themeProvider),
           size: Size.infinite,
         ),
       ),
@@ -48,15 +42,16 @@ class GoBoard extends StatelessWidget {
 class GoBoardPainter extends CustomPainter {
   final GoPosition position;
   final TrainingPosition? trainingPosition;
-  final AppSkin appSkin;
+  final UnifiedThemeProvider themeProvider;
 
-  GoBoardPainter(this.position, this.trainingPosition, this.appSkin);
+  GoBoardPainter(this.position, this.trainingPosition, this.themeProvider);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final gridStyle = themeProvider.getElementStyle(UIElement.boardGridLines);
     final paint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 1.0;
+      ..color = gridStyle.color!
+      ..strokeWidth = gridStyle.strokeWidth!;
 
     // Determine board display area
     final boardDisplay = trainingPosition?.gameInfo?.boardDisplay;
@@ -83,8 +78,9 @@ class GoBoardPainter extends CustomPainter {
     }
 
     if (starPoints != null) {
+      final starStyle = themeProvider.getElementStyle(UIElement.boardStarPoints);
       final starPaint = Paint()
-        ..color = Colors.black
+        ..color = starStyle.color!
         ..style = PaintingStyle.fill;
 
       for (int row in starPoints) {
@@ -109,25 +105,24 @@ class GoBoardPainter extends CustomPainter {
           final double x = boardStart + (col - displayStartCol) * cellSize;
           final double y = boardStart + (row - displayStartRow) * cellSize;
 
-          if (appSkin == AppSkin.eink) {
+          if (themeProvider.skin == AppSkin.eink) {
             // E-ink style: solid colors with borders for white stones
+            final stoneStyle = themeProvider.getElementStyle(
+              stone == StoneColor.black ? UIElement.stoneBlack : UIElement.stoneWhite
+            );
             final stonePaint = Paint()
-              ..style = PaintingStyle.fill;
-
-            if (stone == StoneColor.black) {
-              stonePaint.color = Colors.black;
-            } else {
-              stonePaint.color = Colors.white;
-            }
+              ..style = PaintingStyle.fill
+              ..color = stoneStyle.color!;
 
             canvas.drawCircle(Offset(x, y), stoneRadius, stonePaint);
 
             // Add thick black border for white stones in e-ink mode
             if (stone == StoneColor.white) {
+              final borderStyle = themeProvider.getElementStyle(UIElement.stoneWhiteBorder);
               final borderPaint = Paint()
-                ..color = Colors.black
+                ..color = borderStyle.color!
                 ..style = PaintingStyle.stroke
-                ..strokeWidth = 2.0;
+                ..strokeWidth = borderStyle.strokeWidth!;
               canvas.drawCircle(Offset(x, y), stoneRadius, borderPaint);
             }
           } else {
@@ -275,8 +270,9 @@ class GoBoardPainter extends CustomPainter {
     final focusWidth = boardDisplay.focusWidth!;
     final focusHeight = boardDisplay.focusHeight!;
 
+    final overlayStyle = themeProvider.getElementStyle(UIElement.focusOverlay);
     final overlayPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.6)
+      ..color = overlayStyle.color!
       ..style = PaintingStyle.fill;
 
     // Calculate focus area in display coordinates
@@ -329,13 +325,14 @@ class GoBoardPainter extends CustomPainter {
   }
 
   void _drawMoveNumber(Canvas canvas, double x, double y, int moveNumber, double stoneRadius) {
+    final moveNumberStyle = themeProvider.getElementStyle(UIElement.moveNumber);
     final textPainter = TextPainter(
       text: TextSpan(
         text: '$moveNumber',
         style: TextStyle(
-          color: Colors.black,
-          fontSize: stoneRadius * 0.8,
-          fontWeight: FontWeight.bold,
+          color: moveNumberStyle.color,
+          fontSize: moveNumberStyle.fontSize ?? (stoneRadius * 0.8),
+          fontWeight: moveNumberStyle.fontWeight,
         ),
       ),
       textDirection: TextDirection.ltr,

@@ -2,14 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/timer_type.dart';
 import '../models/app_skin.dart';
-import '../themes/app_theme.dart';
+import '../models/layout_type.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 
 class TimerBar extends StatefulWidget {
   final Duration duration;
   final VoidCallback? onComplete;
   final TimerType timerType;
   final AppSkin appSkin;
-  final bool isVertical;
+  final LayoutType layoutType;
   final double segmentGap;
   final double barThickness;
 
@@ -19,7 +21,7 @@ class TimerBar extends StatefulWidget {
     this.onComplete,
     this.timerType = TimerType.smooth,
     this.appSkin = AppSkin.classic,
-    this.isVertical = false,
+    this.layoutType = LayoutType.vertical,
     this.segmentGap = 2.0,
     this.barThickness = 8.0,
   });
@@ -97,17 +99,16 @@ class _TimerBarState extends State<TimerBar>
   }
 
   Widget _buildSmoothTimer() {
-    final progressColor = SkinConfig.getProgressBarColor(widget.appSkin);
-    final backgroundColor = SkinConfig.getProgressBarBackgroundColor(widget.appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: widget.appSkin, layoutType: widget.layoutType);
+    final progressStyle = themeProvider.getElementStyle(UIElement.timerBarProgress);
+    final containerStyle = themeProvider.getElementStyle(UIElement.timerBarContainer);
+    final isVertical = widget.layoutType == LayoutType.horizontal;
 
-    if (widget.isVertical) {
+    if (isVertical) {
       return Container(
         width: widget.barThickness,
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.barThickness / 2),
-          color: backgroundColor,
-        ),
+        margin: containerStyle.margin,
+        decoration: themeProvider.getContainerDecoration(UIElement.timerBarContainer),
         child: AnimatedBuilder(
           animation: _animation,
           builder: (context, child) {
@@ -118,9 +119,9 @@ class _TimerBarState extends State<TimerBar>
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(widget.barThickness / 2),
-                    color: widget.appSkin == AppSkin.eink
-                        ? progressColor
-                        : _getProgressColorForValue(_animation.value),
+                    color: progressStyle.hasAnimation == true
+                        ? _getProgressColorForValue(_animation.value)
+                        : progressStyle.backgroundColor,
                   ),
                 ),
               ),
@@ -132,11 +133,8 @@ class _TimerBarState extends State<TimerBar>
       // Horizontal timer bar for vertical layout
       return Container(
         height: widget.barThickness,
-        margin: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(widget.barThickness / 2),
-          color: backgroundColor,
-        ),
+        margin: containerStyle.margin,
+        decoration: themeProvider.getContainerDecoration(UIElement.timerBarContainer),
         child: AnimatedBuilder(
           animation: _animation,
           builder: (context, child) {
@@ -147,9 +145,9 @@ class _TimerBarState extends State<TimerBar>
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(widget.barThickness / 2),
-                    color: widget.appSkin == AppSkin.eink
-                        ? progressColor
-                        : _getProgressColorForValue(_animation.value),
+                    color: progressStyle.hasAnimation == true
+                        ? _getProgressColorForValue(_animation.value)
+                        : progressStyle.backgroundColor,
                   ),
                 ),
               ),
@@ -177,7 +175,8 @@ class _TimerBarState extends State<TimerBar>
   Widget _buildSegmentedTimer() {
     final totalSeconds = widget.duration.inSeconds;
     final segmentsFilled = _remainingSeconds;
-    final backgroundColor = SkinConfig.getProgressBarBackgroundColor(widget.appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: widget.appSkin, layoutType: widget.layoutType);
+    final backgroundColor = themeProvider.getElementStyle(UIElement.timerBarContainer).backgroundColor!;
     final progress = segmentsFilled / totalSeconds;
 
     Color segmentColor;
@@ -193,7 +192,7 @@ class _TimerBarState extends State<TimerBar>
       }
     }
 
-    if (widget.isVertical) {
+    if (widget.layoutType == LayoutType.horizontal) {
       return Container(
         width: widget.barThickness,
         margin: const EdgeInsets.all(8),

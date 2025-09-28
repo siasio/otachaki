@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
-import '../themes/app_theme.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 
 class GameStatusBar extends StatelessWidget {
   final TrainingPosition? position;
@@ -18,18 +19,20 @@ class GameStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = SkinConfig.getResultBackgroundColor(appSkin);
-    final textColor = SkinConfig.getTextColor(appSkin);
-    final shouldAnimate = SkinConfig.shouldAnimate(appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
+    final statusBarStyle = themeProvider.getElementStyle(UIElement.gameStatusBar);
 
     if (position == null) {
       return Container(
         height: 60,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: statusBarStyle.margin,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text('Demo position', style: TextStyle(fontSize: 12, color: textColor)),
+            Text(
+              'Demo position',
+              style: themeProvider.getTextStyle(UIElement.textCaption),
+            ),
           ],
         ),
       );
@@ -49,18 +52,11 @@ class GameStatusBar extends StatelessWidget {
       children: [
         Text(
           'Komi',
-          style: TextStyle(
-            fontSize: layoutType == LayoutType.horizontal ? 14 : 10,
-            color: textColor.withOpacity(0.6),
-          ),
+          style: themeProvider.getTextStyle(UIElement.textStatusIndicator),
         ),
         Text(
           '${gameInfo?.komi ?? 0}',
-          style: TextStyle(
-            fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
+          style: themeProvider.getTextStyle(UIElement.textGameInfo),
         ),
       ],
     );
@@ -73,18 +69,8 @@ class GameStatusBar extends StatelessWidget {
 
     return Container(
       height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: shouldAnimate ? [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ] : [],
-      ),
+      margin: statusBarStyle.margin,
+      decoration: themeProvider.getContainerDecoration(UIElement.gameStatusBar),
       child: layoutType == LayoutType.horizontal
           ? Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -106,7 +92,7 @@ class GameStatusBar extends StatelessWidget {
   }
 
   Widget _buildCaptureInfo(String label, int count, Color stoneColor) {
-    final textColor = SkinConfig.getTextColor(appSkin);
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -129,20 +115,13 @@ class GameStatusBar extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               '$count',
-              style: TextStyle(
-                fontSize: layoutType == LayoutType.horizontal ? 20 : 16,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+              style: themeProvider.getTextStyle(UIElement.textGameInfo),
             ),
           ],
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: layoutType == LayoutType.horizontal ? 12 : 9,
-            color: textColor.withOpacity(0.6),
-          ),
+          style: themeProvider.getTextStyle(UIElement.textStatusIndicator),
           textAlign: TextAlign.center,
         ),
       ],

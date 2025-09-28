@@ -3,11 +3,13 @@ import 'screens/training_screen.dart';
 import 'services/position_manager.dart';
 import 'services/global_configuration_manager.dart';
 import 'themes/app_theme.dart';
+import 'themes/theme_enforcement.dart';
 import 'models/app_skin.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  ThemeEnforcement.initialize();
   await PositionManager.initialize();
   runApp(const GoCountingApp());
 }

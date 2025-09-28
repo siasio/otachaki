@@ -14,7 +14,8 @@ import '../models/layout_type.dart';
 import '../models/timer_type.dart';
 import '../widgets/adaptive_layout.dart';
 import '../widgets/adaptive_app_bar.dart';
-import '../themes/app_theme.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 import '../widgets/timer_bar.dart';
 import '../widgets/game_board_container.dart';
 import '../widgets/adaptive_result_buttons.dart';
@@ -473,10 +474,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final displayResult = _formatResultText(result);
     final colors = _getResultDisplayColors(result);
     final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
+    final layoutType = _globalConfig?.layoutType ?? LayoutType.vertical;
+    final themeProvider = UnifiedThemeProvider(skin: currentSkin, layoutType: layoutType);
 
-    final correctColor = SkinConfig.getCorrectColor(currentSkin);
-    final incorrectColor = SkinConfig.getIncorrectColor(currentSkin);
-    final shouldAnimate = SkinConfig.shouldAnimate(currentSkin);
+    final correctColor = themeProvider.getElementStyle(UIElement.correctIndicator).color!;
+    final incorrectColor = themeProvider.getElementStyle(UIElement.incorrectIndicator).color!;
+    final shouldAnimate = themeProvider.getElementStyle(UIElement.correctIndicator).hasAnimation ?? false;
 
     // Check if pause button should be shown
     final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
@@ -639,14 +642,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   ResultDisplayColors _getResultDisplayColors(String result) {
     final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
+    final layoutType = _globalConfig?.layoutType ?? LayoutType.vertical;
+    final themeProvider = UnifiedThemeProvider(skin: currentSkin, layoutType: layoutType);
 
     if (result.isEmpty) {
       // Unknown result - use neutral colors
+      final containerStyle = themeProvider.getElementStyle(UIElement.gameStatusBar);
       return ResultDisplayColors(
-        backgroundColor: SkinConfig.getResultBackgroundColor(currentSkin),
-        textColor: SkinConfig.getTextColor(currentSkin),
-        borderColor: SkinConfig.getResultBorderColor(currentSkin),
-        shadowColor: SkinConfig.getResultShadowColor(currentSkin, 'default'),
+        backgroundColor: containerStyle.backgroundColor!,
+        textColor: themeProvider.getElementStyle(UIElement.textBody).color!,
+        borderColor: containerStyle.borderColor!,
+        shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withOpacity(0.3),
       );
     }
 
@@ -663,11 +669,29 @@ class _TrainingScreenState extends State<TrainingScreen> {
       resultType = 'default';
     }
 
+    final UIElement buttonElement;
+    switch (resultType) {
+      case 'white':
+        buttonElement = UIElement.buttonResultWhite;
+        break;
+      case 'black':
+        buttonElement = UIElement.buttonResultBlack;
+        break;
+      case 'draw':
+        buttonElement = UIElement.buttonResultDraw;
+        break;
+      default:
+        buttonElement = UIElement.gameStatusBar;
+    }
+
+    final elementStyle = themeProvider.getElementStyle(buttonElement);
+    final containerStyle = themeProvider.getElementStyle(UIElement.gameStatusBar);
+
     return ResultDisplayColors(
-      backgroundColor: SkinConfig.getResultBackgroundColor(currentSkin),
-      textColor: SkinConfig.getResultTextColor(currentSkin, resultType),
-      borderColor: SkinConfig.getResultBorderColor(currentSkin),
-      shadowColor: SkinConfig.getResultShadowColor(currentSkin, resultType),
+      backgroundColor: containerStyle.backgroundColor!,
+      textColor: elementStyle.color!,
+      borderColor: containerStyle.borderColor!,
+      shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withOpacity(0.3),
     );
   }
 
@@ -758,7 +782,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                             onComplete: _onTimerComplete,
                             timerType: timerType,
                             appSkin: currentSkin,
-                            isVertical: layoutType == LayoutType.horizontal,
+                            layoutType: layoutType,
                             barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
                             segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
                           )
@@ -778,6 +802,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       position: _currentPosition,
                       trainingPosition: _positionManager.currentTrainingPosition,
                       appSkin: currentSkin,
+                      layoutType: layoutType,
                       showFeedbackOverlay: _showFeedbackOverlay,
                       feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                     ),
@@ -813,7 +838,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       onComplete: _onTimerComplete,
                       timerType: timerType,
                       appSkin: currentSkin,
-                      isVertical: layoutType == LayoutType.horizontal,
+                      layoutType: layoutType,
                       barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
                       segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
                     )
@@ -833,6 +858,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 position: _currentPosition,
                 trainingPosition: _positionManager.currentTrainingPosition,
                 appSkin: currentSkin,
+                layoutType: layoutType,
                 showFeedbackOverlay: _showFeedbackOverlay,
                 feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
               ),

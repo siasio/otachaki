@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:countingapp/widgets/timer_bar.dart';
 import 'package:countingapp/models/timer_type.dart';
 import 'package:countingapp/models/app_skin.dart';
+import 'package:countingapp/models/layout_type.dart';
 
 void main() {
   group('TimerBar Widget Tests', () {
@@ -14,7 +15,7 @@ void main() {
               duration: const Duration(seconds: 10),
               timerType: TimerType.smooth,
               appSkin: AppSkin.classic,
-              isVertical: false,
+              layoutType: LayoutType.vertical,
             ),
           ),
         ),
@@ -35,7 +36,7 @@ void main() {
                 duration: const Duration(seconds: 10),
                 timerType: TimerType.smooth,
                 appSkin: AppSkin.classic,
-                isVertical: true,
+                layoutType: LayoutType.horizontal,
               ),
             ),
           ),
@@ -54,7 +55,7 @@ void main() {
               duration: const Duration(seconds: 5),
               timerType: TimerType.segmented,
               appSkin: AppSkin.classic,
-              isVertical: false,
+              layoutType: LayoutType.vertical,
             ),
           ),
         ),
@@ -72,7 +73,7 @@ void main() {
               duration: const Duration(seconds: 10),
               timerType: TimerType.smooth,
               appSkin: AppSkin.eink,
-              isVertical: false,
+              layoutType: LayoutType.vertical,
             ),
           ),
         ),
@@ -93,7 +94,7 @@ void main() {
                 duration: const Duration(seconds: 10),
                 timerType: TimerType.smooth,
                 appSkin: AppSkin.classic,
-                isVertical: false,
+                layoutType: LayoutType.vertical,
               ),
             ),
           ),
@@ -116,7 +117,7 @@ void main() {
                 duration: const Duration(seconds: 30), // Many segments
                 timerType: TimerType.segmented,
                 appSkin: AppSkin.classic,
-                isVertical: true,
+                layoutType: LayoutType.horizontal,
               ),
             ),
           ),

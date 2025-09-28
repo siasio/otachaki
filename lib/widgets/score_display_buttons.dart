@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
-import '../themes/app_theme.dart';
+import '../themes/unified_theme_provider.dart';
+import '../themes/element_registry.dart';
 import '../core/game_result_parser.dart';
 
 class ScoreDisplayButtons extends StatelessWidget {
@@ -22,6 +23,7 @@ class ScoreDisplayButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
     final scoreInfo = _parseScoreInfo(resultString);
 
     if (layoutType == LayoutType.horizontal) {
@@ -33,17 +35,19 @@ class ScoreDisplayButtons extends StatelessWidget {
               child: _buildScoreDisplay(
                 text: scoreInfo.whiteScore,
                 isWhite: true,
+                themeProvider: themeProvider,
               ),
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _buildNextButton(),
+              child: _buildNextButton(themeProvider: themeProvider),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: _buildScoreDisplay(
                 text: scoreInfo.blackScore,
                 isWhite: false,
+                themeProvider: themeProvider,
               ),
             ),
           ],
@@ -58,17 +62,19 @@ class ScoreDisplayButtons extends StatelessWidget {
               child: _buildScoreDisplay(
                 text: scoreInfo.whiteScore,
                 isWhite: true,
+                themeProvider: themeProvider,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildNextButton(),
+              child: _buildNextButton(themeProvider: themeProvider),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildScoreDisplay(
                 text: scoreInfo.blackScore,
                 isWhite: false,
+                themeProvider: themeProvider,
               ),
             ),
           ],
@@ -80,20 +86,21 @@ class ScoreDisplayButtons extends StatelessWidget {
   Widget _buildScoreDisplay({
     required String text,
     required bool isWhite,
+    required UnifiedThemeProvider themeProvider,
   }) {
     final backgroundColor = useColoredBackground
         ? (isWhite
-            ? SkinConfig.getButtonColor(appSkin, 'white')
-            : SkinConfig.getButtonColor(appSkin, 'black'))
-        : SkinConfig.getButtonColor(appSkin, 'draw');
+            ? themeProvider.getElementStyle(UIElement.buttonResultWhite).backgroundColor!
+            : themeProvider.getElementStyle(UIElement.buttonResultBlack).backgroundColor!)
+        : themeProvider.getElementStyle(UIElement.buttonResultDraw).backgroundColor!;
 
     final textColor = useColoredBackground
         ? (isWhite
-            ? SkinConfig.getButtonTextColor(appSkin, 'white')
-            : SkinConfig.getButtonTextColor(appSkin, 'black'))
-        : SkinConfig.getTextColor(appSkin);
+            ? themeProvider.getElementStyle(UIElement.buttonResultWhite).color!
+            : themeProvider.getElementStyle(UIElement.buttonResultBlack).color!)
+        : themeProvider.getElementStyle(UIElement.textBody).color!;
 
-    final borderColor = SkinConfig.getBorderColor(appSkin);
+    final borderColor = themeProvider.getElementStyle(UIElement.buttonResultWhite).borderColor!;
     final isVertical = layoutType == LayoutType.horizontal;
 
     return Container(
@@ -126,10 +133,10 @@ class ScoreDisplayButtons extends StatelessWidget {
     );
   }
 
-  Widget _buildNextButton() {
-    final color = SkinConfig.getButtonColor(appSkin, 'next');
-    final textColor = SkinConfig.getButtonTextColor(appSkin, 'next');
-    // final borderColor = SkinConfig.getBorderColor(appSkin);
+  Widget _buildNextButton({required UnifiedThemeProvider themeProvider}) {
+    final color = themeProvider.getElementStyle(UIElement.buttonNext).backgroundColor!;
+    final textColor = themeProvider.getElementStyle(UIElement.buttonNext).color!;
+    // final borderColor = themeProvider.getElementStyle(UIElement.buttonResultWhite).borderColor!;
     final isVertical = layoutType == LayoutType.horizontal;
 
     return Material(
