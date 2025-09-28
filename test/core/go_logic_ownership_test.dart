@@ -7,13 +7,13 @@ void main() {
   group('GoLogic ownership decoding', () {
     test('decodeOwnership converts bytes correctly', () {
       // Create test ownership data where:
-      // 0 = -1.0 (white), 128 = 0.0 (neutral), 255 = 1.0 (black)
+      // 0 = -1.0 (white), 16 = 0.0 (neutral), 32 = 1.0 (black)
       final testBytes = Uint8List.fromList([
         0,   // -1.0 (white)
-        64,  // -0.5 (moderate white)
-        128, // 0.0 (neutral)
-        192, // 0.5 (moderate black)
-        255, // 1.0 (black)
+        4,   // -0.75 (strong white)
+        16,  // 0.0 (neutral)
+        28,  // 0.75 (strong black)
+        32,  // 1.0 (black)
       ]);
       final base64String = base64Encode(testBytes);
 
@@ -24,9 +24,9 @@ void main() {
 
       // Check the first 5 values
       expect(ownership[0][0], closeTo(-1.0, 0.01));
-      expect(ownership[0][1], closeTo(-0.5, 0.01));
+      expect(ownership[0][1], closeTo(-0.75, 0.01));
       expect(ownership[0][2], closeTo(0.0, 0.01));
-      expect(ownership[1][0], closeTo(0.5, 0.01));
+      expect(ownership[1][0], closeTo(0.75, 0.01));
       expect(ownership[1][1], closeTo(1.0, 0.01));
 
       // Remaining values should be 0 (default)

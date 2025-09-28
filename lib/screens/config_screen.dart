@@ -481,7 +481,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
                         // Ownership Display Mode
                         DropdownButtonFormField<OwnershipDisplayMode>(
-                          initialValue: _currentDatasetConfig!.ownershipDisplayMode,
+                          value: _currentDatasetConfig!.ownershipDisplayMode,
                           decoration: const InputDecoration(
                             labelText: 'Ownership Display Mode',
                             helperText: 'How ownership information is shown in review view',

@@ -293,19 +293,19 @@ class GoBoardPainter extends CustomPainter {
       }
     }
 
-    // Draw ownership information (only in review view)
-    if (viewMode == BoardViewMode.review &&
-        ownershipDisplayMode.showOwnership &&
-        trainingPosition?.hasOwnership == true) {
-      _drawOwnership(canvas, size, boardStart, cellSize, displayStartRow, displayStartCol,
-                    displayWidth, displayHeight);
-    }
-
     // Draw focus area highlighting (gray out everything except focus area)
     if (boardDisplay?.focusStartRow != null && boardDisplay?.focusStartCol != null &&
         boardDisplay?.focusWidth != null && boardDisplay?.focusHeight != null) {
       _drawFocusHighlight(canvas, size, boardStart, cellSize, displayStartRow, displayStartCol,
                          displayWidth, displayHeight, boardDisplay!);
+    }
+
+    // Draw ownership information (only in review view) - drawn last to be on top
+    if (viewMode == BoardViewMode.review &&
+        ownershipDisplayMode.showOwnership &&
+        trainingPosition?.hasOwnership == true) {
+      _drawOwnership(canvas, size, boardStart, cellSize, displayStartRow, displayStartCol,
+                    displayWidth, displayHeight);
     }
   }
 
@@ -456,7 +456,7 @@ class GoBoardPainter extends CustomPainter {
     // Draw background circle to hide grid lines
     final boardStyle = themeProvider.getElementStyle(UIElement.boardBackground);
     final backgroundPaint = Paint()
-      ..color = boardStyle.color!
+      ..color = boardStyle.backgroundColor!
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(Offset(x, y), stoneRadius * 0.7, backgroundPaint);
@@ -535,49 +535,88 @@ class GoBoardPainter extends CustomPainter {
 
     // Square size based on ownership strength (0.125 increments from 0 to 1)
     final quantizedStrength = (strength * 8).round() / 8.0; // Quantize to 0.125 increments
-    final squareSize = cellSize * 0.15 * quantizedStrength.clamp(0.125, 1.0);
+    final squareSize = cellSize * 0.2 * quantizedStrength.clamp(0.125, 1.0);
 
-    final paint = Paint()
-      ..color = isBlackOwnership ? Colors.black : Colors.white
-      ..style = PaintingStyle.fill;
+    if (isBlackOwnership) {
+      // Black ownership: black squares
+      final paint = Paint()
+        ..color = Colors.black
+        ..style = PaintingStyle.fill;
 
-    // Add border for white squares for visibility
-    if (!isBlackOwnership) {
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, y), width: squareSize, height: squareSize),
+        paint,
+      );
+    } else {
+      // White ownership: white squares with thick black border for visibility
+      final whitePaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+
       final borderPaint = Paint()
         ..color = Colors.black
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0;
+        ..strokeWidth = 2.0; // Thick border for visibility
 
+      // Draw white fill
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, y), width: squareSize, height: squareSize),
+        whitePaint,
+      );
+
+      // Draw black border
       canvas.drawRect(
         Rect.fromCenter(center: Offset(x, y), width: squareSize, height: squareSize),
         borderPaint,
       );
     }
-
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(x, y), width: squareSize, height: squareSize),
-      paint,
-    );
   }
 
   void _drawOwnershipOverlay(Canvas canvas, double x, double y, double ownership, double cellSize) {
     final isBlackOwnership = ownership > 0;
     final strength = ownership.abs();
 
-    // Overlay opacity: max 0.5, scaled by ownership strength
-    final maxOpacity = 0.5;
-    final opacity = (strength * maxOpacity).clamp(0.0, maxOpacity);
-
-    final paint = Paint()
-      ..color = (isBlackOwnership ? Colors.black : Colors.white).withOpacity(opacity)
-      ..style = PaintingStyle.fill;
-
     // Cover the entire intersection area
     final overlaySize = cellSize * 0.9;
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(x, y), width: overlaySize, height: overlaySize),
-      paint,
-    );
+
+    if (isBlackOwnership) {
+      // Black ownership: black overlay
+      final maxOpacity = 0.5;
+      final opacity = (strength * maxOpacity).clamp(0.0, maxOpacity);
+
+      final paint = Paint()
+        ..color = Colors.black.withValues(alpha: opacity)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, y), width: overlaySize, height: overlaySize),
+        paint,
+      );
+    } else {
+      // White ownership: use a light gray overlay for better visibility than pure white
+      final maxOpacity = 0.6;
+      final opacity = (strength * maxOpacity).clamp(0.2, maxOpacity); // Minimum opacity for visibility
+
+      final paint = Paint()
+        ..color = const Color(0xFFE0E0E0).withValues(alpha: opacity) // Light gray instead of white
+        ..style = PaintingStyle.fill;
+
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, y), width: overlaySize, height: overlaySize),
+        paint,
+      );
+
+      // Add a subtle border for even better visibility
+      final borderPaint = Paint()
+        ..color = Colors.grey.withValues(alpha: 0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, y), width: overlaySize, height: overlaySize),
+        borderPaint,
+      );
+    }
   }
 
   @override

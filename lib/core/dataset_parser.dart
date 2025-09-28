@@ -64,6 +64,7 @@ class DatasetParser {
           : null,
       'moves': json['moves'] as String?,
       'number_of_moves': json['number_of_moves'] as int? ?? 0,
+      'ownership': json['ownership'] as String?,
     };
   }
 

@@ -21,6 +21,7 @@ class GoLogic {
   /// Decode base64 ownership to a 2D array of doubles
   /// Returns boardSize x boardSize array where ownership values range from -1.0 to 1.0
   /// Negative values indicate white ownership, positive indicate black ownership
+  /// Uses the same conversion as the Python generator: (val - 16) / 16.0
   static List<List<double>> decodeOwnership(String ownershipBase64, int boardSize) {
     final bytes = base64Decode(ownershipBase64);
     final ownership = List.generate(boardSize, (_) => List.generate(boardSize, (_) => 0.0));
@@ -28,10 +29,10 @@ class GoLogic {
     for (int i = 0; i < bytes.length && i < boardSize * boardSize; i++) {
       final row = i ~/ boardSize;
       final col = i % boardSize;
-      // Convert byte (0-255) to ownership value (-1.0 to 1.0)
-      // Assuming byte values: 0 = -1.0 (white), 128 = 0.0 (neutral), 255 = 1.0 (black)
+      // Convert from 0-32 range to -1.0 to 1.0 range
+      // Same conversion as in enhanced_final_position_generator.py:261
       final rawValue = bytes[i];
-      ownership[row][col] = (rawValue - 128.0) / 128.0;
+      ownership[row][col] = (rawValue - 16.0) / 16.0;
       // Clamp to valid range
       ownership[row][col] = ownership[row][col].clamp(-1.0, 1.0);
     }
