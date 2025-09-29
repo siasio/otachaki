@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
 import '../themes/unified_theme_provider.dart';
@@ -11,6 +12,9 @@ class ScoreDisplayButtons extends StatelessWidget {
   final AppSkin appSkin;
   final LayoutType layoutType;
   final bool useColoredBackground;
+  final int? blackTerritory;
+  final int? whiteTerritory;
+  final double? komi;
 
   const ScoreDisplayButtons({
     super.key,
@@ -19,12 +23,15 @@ class ScoreDisplayButtons extends StatelessWidget {
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
     this.useColoredBackground = true,
+    this.blackTerritory,
+    this.whiteTerritory,
+    this.komi,
   });
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
-    final scoreInfo = _parseScoreInfo(resultString);
+    final scoreInfo = parseScoreInfo(resultString);
 
     if (layoutType == LayoutType.horizontal) {
       return Container(
@@ -100,7 +107,12 @@ class ScoreDisplayButtons extends StatelessWidget {
             : themeProvider.getElementStyle(UIElement.buttonResultBlack).color!)
         : themeProvider.getElementStyle(UIElement.textBody).color!;
 
-    final borderColor = themeProvider.getElementStyle(UIElement.buttonResultWhite).borderColor!;
+    // Use thick dashed border of opposite color for territory displays
+    final shouldUseDashedBorder = blackTerritory != null && whiteTerritory != null;
+    final borderColor = shouldUseDashedBorder
+        ? (isWhite ? Colors.black : Colors.white)
+        : themeProvider.getElementStyle(UIElement.buttonResultWhite).borderColor!;
+
     final isVertical = layoutType == LayoutType.horizontal;
 
     return Container(
@@ -110,7 +122,9 @@ class ScoreDisplayButtons extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 2),
+        border: shouldUseDashedBorder
+            ? null  // We'll use a custom dashed border painter
+            : Border.all(color: borderColor, width: 2),
         boxShadow: appSkin == AppSkin.eink ? [] : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -119,17 +133,49 @@ class ScoreDisplayButtons extends StatelessWidget {
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: layoutType == LayoutType.horizontal ? 20 : 18,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
+      foregroundDecoration: shouldUseDashedBorder
+          ? ShapeDecoration(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide.none,
+              ),
+            )
+          : null,
+      child: shouldUseDashedBorder
+          ? CustomPaint(
+              painter: DashedBorderPainter(
+                color: borderColor,
+                strokeWidth: 4.0,
+                dashLength: 8.0,
+                dashGap: 4.0,
+                borderRadius: 12.0,
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: layoutType == LayoutType.horizontal ? 20 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            )
+          : Center(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: layoutType == LayoutType.horizontal ? 20 : 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
     );
   }
 
@@ -214,7 +260,27 @@ class ScoreDisplayButtons extends StatelessWidget {
     );
   }
 
-  ScoreInfo _parseScoreInfo(String result) {
+  @visibleForTesting
+  ScoreInfo parseScoreInfo(String result) {
+    // If we have territory data, use the new format
+    if (blackTerritory != null && whiteTerritory != null) {
+      final blackText = "Black's territory: $blackTerritory points";
+
+      String whiteText;
+      if (komi != null) {
+        // Check if komi is a whole number to avoid .0 display
+        final komiDisplay = komi! == komi!.roundToDouble() ? komi!.round().toString() : komi.toString();
+        final whiteTotal = whiteTerritory! + komi!;
+        final whiteTotalDisplay = whiteTotal == whiteTotal.roundToDouble() ? whiteTotal.round().toString() : whiteTotal.toString();
+        whiteText = "White's territory: $whiteTerritory + $komiDisplay = $whiteTotalDisplay points";
+      } else {
+        whiteText = "White's territory: $whiteTerritory points";
+      }
+
+      return ScoreInfo(whiteScore: whiteText, blackScore: blackText);
+    }
+
+    // Fallback to old format if territory data is not available
     if (result.isEmpty) {
       return ScoreInfo(whiteScore: 'W: ?', blackScore: 'B: ?');
     }
@@ -251,4 +317,52 @@ class ScoreInfo {
     required this.whiteScore,
     required this.blackScore,
   });
+}
+
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashLength;
+  final double dashGap;
+  final double borderRadius;
+
+  DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.dashLength,
+    required this.dashGap,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2,
+                     size.width - strokeWidth, size.height - strokeWidth),
+        Radius.circular(borderRadius),
+      ));
+
+    _drawDashedPath(canvas, path, paint);
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    final pathMetrics = path.computeMetrics();
+    for (final pathMetric in pathMetrics) {
+      double distance = 0.0;
+      while (distance < pathMetric.length) {
+        final segment = pathMetric.extractPath(distance, distance + dashLength);
+        canvas.drawPath(segment, paint);
+        distance += dashLength + dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

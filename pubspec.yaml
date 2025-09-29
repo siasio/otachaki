@@ -26,5 +26,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/fox_mid150_19x19.json
-    - assets/final_9x9_katago.json
     - assets/final_19x19_katago.json
+    - assets/final_9x9_katago.json

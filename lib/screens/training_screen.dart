@@ -362,12 +362,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final displayMode = stateManager.getDisplayMode();
 
     if (_waitingForNext || (displayMode == ButtonDisplayMode.scores && _hasAnswered && !_showFeedbackOverlay)) {
+      final currentTrainingPosition = _positionManager.currentTrainingPosition;
       return AdaptiveResultButtons.forScores(
-        resultString: _positionManager.currentTrainingPosition?.result ?? '',
+        resultString: currentTrainingPosition?.result ?? '',
         onNextPressed: _onNextPressed,
         appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
         layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
         useColoredBackgroundForScores: true,
+        blackTerritory: currentTrainingPosition?.blackTerritory,
+        whiteTerritory: currentTrainingPosition?.whiteTerritory,
+        komi: currentTrainingPosition?.gameInfo?.komi,
       );
     } else {
       if (_positionManager.currentDataset != null &&

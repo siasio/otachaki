@@ -128,7 +128,7 @@ class PositionManager {
       }
 
       // No previous selection or failed to load, use default
-      // Default to 9x9 final positions as they are easier to understand for beginners
+      // Use 9x9 final positions as default
       const defaultDataset = 'final_9x9_katago.json';
       PositionLoader.setDatasetFile(defaultDataset);
       await preferenceManager.setSelectedDataset('assets/$defaultDataset');

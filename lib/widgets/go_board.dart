@@ -522,6 +522,11 @@ class GoBoardPainter extends CustomPainter {
                      int displayStartRow, int displayStartCol, int displayWidth, int displayHeight) {
     final ownership = trainingPosition!.decodeOwnership()!;
 
+    // Get ultimate stones if available, fallback to regular stones
+    final List<List<int>>? ultimateStones = trainingPosition!.hasUltimateStones
+        ? trainingPosition!.decodeUltimateStones()
+        : null;
+
     for (int row = displayStartRow; row < displayStartRow + displayHeight && row < position.size; row++) {
       for (int col = displayStartCol; col < displayStartCol + displayWidth && col < position.size; col++) {
         final ownershipValue = ownership[row][col];
@@ -529,12 +534,19 @@ class GoBoardPainter extends CustomPainter {
 
         final double x = boardStart + (col - displayStartCol) * cellSize;
         final double y = boardStart + (row - displayStartRow) * cellSize;
-        final StoneColor stoneAtPosition = position.board[row][col];
+
+        // For squares mode: use ultimate stones if available, fallback to regular stones
+        final StoneColor stoneAtPosition = ultimateStones != null
+            ? _intToStoneColor(ultimateStones[row][col])
+            : position.board[row][col];
 
         if (ownershipDisplayMode.useSquares) {
           _drawOwnershipSquare(canvas, x, y, ownershipValue, cellSize, stoneAtPosition);
         } else if (ownershipDisplayMode.useOverlay) {
-          _drawOwnershipOverlay(canvas, x, y, ownershipValue, cellSize);
+          // For overlay mode, we need additional filtering logic
+          final StoneColor currentStone = position.board[row][col];
+          final StoneColor ultimateStone = ultimateStones != null ? _intToStoneColor(ultimateStones[row][col]) : currentStone;
+          _drawOwnershipOverlay(canvas, x, y, ownershipValue, cellSize, currentStone, ultimateStone);
         }
       }
     }
@@ -592,9 +604,39 @@ class GoBoardPainter extends CustomPainter {
     }
   }
 
-  void _drawOwnershipOverlay(Canvas canvas, double x, double y, double ownership, double cellSize) {
+  /// Helper method to convert int stone representation to StoneColor enum
+  StoneColor _intToStoneColor(int stoneValue) {
+    switch (stoneValue) {
+      case 0:
+        return StoneColor.empty;
+      case 1:
+        return StoneColor.black;
+      case 2:
+        return StoneColor.white;
+      default:
+        return StoneColor.empty;
+    }
+  }
+
+  void _drawOwnershipOverlay(Canvas canvas, double x, double y, double ownership, double cellSize,
+                              StoneColor currentStone, StoneColor ultimateStone) {
     final isBlackOwnership = ownership > 0;
     final strength = ownership.abs();
+
+    // Special filtering for overlay mode:
+    // Show overlays over all intersections owned by a given color
+    // EXCEPT for those which have stones of that color in ultimate-stones but not in stones
+    if (isBlackOwnership) {
+      // For black ownership: don't show if there's a black stone in ultimate-stones but not in stones
+      if (ultimateStone == StoneColor.black && currentStone != StoneColor.black) {
+        return; // Skip this intersection
+      }
+    } else {
+      // For white ownership: don't show if there's a white stone in ultimate-stones but not in stones
+      if (ultimateStone == StoneColor.white && currentStone != StoneColor.white) {
+        return; // Skip this intersection
+      }
+    }
 
     // Cover the entire intersection area with no gaps between neighboring overlays
     final overlaySize = cellSize;

@@ -53,18 +53,28 @@ class DatasetParser {
 
   /// Parse training position from JSON - returns Map to avoid type conflicts
   static Map<String, dynamic> parseTrainingPositionToMap(Map<String, dynamic> json) {
+    // Use territory-score and territory-result if available, otherwise fallback to score and result
+    final score = json['territory-score'] != null
+        ? (json['territory-score'] as num?)?.toDouble() ?? 0.0
+        : (json['score'] as num?)?.toDouble() ?? 0.0;
+
+    final result = json['territory-result'] as String? ?? json['result'] as String? ?? 'Unknown';
+
     return {
       'id': json['id'] as String? ?? '',
       'board_size': json['board_size'] as int? ?? 19,
       'stones': json['stones'] as String? ?? '',
-      'score': (json['score'] as num?)?.toDouble() ?? 0.0,
-      'result': json['result'] as String? ?? 'Unknown',
+      'score': score,
+      'result': result,
       'game_info': json['game_info'] != null
           ? parseGameInfoToMap(json['game_info'] as Map<String, dynamic>)
           : null,
       'moves': json['moves'] as String?,
       'number_of_moves': json['number_of_moves'] as int? ?? 0,
       'ownership': json['ownership'] as String?,
+      'black_territory': json['blackTerritory'] as int?,
+      'white_territory': json['whiteTerritory'] as int?,
+      'ultimate_stones': json['ultimate-stones'] as String?,
     };
   }
 

@@ -13,6 +13,9 @@ class TrainingPosition {
   final String? movesBase64;
   final int numberOfMoves;
   final String? ownershipBase64;
+  final int? blackTerritory;
+  final int? whiteTerritory;
+  final String? ultimateStonesBase64;
 
   const TrainingPosition({
     required this.id,
@@ -24,6 +27,9 @@ class TrainingPosition {
     this.movesBase64,
     this.numberOfMoves = 0,
     this.ownershipBase64,
+    this.blackTerritory,
+    this.whiteTerritory,
+    this.ultimateStonesBase64,
   });
 
   factory TrainingPosition.fromJson(Map<String, dynamic> json) {
@@ -40,6 +46,9 @@ class TrainingPosition {
       movesBase64: parsed['moves'] as String?,
       numberOfMoves: parsed['number_of_moves'] as int? ?? 0,
       ownershipBase64: parsed['ownership'] as String?,
+      blackTerritory: parsed['black_territory'] as int?,
+      whiteTerritory: parsed['white_territory'] as int?,
+      ultimateStonesBase64: parsed['ultimate_stones'] as String?,
     );
   }
 
@@ -58,8 +67,22 @@ class TrainingPosition {
     return GoLogic.decodeOwnership(ownershipBase64!, boardSize);
   }
 
+  /// Decode the base64 ultimate-stones to a 2D array of integers
+  /// Returns boardSize x boardSize array where 0=empty, 1=black, 2=white
+  /// Returns null if no ultimate stones data is available
+  List<List<int>>? decodeUltimateStones() {
+    if (ultimateStonesBase64 == null) return null;
+    return GoLogic.decodeStones(ultimateStonesBase64!, boardSize);
+  }
+
   /// Check if this position has ownership data
   bool get hasOwnership => ownershipBase64 != null;
+
+  /// Check if this position has ultimate stones data
+  bool get hasUltimateStones => ultimateStonesBase64 != null;
+
+  /// Check if this position has territory data
+  bool get hasTerritoryData => blackTerritory != null && whiteTerritory != null;
 
   /// Get a human-readable description of the position
   String get description {
@@ -122,7 +145,10 @@ class TrainingDataset {
   factory TrainingDataset.fromJson(Map<String, dynamic> json) {
     final parsed = core.DatasetParser.parseDatasetToMap(json);
     final metadata = DatasetMetadata.fromJson(parsed['metadata'] as Map<String, dynamic>);
-    final positions = (parsed['positions'] as List)
+
+    // Use raw JSON positions instead of pre-parsed ones to avoid double-parsing
+    final rawPositions = json['positions'] as List;
+    final positions = rawPositions
         .map((p) => TrainingPosition.fromJson(p as Map<String, dynamic>))
         .toList();
 

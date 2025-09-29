@@ -25,6 +25,9 @@ class AdaptiveResultButtons extends StatelessWidget {
   final LayoutType layoutType;
   final ButtonDisplayMode displayMode;
   final bool useColoredBackgroundForScores;
+  final int? blackTerritory;
+  final int? whiteTerritory;
+  final double? komi;
 
   const AdaptiveResultButtons({
     super.key,
@@ -38,6 +41,9 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.layoutType = LayoutType.vertical,
     this.displayMode = ButtonDisplayMode.choices,
     this.useColoredBackgroundForScores = true,
+    this.blackTerritory,
+    this.whiteTerritory,
+    this.komi,
   });
 
   factory AdaptiveResultButtons.forChoices({
@@ -67,6 +73,9 @@ class AdaptiveResultButtons extends StatelessWidget {
     AppSkin appSkin = AppSkin.classic,
     LayoutType layoutType = LayoutType.vertical,
     bool useColoredBackgroundForScores = true,
+    int? blackTerritory,
+    int? whiteTerritory,
+    double? komi,
   }) {
     return AdaptiveResultButtons(
       resultString: resultString,
@@ -75,6 +84,9 @@ class AdaptiveResultButtons extends StatelessWidget {
       layoutType: layoutType,
       displayMode: ButtonDisplayMode.scores,
       useColoredBackgroundForScores: useColoredBackgroundForScores,
+      blackTerritory: blackTerritory,
+      whiteTerritory: whiteTerritory,
+      komi: komi,
     );
   }
 
@@ -120,6 +132,9 @@ class AdaptiveResultButtons extends StatelessWidget {
         appSkin: appSkin,
         layoutType: layoutType,
         useColoredBackground: useColoredBackgroundForScores,
+        blackTerritory: blackTerritory,
+        whiteTerritory: whiteTerritory,
+        komi: komi,
       );
     } else {
       return Container();
