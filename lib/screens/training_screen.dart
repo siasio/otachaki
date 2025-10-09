@@ -26,6 +26,8 @@ import '../models/game_result_option.dart';
 import '../models/sequence_display_mode.dart';
 import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
+import '../models/prediction_type.dart';
+import '../models/positioned_score_options.dart';
 import './info_screen.dart';
 import './config_screen.dart';
 
@@ -62,6 +64,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   bool _hasAnswered = false;
   bool _waitingForNext = false;
   bool _pausePressed = false;
+  PositionedScoreOptions? _currentScoreOptions;
   final FocusNode _focusNode = FocusNode();
   ConfigurationManager? _configManager;
   DatasetConfiguration? _currentConfig;
@@ -135,9 +138,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
         return;
       }
 
-      if (!_timerRunning || _showFeedbackOverlay) return;
+      final isTimerEnabled = _currentConfig?.timerEnabled ?? true;
+      if ((!_timerRunning && isTimerEnabled) || _showFeedbackOverlay) return;
 
-      if (_positionManager.currentDataset != null &&
+      final predictionType = _currentConfig?.predictionType ?? PredictionType.winnerPrediction;
+
+      // Handle exact score prediction mode
+      if (predictionType == PredictionType.exactScorePrediction && _currentScoreOptions != null) {
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          _onExactScoreButtonPressed(0); // Left button
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _onExactScoreButtonPressed(1); // Middle button
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          _onExactScoreButtonPressed(2); // Right button
+        }
+      } else if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
         final options = GameResultOption.generateOptions(
           _positionManager.currentDataset!.metadata.datasetType,
@@ -205,9 +220,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
     try {
       final position = await _positionManager.loadRandomPosition();
       await _updateConfiguration();
+
+      // Generate score options for exact score prediction (if needed)
+      PositionedScoreOptions? scoreOptions;
+      if (_currentConfig?.predictionType == PredictionType.exactScorePrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        scoreOptions = PositionedScoreOptions.generate(
+          actualScoreString: _positionManager.currentTrainingPosition!.result,
+          scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
+        );
+      }
+
       setState(() {
         _currentPosition = position;
         _loading = false;
+        _currentScoreOptions = scoreOptions;
       });
       // Start timing the problem
       _problemStartTime = DateTime.now();
@@ -258,8 +285,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final isCorrect = _checkResultUsingNewSystem(result);
     _recordAttempt(isCorrect, false);
 
+    final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
     setState(() {
-      _showFeedbackOverlay = true;
+      _showFeedbackOverlay = markDisplayEnabled;
       _isCorrectAnswer = isCorrect;
     });
 
@@ -274,12 +302,33 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     _recordAttempt(option.isCorrect, false);
 
+    final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
     setState(() {
-      _showFeedbackOverlay = true;
+      _showFeedbackOverlay = markDisplayEnabled;
       _isCorrectAnswer = option.isCorrect;
     });
 
     _handlePostAnswerFlow(option.isCorrect);
+  }
+
+  void _onExactScoreButtonPressed(int buttonPosition) {
+    setState(() {
+      _timerRunning = false;
+      _hasAnswered = true;
+    });
+
+    // Check if the pressed button position is correct
+    final isCorrect = buttonPosition == _currentScoreOptions?.correctButtonPosition;
+
+    _recordAttempt(isCorrect, false);
+
+    final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
+    setState(() {
+      _showFeedbackOverlay = markDisplayEnabled;
+      _isCorrectAnswer = isCorrect;
+    });
+
+    _handlePostAnswerFlow(isCorrect);
   }
 
   bool _checkResultUsingNewSystem(GameResult selectedResult) {
@@ -297,9 +346,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _onTimerComplete() {
+    final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
     setState(() {
       _timerRunning = false;
-      _showFeedbackOverlay = true;
+      _showFeedbackOverlay = markDisplayEnabled;
       _isCorrectAnswer = false;
       _hasAnswered = true;
     });
@@ -311,6 +361,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   void _handlePostAnswerFlow(bool isCorrect) {
     final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
     final stateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
       isAnswerCorrect: isCorrect,
@@ -318,23 +369,40 @@ class _TrainingScreenState extends State<TrainingScreen> {
     );
 
     if (stateManager.shouldAutoAdvance()) {
-      final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-      Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-        // Check if pause was pressed during the delay
-        if (!_pausePressed && mounted) {
-          _loadNextPosition();
-        }
-      });
+      if (markDisplayEnabled) {
+        final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
+        Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
+          // Check if pause was pressed during the delay
+          if (!_pausePressed && mounted) {
+            _loadNextPosition();
+          }
+        });
+      } else {
+        // No mark display - advance immediately but use a minimal delay to ensure state is properly set
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (!_pausePressed && mounted) {
+            _loadNextPosition();
+          }
+        });
+      }
     } else {
-      final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-      Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-        if (mounted) {
-          setState(() {
-            _showFeedbackOverlay = false;
-            _waitingForNext = true;
-          });
-        }
-      });
+      if (markDisplayEnabled) {
+        final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
+        Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
+          if (mounted) {
+            setState(() {
+              _showFeedbackOverlay = false;
+              _waitingForNext = true;
+            });
+          }
+        });
+      } else {
+        // No mark display - go directly to waiting state
+        setState(() {
+          _showFeedbackOverlay = false;
+          _waitingForNext = true;
+        });
+      }
     }
   }
 
@@ -360,6 +428,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     );
 
     final displayMode = stateManager.getDisplayMode();
+    final predictionType = _currentConfig?.predictionType ?? PredictionType.winnerPrediction;
 
     if (_waitingForNext || (displayMode == ButtonDisplayMode.scores && _hasAnswered && !_showFeedbackOverlay)) {
       final currentTrainingPosition = _positionManager.currentTrainingPosition;
@@ -374,19 +443,37 @@ class _TrainingScreenState extends State<TrainingScreen> {
         komi: currentTrainingPosition?.gameInfo?.komi,
       );
     } else {
-      if (_positionManager.currentDataset != null &&
+      final isEnabled = ((_timerRunning || !(_currentConfig?.timerEnabled ?? true)) && !_hasAnswered);
+
+      if (predictionType == PredictionType.exactScorePrediction && _positionManager.currentTrainingPosition != null) {
+        // Use pre-generated score options (generated once when position was loaded)
+        if (_currentScoreOptions == null) {
+          // Fallback: generate if not already generated (shouldn't happen in normal flow)
+          _currentScoreOptions = PositionedScoreOptions.generate(
+            actualScoreString: _positionManager.currentTrainingPosition!.result,
+            scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
+          );
+        }
+
+        return AdaptiveResultButtons.forExactScores(
+          positionedScoreOptions: _currentScoreOptions!,
+          onExactScoreButtonPressed: isEnabled ? _onExactScoreButtonPressed : (_) {},
+          appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        );
+      } else if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
         return AdaptiveResultButtons.forChoices(
           datasetType: _positionManager.currentDataset!.metadata.datasetType,
           actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
           resultString: _positionManager.currentTrainingPosition!.result,
-          onResultOptionSelected: _timerRunning && !_hasAnswered ? _onResultOptionSelected : (_) {},
+          onResultOptionSelected: isEnabled ? _onResultOptionSelected : (_) {},
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
         );
       } else {
         return AdaptiveResultButtons.forChoices(
-          onResultSelected: _timerRunning && !_hasAnswered ? _onResultSelected : (_) {},
+          onResultSelected: isEnabled ? _onResultSelected : (_) {},
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
         );
@@ -401,15 +488,28 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _hasAnswered = false;
       _waitingForNext = false;
       _pausePressed = false;
+      _currentScoreOptions = null;
     });
 
     try {
       final position = await _positionManager.loadRandomPosition();
       await _updateConfiguration();
+
+      // Generate score options for exact score prediction (if needed)
+      PositionedScoreOptions? scoreOptions;
+      if (_currentConfig?.predictionType == PredictionType.exactScorePrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        scoreOptions = PositionedScoreOptions.generate(
+          actualScoreString: _positionManager.currentTrainingPosition!.result,
+          scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
+        );
+      }
+
       setState(() {
         _currentPosition = position;
         _timerRunning = true;
         _loading = false;
+        _currentScoreOptions = scoreOptions;
       });
       // Start timing the new problem
       _problemStartTime = DateTime.now();
@@ -801,6 +901,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     final timerType = _globalConfig?.timerType ?? TimerType.smooth;
     final shouldShowGameInfo = _currentConfig != null ? !_currentConfig!.hideGameInfoBar : true;
+    final isTimerEnabled = _currentConfig?.timerEnabled ?? true;
 
     if (layoutType == LayoutType.horizontal) {
       // Horizontal layout with vertical app bar on the left
@@ -820,7 +921,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 child: SafeArea(
                   child: AdaptiveLayout(
                     layoutType: layoutType,
-                    timerBar: _timerRunning
+                    timerBar: (_timerRunning && isTimerEnabled)
                         ? TimerBar(
                             duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
                             onComplete: _onTimerComplete,
@@ -880,7 +981,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
           child: SafeArea(
             child: AdaptiveLayout(
               layoutType: layoutType,
-              timerBar: _timerRunning
+              timerBar: (_timerRunning && isTimerEnabled)
                   ? TimerBar(
                       duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
                       onComplete: _onTimerComplete,

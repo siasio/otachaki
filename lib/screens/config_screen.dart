@@ -8,6 +8,7 @@ import '../models/layout_type.dart';
 import '../models/app_skin.dart';
 import '../models/auto_advance_mode.dart';
 import '../models/ownership_display_mode.dart';
+import '../models/prediction_type.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/position_loader.dart';
@@ -37,6 +38,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   late TextEditingController _thresholdCloseController;
   late TextEditingController _timeProblemController;
   late TextEditingController _sequenceLengthController;
+  late TextEditingController _scoreGranularityController;
 
   @override
   void initState() {
@@ -55,11 +57,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdCloseController = TextEditingController();
     _timeProblemController = TextEditingController();
     _sequenceLengthController = TextEditingController();
+    _scoreGranularityController = TextEditingController();
 
     _thresholdGoodController.addListener(_onDatasetConfigurationChanged);
     _thresholdCloseController.addListener(_onDatasetConfigurationChanged);
     _timeProblemController.addListener(_onDatasetConfigurationChanged);
     _sequenceLengthController.addListener(_onDatasetConfigurationChanged);
+    _scoreGranularityController.addListener(_onDatasetConfigurationChanged);
   }
 
   @override
@@ -69,6 +73,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdCloseController.dispose();
     _timeProblemController.dispose();
     _sequenceLengthController.dispose();
+    _scoreGranularityController.dispose();
     super.dispose();
   }
 
@@ -143,6 +148,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdCloseController.removeListener(_onDatasetConfigurationChanged);
     _timeProblemController.removeListener(_onDatasetConfigurationChanged);
     _sequenceLengthController.removeListener(_onDatasetConfigurationChanged);
+    _scoreGranularityController.removeListener(_onDatasetConfigurationChanged);
 
     setState(() {
       _currentDatasetConfig = config;
@@ -150,6 +156,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       _thresholdCloseController.text = config.thresholdClose.toString();
       _timeProblemController.text = config.timePerProblemSeconds.toString();
       _sequenceLengthController.text = config.sequenceLength.toString();
+      _scoreGranularityController.text = config.scoreGranularity.toString();
     });
 
 
@@ -158,13 +165,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _thresholdCloseController.addListener(_onDatasetConfigurationChanged);
     _timeProblemController.addListener(_onDatasetConfigurationChanged);
     _sequenceLengthController.addListener(_onDatasetConfigurationChanged);
+    _scoreGranularityController.addListener(_onDatasetConfigurationChanged);
   }
 
   void _onGlobalConfigurationChanged() {
     if (_globalConfig == null) return;
 
     final value = double.tryParse(_markDisplayController.text);
-    if (value != null && value >= 0) {
+    if (value != null && (!_globalConfig!.markDisplayEnabled || value >= 0)) {
       final newConfig = _globalConfig!.copyWith(
         markDisplayTimeSeconds: value,
       );
@@ -179,21 +187,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
     final thresholdClose = double.tryParse(_thresholdCloseController.text);
     final timeProblem = int.tryParse(_timeProblemController.text);
     final sequenceLength = int.tryParse(_sequenceLengthController.text);
+    final scoreGranularity = int.tryParse(_scoreGranularityController.text);
 
     if (thresholdGood != null &&
         thresholdClose != null &&
         timeProblem != null &&
         sequenceLength != null &&
+        scoreGranularity != null &&
         thresholdClose >= thresholdGood &&
-        timeProblem > 0 &&
+        (!_currentDatasetConfig!.timerEnabled || timeProblem > 0) &&
         sequenceLength >= 0 &&
-        sequenceLength <= 50) {
+        sequenceLength <= 50 &&
+        scoreGranularity > 0) {
 
       final newConfig = _currentDatasetConfig!.copyWith(
         thresholdGood: thresholdGood,
         thresholdClose: thresholdClose,
         timePerProblemSeconds: timeProblem,
         sequenceLength: sequenceLength,
+        scoreGranularity: scoreGranularity,
       );
 
       _autoSaveDatasetConfiguration(newConfig);
@@ -447,18 +459,42 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Time per Problem
-                        TextFormField(
-                          controller: _timeProblemController,
-                          decoration: const InputDecoration(
-                            labelText: 'Time per Problem',
-                            helperText: 'Time allowed to solve one problem',
-                            border: OutlineInputBorder(),
-                            suffix: Text('seconds'),
-                          ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
+                        // Time per Problem with enable checkbox
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _timeProblemController,
+                                enabled: _currentDatasetConfig!.timerEnabled,
+                                decoration: InputDecoration(
+                                  labelText: 'Time per Problem (uncheck to disable)',
+                                  helperText: 'Time allowed to solve one problem',
+                                  border: const OutlineInputBorder(),
+                                  suffix: const Text('seconds'),
+                                  filled: !_currentDatasetConfig!.timerEnabled,
+                                  fillColor: !_currentDatasetConfig!.timerEnabled ? Colors.grey[100] : null,
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 56, // Match the height of the TextFormField
+                              child: Checkbox(
+                                value: _currentDatasetConfig!.timerEnabled,
+                                onChanged: (bool? value) {
+                                  if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                                    final newConfig = _currentDatasetConfig!.copyWith(
+                                      timerEnabled: value,
+                                    );
+                                    _autoSaveDatasetConfiguration(newConfig);
+                                  }
+                                },
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -478,6 +514,49 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
+
+                        // Prediction Type
+                        DropdownButtonFormField<PredictionType>(
+                          value: _currentDatasetConfig!.predictionType,
+                          decoration: const InputDecoration(
+                            labelText: 'Button Type',
+                            helperText: 'Type of buttons to display for answers',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: PredictionType.values.map((type) {
+                            return DropdownMenuItem<PredictionType>(
+                              value: type,
+                              child: Text(type.displayName),
+                            );
+                          }).toList(),
+                          onChanged: (PredictionType? value) {
+                            if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                              final newConfig = _currentDatasetConfig!.copyWith(
+                                predictionType: value,
+                              );
+                              _autoSaveDatasetConfiguration(newConfig);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Score Granularity (only show if exact score prediction is selected)
+                        if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction) ...[
+                          TextFormField(
+                            controller: _scoreGranularityController,
+                            decoration: const InputDecoration(
+                              labelText: 'Score Granularity',
+                              helperText: 'Point difference between score options',
+                              border: OutlineInputBorder(),
+                              suffix: Text('points'),
+                            ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
                         // Ownership Display Mode
                         DropdownButtonFormField<OwnershipDisplayMode>(
@@ -556,18 +635,42 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Mark Display Time
-                      TextFormField(
-                        controller: _markDisplayController,
-                        decoration: const InputDecoration(
-                          labelText: 'Mark Display Time',
-                          helperText: 'Time to show result before next problem',
-                          border: OutlineInputBorder(),
-                          suffix: Text('seconds'),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                      // Mark Display Time with enable checkbox
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _markDisplayController,
+                              enabled: _globalConfig!.markDisplayEnabled,
+                              decoration: InputDecoration(
+                                labelText: 'Mark Display Time (uncheck to disable)',
+                                helperText: 'Time to show result before next problem',
+                                border: const OutlineInputBorder(),
+                                suffix: const Text('seconds'),
+                                filled: !_globalConfig!.markDisplayEnabled,
+                                fillColor: !_globalConfig!.markDisplayEnabled ? Colors.grey[100] : null,
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 56, // Match the height of the TextFormField
+                            child: Checkbox(
+                              value: _globalConfig!.markDisplayEnabled,
+                              onChanged: (bool? value) {
+                                if (value != null && _globalConfig != null) {
+                                  final newConfig = _globalConfig!.copyWith(
+                                    markDisplayEnabled: value,
+                                  );
+                                  _autoSaveGlobalConfiguration(newConfig);
+                                }
+                              },
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),

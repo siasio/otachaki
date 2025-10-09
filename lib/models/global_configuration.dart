@@ -9,6 +9,7 @@ class GlobalConfiguration {
   final LayoutType layoutType;
   final AppSkin appSkin;
   final AutoAdvanceMode autoAdvanceMode;
+  final bool markDisplayEnabled;
 
   const GlobalConfiguration({
     required this.markDisplayTimeSeconds,
@@ -16,6 +17,7 @@ class GlobalConfiguration {
     required this.layoutType,
     required this.appSkin,
     required this.autoAdvanceMode,
+    this.markDisplayEnabled = true,
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(
@@ -32,6 +34,7 @@ class GlobalConfiguration {
     LayoutType? layoutType,
     AppSkin? appSkin,
     AutoAdvanceMode? autoAdvanceMode,
+    bool? markDisplayEnabled,
   }) {
     return GlobalConfiguration(
       markDisplayTimeSeconds: markDisplayTimeSeconds ?? this.markDisplayTimeSeconds,
@@ -39,6 +42,7 @@ class GlobalConfiguration {
       layoutType: layoutType ?? this.layoutType,
       appSkin: appSkin ?? this.appSkin,
       autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
+      markDisplayEnabled: markDisplayEnabled ?? this.markDisplayEnabled,
     );
   }
 
@@ -49,6 +53,7 @@ class GlobalConfiguration {
       'layoutType': layoutType.value,
       'appSkin': appSkin.value,
       'autoAdvanceMode': autoAdvanceMode.value,
+      'markDisplayEnabled': markDisplayEnabled,
     };
   }
 
@@ -59,6 +64,7 @@ class GlobalConfiguration {
       layoutType: LayoutType.fromString(json['layoutType'] as String?) ?? defaultConfig.layoutType,
       appSkin: AppSkin.fromString(json['appSkin'] as String?) ?? defaultConfig.appSkin,
       autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
+      markDisplayEnabled: json['markDisplayEnabled'] as bool? ?? true,
     );
   }
 

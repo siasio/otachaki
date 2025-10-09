@@ -1,5 +1,6 @@
 import 'dataset_type.dart';
 import 'ownership_display_mode.dart';
+import 'prediction_type.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
@@ -8,6 +9,9 @@ class DatasetConfiguration {
   final bool hideGameInfoBar;
   final int sequenceLength;
   final OwnershipDisplayMode ownershipDisplayMode;
+  final bool timerEnabled;
+  final PredictionType predictionType;
+  final int scoreGranularity;
 
   const DatasetConfiguration({
     required this.thresholdGood,
@@ -16,6 +20,9 @@ class DatasetConfiguration {
     required this.hideGameInfoBar,
     this.sequenceLength = 0,
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
+    this.timerEnabled = true,
+    this.predictionType = PredictionType.winnerPrediction,
+    this.scoreGranularity = 1,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
@@ -65,6 +72,9 @@ class DatasetConfiguration {
     bool? hideGameInfoBar,
     int? sequenceLength,
     OwnershipDisplayMode? ownershipDisplayMode,
+    bool? timerEnabled,
+    PredictionType? predictionType,
+    int? scoreGranularity,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
@@ -73,6 +83,9 @@ class DatasetConfiguration {
       hideGameInfoBar: hideGameInfoBar ?? this.hideGameInfoBar,
       sequenceLength: sequenceLength ?? this.sequenceLength,
       ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
+      timerEnabled: timerEnabled ?? this.timerEnabled,
+      predictionType: predictionType ?? this.predictionType,
+      scoreGranularity: scoreGranularity ?? this.scoreGranularity,
     );
   }
 
@@ -84,6 +97,9 @@ class DatasetConfiguration {
       'hideGameInfoBar': hideGameInfoBar,
       'sequenceLength': sequenceLength,
       'ownershipDisplayMode': ownershipDisplayMode.name,
+      'timerEnabled': timerEnabled,
+      'predictionType': predictionType.value,
+      'scoreGranularity': scoreGranularity,
     };
   }
 
@@ -104,12 +120,16 @@ class DatasetConfiguration {
       hideGameInfoBar: json['hideGameInfoBar'] as bool? ?? false,
       sequenceLength: json['sequenceLength'] as int? ?? 0,
       ownershipDisplayMode: ownershipDisplayMode,
+      timerEnabled: json['timerEnabled'] as bool? ?? true,
+      predictionType: PredictionType.fromString(json['predictionType'] as String?) ?? PredictionType.winnerPrediction,
+      scoreGranularity: json['scoreGranularity'] as int? ?? 1,
     );
   }
 
   bool isValidConfiguration() {
     return thresholdClose >= thresholdGood &&
            timePerProblemSeconds > 0 &&
-           sequenceLength >= 0;
+           sequenceLength >= 0 &&
+           scoreGranularity > 0;
   }
 }

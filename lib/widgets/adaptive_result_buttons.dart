@@ -5,9 +5,11 @@ import '../models/app_skin.dart';
 import '../models/layout_type.dart';
 import '../models/auto_advance_mode.dart';
 import '../models/scoring_config.dart';
+import '../models/positioned_score_options.dart';
 import 'result_buttons.dart';
 import 'context_aware_result_buttons.dart';
 import 'score_display_buttons.dart';
+import 'exact_score_buttons.dart';
 
 enum ButtonDisplayMode {
   choices,
@@ -20,7 +22,9 @@ class AdaptiveResultButtons extends StatelessWidget {
   final String? resultString;
   final Function(GameResultOption)? onResultOptionSelected;
   final Function(GameResult)? onResultSelected;
+  final Function(int)? onExactScoreButtonPressed; // Takes button position
   final VoidCallback? onNextPressed;
+  final PositionedScoreOptions? positionedScoreOptions;
   final AppSkin appSkin;
   final LayoutType layoutType;
   final ButtonDisplayMode displayMode;
@@ -36,7 +40,9 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.resultString,
     this.onResultOptionSelected,
     this.onResultSelected,
+    this.onExactScoreButtonPressed,
     this.onNextPressed,
+    this.positionedScoreOptions,
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
     this.displayMode = ButtonDisplayMode.choices,
@@ -61,6 +67,21 @@ class AdaptiveResultButtons extends StatelessWidget {
       resultString: resultString,
       onResultOptionSelected: onResultOptionSelected,
       onResultSelected: onResultSelected,
+      appSkin: appSkin,
+      layoutType: layoutType,
+      displayMode: ButtonDisplayMode.choices,
+    );
+  }
+
+  factory AdaptiveResultButtons.forExactScores({
+    required PositionedScoreOptions positionedScoreOptions,
+    required Function(int) onExactScoreButtonPressed,
+    AppSkin appSkin = AppSkin.classic,
+    LayoutType layoutType = LayoutType.vertical,
+  }) {
+    return AdaptiveResultButtons(
+      positionedScoreOptions: positionedScoreOptions,
+      onExactScoreButtonPressed: onExactScoreButtonPressed,
       appSkin: appSkin,
       layoutType: layoutType,
       displayMode: ButtonDisplayMode.choices,
@@ -101,7 +122,14 @@ class AdaptiveResultButtons extends StatelessWidget {
   }
 
   Widget _buildChoiceButtons() {
-    if (datasetType != null &&
+    if (positionedScoreOptions != null && onExactScoreButtonPressed != null) {
+      return ExactScoreButtons(
+        scoreOptions: positionedScoreOptions!,
+        onButtonPressed: onExactScoreButtonPressed!,
+        appSkin: appSkin,
+        layoutType: layoutType,
+      );
+    } else if (datasetType != null &&
         actualScore != null &&
         resultString != null &&
         onResultOptionSelected != null) {
