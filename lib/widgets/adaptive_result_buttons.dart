@@ -7,6 +7,8 @@ import '../models/auto_advance_mode.dart';
 import '../models/scoring_config.dart';
 import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
+import '../models/training_position.dart';
+import '../models/position_type.dart';
 import 'result_buttons.dart';
 import 'context_aware_result_buttons.dart';
 import 'score_display_buttons.dart';
@@ -36,6 +38,8 @@ class AdaptiveResultButtons extends StatelessWidget {
   final int? blackTerritory;
   final int? whiteTerritory;
   final double? komi;
+  final TrainingPosition? trainingPosition;
+  final PositionType? positionType;
 
   const AdaptiveResultButtons({
     super.key,
@@ -56,6 +60,8 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.blackTerritory,
     this.whiteTerritory,
     this.komi,
+    this.trainingPosition,
+    this.positionType,
   });
 
   factory AdaptiveResultButtons.forChoices({
@@ -107,6 +113,8 @@ class AdaptiveResultButtons extends StatelessWidget {
     int? blackTerritory,
     int? whiteTerritory,
     double? komi,
+    TrainingPosition? trainingPosition,
+    PositionType? positionType,
   }) {
     return AdaptiveResultButtons(
       resultString: resultString,
@@ -118,6 +126,8 @@ class AdaptiveResultButtons extends StatelessWidget {
       blackTerritory: blackTerritory,
       whiteTerritory: whiteTerritory,
       komi: komi,
+      trainingPosition: trainingPosition,
+      positionType: positionType,
     );
   }
 
@@ -180,6 +190,8 @@ class AdaptiveResultButtons extends StatelessWidget {
         blackTerritory: blackTerritory,
         whiteTerritory: whiteTerritory,
         komi: komi,
+        trainingPosition: trainingPosition,
+        positionType: positionType,
       );
     } else {
       return Container();

@@ -6,6 +6,7 @@ import '../models/layout_type.dart';
 import '../models/sequence_display_mode.dart';
 import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
+import '../models/position_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../core/go_logic.dart';
@@ -19,6 +20,8 @@ class GoBoard extends StatelessWidget {
   final SequenceDisplayMode sequenceDisplayMode;
   final BoardViewMode viewMode;
   final OwnershipDisplayMode ownershipDisplayMode;
+  final PositionType positionType;
+  final bool showMoveNumbers;
 
   const GoBoard({
     super.key,
@@ -30,6 +33,8 @@ class GoBoard extends StatelessWidget {
     this.sequenceDisplayMode = SequenceDisplayMode.numbersOnly,
     this.viewMode = BoardViewMode.problem,
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
+    this.positionType = PositionType.withFilledNeutralPoints,
+    this.showMoveNumbers = true,
   });
 
   @override
@@ -51,6 +56,8 @@ class GoBoard extends StatelessWidget {
             sequenceDisplayMode,
             viewMode,
             ownershipDisplayMode,
+            positionType,
+            showMoveNumbers,
           ),
           size: Size.infinite,
         ),
@@ -67,6 +74,8 @@ class GoBoardPainter extends CustomPainter {
   final SequenceDisplayMode sequenceDisplayMode;
   final BoardViewMode viewMode;
   final OwnershipDisplayMode ownershipDisplayMode;
+  final PositionType positionType;
+  final bool showMoveNumbers;
 
   GoBoardPainter(
     this.position,
@@ -76,6 +85,8 @@ class GoBoardPainter extends CustomPainter {
     this.sequenceDisplayMode,
     this.viewMode,
     this.ownershipDisplayMode,
+    this.positionType,
+    this.showMoveNumbers,
   );
 
   @override
@@ -127,14 +138,14 @@ class GoBoardPainter extends CustomPainter {
       }
     }
 
-    // Get sequence moves if available
-    final List<MoveSequenceData> sequenceMoves = sequenceLength > 0 && trainingPosition != null
-        ? trainingPosition!.extractMoveSequence(sequenceLength)
+    // Get sequence moves if available (using position-type-aware method)
+    final List<MoveSequenceData> sequenceMoves = trainingPosition != null
+        ? trainingPosition!.extractMoveSequenceWithType(sequenceLength, positionType, showMoveNumbers, viewMode)
         : [];
 
-    // Get last move before sequence for marker
-    final Position? lastMovePosition = sequenceLength > 0 && trainingPosition != null
-        ? trainingPosition!.getLastMoveBeforeSequence(sequenceLength)
+    // Get last move before sequence for marker (using position-type-aware method)
+    final Position? lastMovePosition = trainingPosition != null
+        ? trainingPosition!.getLastMoveBeforeSequenceWithType(sequenceLength, positionType)
         : null;
 
     // Create a set of sequence positions for quick lookup
@@ -267,7 +278,9 @@ class GoBoardPainter extends CustomPainter {
           // Draw sequence numbers on stones (for stonesWithNumbers mode)
           if (isSequencePosition && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers) {
             final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
-            _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, stone);
+            if (sequenceMove.moveNumber > 0) { // Only draw if not hidden
+              _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, stone);
+            }
           }
         }
 
@@ -279,19 +292,23 @@ class GoBoardPainter extends CustomPainter {
 
           if (viewMode == BoardViewMode.problem && sequenceDisplayMode == SequenceDisplayMode.numbersOnly) {
             // Problem view: numbers with background blobs (stones are hidden)
-            _drawMoveNumberOnEmptyIntersection(canvas, x, y, sequenceMove.moveNumber, stoneRadius);
+            if (sequenceMove.moveNumber > 0) { // Only draw if not hidden
+              _drawMoveNumberOnEmptyIntersection(canvas, x, y, sequenceMove.moveNumber, stoneRadius);
+            }
           } else if (viewMode == BoardViewMode.review && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers) {
             // Review view: numbers overlaid on stones
-            if (position.board[row][col] != StoneColor.empty) {
-              _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, position.board[row][col]);
-            } else {
-              _drawMoveNumberOnEmptyIntersection(canvas, x, y, sequenceMove.moveNumber, stoneRadius);
+            if (sequenceMove.moveNumber > 0) { // Only draw if not hidden
+              if (position.board[row][col] != StoneColor.empty) {
+                _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, position.board[row][col]);
+              } else {
+                _drawMoveNumberOnEmptyIntersection(canvas, x, y, sequenceMove.moveNumber, stoneRadius);
+              }
             }
           }
         }
 
         // Legacy: Draw old move sequence numbers for backward compatibility
-        if (sequenceLength == 0 && trainingPosition?.gameInfo?.moveSequence != null) {
+        if (sequenceLength == 0 && showMoveNumbers && trainingPosition?.gameInfo?.moveSequence != null) {
           for (final move in trainingPosition!.gameInfo!.moveSequence!) {
             if (move.row == row && move.col == col && position.board[row][col] == StoneColor.empty) {
               final double x = boardStart + (col - displayStartCol) * cellSize;
@@ -678,6 +695,8 @@ class GoBoardPainter extends CustomPainter {
            oldDelegate.sequenceLength != sequenceLength ||
            oldDelegate.sequenceDisplayMode != sequenceDisplayMode ||
            oldDelegate.viewMode != viewMode ||
-           oldDelegate.ownershipDisplayMode != ownershipDisplayMode;
+           oldDelegate.ownershipDisplayMode != ownershipDisplayMode ||
+           oldDelegate.positionType != positionType ||
+           oldDelegate.showMoveNumbers != showMoveNumbers;
   }
 }

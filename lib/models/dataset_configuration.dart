@@ -14,6 +14,7 @@ class DatasetConfiguration {
   final PredictionType predictionType;
   final int scoreGranularity;
   final PositionType positionType;
+  final bool showMoveNumbers;
 
   const DatasetConfiguration({
     required this.thresholdGood,
@@ -26,6 +27,7 @@ class DatasetConfiguration {
     this.predictionType = PredictionType.winnerPrediction,
     this.scoreGranularity = 1,
     this.positionType = PositionType.withFilledNeutralPoints,
+    this.showMoveNumbers = true,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
@@ -79,6 +81,7 @@ class DatasetConfiguration {
     PredictionType? predictionType,
     int? scoreGranularity,
     PositionType? positionType,
+    bool? showMoveNumbers,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
@@ -91,6 +94,7 @@ class DatasetConfiguration {
       predictionType: predictionType ?? this.predictionType,
       scoreGranularity: scoreGranularity ?? this.scoreGranularity,
       positionType: positionType ?? this.positionType,
+      showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
     );
   }
 
@@ -106,6 +110,7 @@ class DatasetConfiguration {
       'predictionType': predictionType.value,
       'scoreGranularity': scoreGranularity,
       'positionType': positionType.value,
+      'showMoveNumbers': showMoveNumbers,
     };
   }
 
@@ -130,6 +135,7 @@ class DatasetConfiguration {
       predictionType: PredictionType.fromString(json['predictionType'] as String?) ?? PredictionType.winnerPrediction,
       scoreGranularity: json['scoreGranularity'] as int? ?? 1,
       positionType: PositionType.fromString(json['positionType'] as String?) ?? PositionType.withFilledNeutralPoints,
+      showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
     );
   }
 

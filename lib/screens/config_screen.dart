@@ -375,22 +375,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   /// Get a compatible ownership mode when position type changes
   OwnershipDisplayMode _getCompatibleOwnershipMode(PositionType positionType) {
-    final currentMode = _currentDatasetConfig?.ownershipDisplayMode ?? OwnershipDisplayMode.none;
-
-    // Get available modes for the new position type
-    List<OwnershipDisplayMode> availableModes;
+    // For "Before filling neutral points" mode, always use none (no ownership display)
     if (positionType == PositionType.beforeFillingNeutralPoints) {
-      availableModes = [OwnershipDisplayMode.none, OwnershipDisplayMode.squares];
-    } else {
-      availableModes = OwnershipDisplayMode.values;
+      return OwnershipDisplayMode.none;
     }
 
-    if (availableModes.contains(currentMode)) {
-      return currentMode;
-    }
-
-    // Return the first available mode if current is not compatible
-    return availableModes.first;
+    // For other modes, preserve current setting if valid
+    final currentMode = _currentDatasetConfig?.ownershipDisplayMode ?? OwnershipDisplayMode.none;
+    return currentMode;
   }
 
   @override
@@ -588,24 +580,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Sequence Length (hide for "with filled neutral points" mode)
-                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
-                          TextFormField(
-                            controller: _sequenceLengthController,
-                            decoration: const InputDecoration(
-                              labelText: 'Move Sequence Length',
-                              helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
-                              border: OutlineInputBorder(),
-                              suffix: Text('moves'),
-                            ),
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
                         // Position Type (only for final datasets)
                         if (_isFinalDataset()) ...[
                           DropdownButtonFormField<PositionType>(
@@ -646,8 +620,48 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Ownership Display Mode
-                        DropdownButtonFormField<OwnershipDisplayMode>(
+                        // Sequence Length (hide for "with filled neutral points" mode)
+                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
+                          TextFormField(
+                            controller: _sequenceLengthController,
+                            decoration: const InputDecoration(
+                              labelText: 'Move Sequence Length',
+                              helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
+                              border: OutlineInputBorder(),
+                              suffix: Text('moves'),
+                            ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Show Move Numbers checkbox (only for "Before filling neutral points" mode)
+                          if (_isFinalDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
+                            CheckboxListTile(
+                              title: const Text('Show Move Numbers'),
+                              subtitle: const Text(
+                                'Display numbers on move sequence intersections (uncheck to leave intersections empty)',
+                              ),
+                              value: _currentDatasetConfig!.showMoveNumbers,
+                              onChanged: (bool? value) {
+                                if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                                  final newConfig = _currentDatasetConfig!.copyWith(
+                                    showMoveNumbers: value,
+                                  );
+                                  _autoSaveDatasetConfiguration(newConfig);
+                                }
+                              },
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ],
+
+                        // Ownership Display Mode (hide for "Before filling neutral points" mode)
+                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType != PositionType.beforeFillingNeutralPoints) ...[
+                          DropdownButtonFormField<OwnershipDisplayMode>(
                           value: _currentDatasetConfig!.ownershipDisplayMode,
                           decoration: const InputDecoration(
                             labelText: 'Ownership Display Mode',
@@ -670,6 +684,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
+                        ],
 
                         // Hide Game Info Bar (hide for final datasets - controlled by position type)
                         if (!_isFinalDataset()) ...[

@@ -67,18 +67,20 @@ class PositionScoring {
   static String generateBlackScoringText(TrainingPosition position, PositionType positionType) {
     switch (positionType) {
       case PositionType.withFilledNeutralPoints:
-        // Simple: just show territory + captured
+        // "Black: {blackTerritory}"
         final territory = position.blackTerritory ?? 0;
-        final captured = position.whiteCaptured;
-        final total = territory + captured;
-        return '$territory+$captured=$total';
+        return 'Black: ${formatScore(territory.toDouble())}';
 
       case PositionType.beforeFillingNeutralPoints:
-        // Complex: territory points on board + captured
-        final territoryScore = calculateBlackTerritoryScore(position);
-        final captured = position.whiteCaptured;
-        final total = territoryScore + captured;
-        return '$territoryScore+$captured=$total';
+        // "Black: {(blackTerritory + (ultimateWhiteCaptured - whiteCaptured))} + {whiteCaptured} = {blackTerritory + ultimateWhiteCaptured}"
+        final blackTerritory = position.blackTerritory ?? 0;
+        final whiteCaptured = position.whiteCaptured;
+        final ultimateWhiteCaptured = position.ultimateWhiteCaptured ?? whiteCaptured;
+
+        final territoryPart = blackTerritory + (ultimateWhiteCaptured - whiteCaptured);
+        final total = blackTerritory + ultimateWhiteCaptured;
+
+        return 'Black: ${formatScore(territoryPart.toDouble())} + ${formatScore(whiteCaptured.toDouble())} = ${formatScore(total.toDouble())}';
     }
   }
 
@@ -86,30 +88,30 @@ class PositionScoring {
   static String generateWhiteScoringText(TrainingPosition position, PositionType positionType) {
     switch (positionType) {
       case PositionType.withFilledNeutralPoints:
-        // Simple: territory + captured + komi
+        // "White: {whiteTerritory} + {komi} = {whiteTerritory + komi}"
         final territory = position.whiteTerritory ?? 0;
-        final captured = position.blackCaptured;
         final komi = position.komi;
-        final total = territory + captured + komi;
+        final total = territory + komi;
 
-        // Format komi for display
-        final komiStr = formatScore(komi);
-        final totalStr = formatScore(total);
-
-        return '$territory+$captured+$komiStr=$totalStr';
+        return 'White: ${formatScore(territory.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
 
       case PositionType.beforeFillingNeutralPoints:
-        // Complex: territory points on board + captured + komi
-        final territoryScore = calculateWhiteTerritoryScore(position);
-        final captured = position.blackCaptured;
+        // "White: {(whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment)} + {blackCaptured} + {komi} = {whiteTerritory + ultimateBlackCaptured + adjustment + komi}"
+        final whiteTerritory = position.whiteTerritory ?? 0;
+        final blackCaptured = position.blackCaptured;
+        final ultimateBlackCaptured = position.ultimateBlackCaptured ?? blackCaptured;
         final komi = position.komi;
-        final total = territoryScore + captured + komi;
 
-        // Format komi for display
-        final komiStr = formatScore(komi);
-        final totalStr = formatScore(total);
+        // Apply additional white move adjustment if needed
+        int adjustment = 0;
+        if (position.additionalWhiteMove == true) {
+          adjustment = 1;
+        }
 
-        return '$territoryScore+$captured+$komiStr=$totalStr';
+        final territoryPart = whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment;
+        final total = whiteTerritory + ultimateBlackCaptured + adjustment + komi;
+
+        return 'White: ${formatScore(territoryPart.toDouble())} + ${formatScore(blackCaptured.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
     }
   }
 }

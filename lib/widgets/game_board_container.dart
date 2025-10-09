@@ -6,6 +6,7 @@ import '../models/layout_type.dart';
 import '../models/sequence_display_mode.dart';
 import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
+import '../models/position_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import 'go_board.dart';
@@ -23,6 +24,8 @@ class GameBoardContainer extends StatefulWidget {
   final SequenceDisplayMode sequenceDisplayMode;
   final BoardViewMode viewMode;
   final OwnershipDisplayMode ownershipDisplayMode;
+  final PositionType positionType;
+  final bool showMoveNumbers;
 
   const GameBoardContainer({
     super.key,
@@ -36,6 +39,8 @@ class GameBoardContainer extends StatefulWidget {
     this.sequenceDisplayMode = SequenceDisplayMode.numbersOnly,
     this.viewMode = BoardViewMode.problem,
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
+    this.positionType = PositionType.withFilledNeutralPoints,
+    this.showMoveNumbers = true,
   });
 
   @override
@@ -83,6 +88,8 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                           layoutType: widget.layoutType,
                           sequenceLength: widget.sequenceLength,
                           sequenceDisplayMode: widget.sequenceDisplayMode,
+                          positionType: widget.positionType,
+                          showMoveNumbers: widget.showMoveNumbers,
                         ),
                       )
                     : GoBoard(
@@ -94,6 +101,8 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                         sequenceDisplayMode: widget.sequenceDisplayMode,
                         viewMode: widget.viewMode,
                         ownershipDisplayMode: widget.ownershipDisplayMode,
+                        positionType: widget.positionType,
+                        showMoveNumbers: widget.showMoveNumbers,
                       ),
                 // Overlay for feedback widget only (no background color)
                 if (widget.showFeedbackOverlay && widget.feedbackWidget != null)

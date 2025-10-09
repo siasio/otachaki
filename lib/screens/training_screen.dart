@@ -4,6 +4,7 @@ import '../models/go_position.dart';
 import '../models/scoring_config.dart';
 import '../models/dataset_type.dart';
 import '../models/dataset_configuration.dart';
+import '../models/position_type.dart';
 import '../services/position_manager.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
@@ -166,10 +167,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
         }
       } else if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
+        final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+        final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
         final options = GameResultOption.generateOptions(
           _positionManager.currentDataset!.metadata.datasetType,
-          ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
-          _positionManager.currentTrainingPosition!.result,
+          ScoringConfig.parseScore(effectiveResult),
+          effectiveResult,
         );
 
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft && options.isNotEmpty) {
@@ -237,8 +240,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
       PositionedScoreOptions? scoreOptions;
       if (_currentConfig?.predictionType == PredictionType.exactScorePrediction &&
           _positionManager.currentTrainingPosition != null) {
+        final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+        final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
         scoreOptions = PositionedScoreOptions.generate(
-          actualScoreString: _positionManager.currentTrainingPosition!.result,
+          actualScoreString: effectiveResult,
           scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
         );
       }
@@ -247,7 +252,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
       RoughLeadPredictionState? roughLeadState;
       if (_currentConfig?.predictionType == PredictionType.roughLeadPrediction &&
           _positionManager.currentTrainingPosition != null) {
-        final actualScore = ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result);
+        final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+        final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
+        final actualScore = ScoringConfig.parseScore(effectiveResult);
         roughLeadState = RoughLeadPredictionState.generate(
           actualScore: actualScore,
           thresholdGood: _currentConfig?.thresholdGood ?? 2.0,
@@ -387,8 +394,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final currentTrainingPosition = _positionManager.currentTrainingPosition;
     if (currentTrainingPosition == null) return false;
 
-    // Parse the score from the result string
-    final actualScore = ScoringConfig.parseScore(currentTrainingPosition.result);
+    // Parse the score from the result string (using position-type-aware result)
+    final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+    final effectiveResult = currentTrainingPosition.getResult(positionType);
+    final actualScore = ScoringConfig.parseScore(effectiveResult);
 
     // Get all valid results for this score using default config
     final validResults = ScoringConfig.defaultConfig.getValidResults(actualScore);
@@ -492,7 +501,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
         useColoredBackgroundForScores: true,
         blackTerritory: currentTrainingPosition?.blackTerritory,
         whiteTerritory: currentTrainingPosition?.whiteTerritory,
-        komi: currentTrainingPosition?.gameInfo?.komi,
+        komi: currentTrainingPosition?.komi,
+        trainingPosition: currentTrainingPosition,
+        positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
       );
     } else {
       final isEnabled = ((_timerRunning || !(_currentConfig?.timerEnabled ?? true)) && !_hasAnswered);
@@ -501,8 +512,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
         // Use pre-generated score options (generated once when position was loaded)
         if (_currentScoreOptions == null) {
           // Fallback: generate if not already generated (shouldn't happen in normal flow)
+          final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+          final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
           _currentScoreOptions = PositionedScoreOptions.generate(
-            actualScoreString: _positionManager.currentTrainingPosition!.result,
+            actualScoreString: effectiveResult,
             scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
           );
         }
@@ -522,10 +535,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
         );
       } else if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
+        final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+        final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
         return AdaptiveResultButtons.forChoices(
           datasetType: _positionManager.currentDataset!.metadata.datasetType,
-          actualScore: ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result),
-          resultString: _positionManager.currentTrainingPosition!.result,
+          actualScore: ScoringConfig.parseScore(effectiveResult),
+          resultString: effectiveResult,
           onResultOptionSelected: isEnabled ? _onResultOptionSelected : (_) {},
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
@@ -559,8 +574,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
       PositionedScoreOptions? scoreOptions;
       if (_currentConfig?.predictionType == PredictionType.exactScorePrediction &&
           _positionManager.currentTrainingPosition != null) {
+        final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+        final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
         scoreOptions = PositionedScoreOptions.generate(
-          actualScoreString: _positionManager.currentTrainingPosition!.result,
+          actualScoreString: effectiveResult,
           scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
         );
       }
@@ -569,7 +586,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
       RoughLeadPredictionState? roughLeadState;
       if (_currentConfig?.predictionType == PredictionType.roughLeadPrediction &&
           _positionManager.currentTrainingPosition != null) {
-        final actualScore = ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result);
+        final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+        final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
+        final actualScore = ScoringConfig.parseScore(effectiveResult);
         roughLeadState = RoughLeadPredictionState.generate(
           actualScore: actualScore,
           thresholdGood: _currentConfig?.thresholdGood ?? 2.0,
@@ -650,7 +669,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Widget _buildFeedbackWidget() {
-    final result = _positionManager.currentTrainingPosition?.result ?? '';
+    // Use position-type-aware effective result
+    final currentTrainingPosition = _positionManager.currentTrainingPosition;
+    final String result;
+    if (currentTrainingPosition != null) {
+      final positionType = _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+      result = currentTrainingPosition.getResult(positionType);
+    } else {
+      result = '';
+    }
     final displayResult = _formatResultText(result);
     final colors = _getResultDisplayColors(result);
     final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
@@ -973,7 +1000,23 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
 
     final timerType = _globalConfig?.timerType ?? TimerType.smooth;
-    final shouldShowGameInfo = _currentConfig != null ? !_currentConfig!.hideGameInfoBar : true;
+    // Determine whether to show game info bar
+    bool shouldShowGameInfo = true;
+    if (_currentConfig != null) {
+      final datasetType = _positionManager.currentDataset?.metadata.datasetType;
+      final isFinalDataset = datasetType == DatasetType.final9x9Area ||
+                           datasetType == DatasetType.final19x19Area ||
+                           datasetType == DatasetType.final9x9AreaVars;
+
+      if (isFinalDataset) {
+        // For final datasets, show game info based on position type
+        final positionType = _currentConfig!.positionType;
+        shouldShowGameInfo = positionType == PositionType.beforeFillingNeutralPoints;
+      } else {
+        // For non-final datasets, use the hideGameInfoBar setting
+        shouldShowGameInfo = !_currentConfig!.hideGameInfoBar;
+      }
+    }
     final isTimerEnabled = _currentConfig?.timerEnabled ?? true;
 
     if (layoutType == LayoutType.horizontal) {
@@ -1026,6 +1069,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       sequenceDisplayMode: _currentSequenceDisplayMode,
                       viewMode: _currentViewMode,
                       ownershipDisplayMode: _currentOwnershipDisplayMode,
+                      positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
+                      showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
                       feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                     ),
                     buttons: _buildButtons(),
@@ -1086,6 +1131,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 sequenceDisplayMode: _currentSequenceDisplayMode,
                 viewMode: _currentViewMode,
                 ownershipDisplayMode: _currentOwnershipDisplayMode,
+                positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
+                showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
                 feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
               ),
               buttons: _buildButtons(),

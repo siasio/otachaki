@@ -4,6 +4,7 @@ import '../core/game_result_parser.dart';
 import '../core/position_scoring.dart';
 import 'dataset_type.dart';
 import 'position_type.dart';
+import 'board_view_mode.dart';
 
 
 class TrainingPosition {
@@ -194,6 +195,90 @@ class TrainingPosition {
   /// Check if move sequence selection should be shown based on position type
   bool shouldShowMoveSequenceSelection(PositionType positionType) {
     return positionType.showMoveSequenceSelection;
+  }
+
+  /// Extract recent move sequence for display with position type logic
+  ///
+  /// Parameters:
+  /// - sequenceLength: Number of moves to show in sequence
+  /// - positionType: The position type mode (affects special behavior for "Before filling neutral points")
+  /// - showMoveNumbers: Whether to show move numbers (only affects problem view)
+  /// - viewMode: The current board view mode (problem vs review/feedback)
+  ///
+  /// Special behavior for "Before filling neutral points" mode with sequenceLength 0:
+  /// - Returns empty list (no sequence moves) so the last move can be shown as a triangle marker
+  List<MoveSequenceData> extractMoveSequenceWithType(int sequenceLength, PositionType positionType, bool showMoveNumbers, BoardViewMode viewMode) {
+    if (movesBase64 == null) {
+      return [];
+    }
+
+    // For "Before filling neutral points" mode with sequence length 0:
+    // Don't return any sequence moves - let the last move marker triangle handle it
+    if (positionType == PositionType.beforeFillingNeutralPoints && sequenceLength == 0) {
+      return [];
+    }
+
+    if (sequenceLength <= 0) {
+      return [];
+    }
+
+    final moves = GoLogic.extractRecentMoves(
+      movesBase64!,
+      boardSize,
+      numberOfMoves,
+      sequenceLength,
+    );
+
+    // Only hide move numbers in problem view when showMoveNumbers is false
+    // In review/feedback view, always show move numbers
+    if (viewMode == BoardViewMode.problem && !showMoveNumbers) {
+      // Return moves with moveNumber 0 to indicate no number should be shown
+      return moves.map((move) => MoveSequenceData(
+        row: move.row,
+        col: move.col,
+        moveNumber: 0, // 0 indicates no number should be shown
+      )).toList();
+    }
+
+    return moves;
+  }
+
+  /// Get position of last move before sequence with position type logic
+  ///
+  /// Special behavior for "Before filling neutral points" mode with sequenceLength 0:
+  /// - Returns the actual last move position to show the triangle marker
+  Position? getLastMoveBeforeSequenceWithType(int sequenceLength, PositionType positionType) {
+    if (movesBase64 == null) {
+      return null;
+    }
+
+    // For "Before filling neutral points" mode with sequence length 0:
+    // Return the last move position to show the triangle marker
+    if (positionType == PositionType.beforeFillingNeutralPoints && sequenceLength == 0) {
+      if (numberOfMoves > 0) {
+        final lastMoves = GoLogic.extractRecentMoves(
+          movesBase64!,
+          boardSize,
+          numberOfMoves,
+          1,
+        );
+        if (lastMoves.isNotEmpty) {
+          return Position(lastMoves.first.row, lastMoves.first.col);
+        }
+      }
+      return null;
+    }
+
+    if (sequenceLength <= 0) {
+      return null;
+    }
+
+    return GoLogic.findLastMoveBeforeSequence(
+      movesBase64!,
+      boardSize,
+      numberOfMoves,
+      sequenceLength,
+    );
   }
 
   /// Extract recent move sequence for display

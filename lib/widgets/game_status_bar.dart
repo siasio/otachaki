@@ -38,12 +38,10 @@ class GameStatusBar extends StatelessWidget {
       );
     }
 
-    final gameInfo = position!.gameInfo;
-
-    // Build the info widgets
+    // Build the info widgets using top-level fields (not gameInfo)
     final blackCapturesWidget = _buildCaptureInfo(
       'Black stones dead',
-      gameInfo?.whiteCaptured ?? 0, // White captured black stones
+      position!.blackCaptured, // captured Black stones
       Colors.black,
     );
 
@@ -55,7 +53,7 @@ class GameStatusBar extends StatelessWidget {
           style: themeProvider.getTextStyle(UIElement.textStatusIndicator),
         ),
         Text(
-          '${gameInfo?.komi ?? 0}',
+          '${position!.komi}',
           style: themeProvider.getTextStyle(UIElement.textGameInfo),
         ),
       ],
@@ -63,7 +61,7 @@ class GameStatusBar extends StatelessWidget {
 
     final whiteCapturesWidget = _buildCaptureInfo(
       'White stones dead',
-      gameInfo?.blackCaptured ?? 0, // Black captured white stones
+      position!.whiteCaptured, // White captured stones
       Colors.white,
     );
 

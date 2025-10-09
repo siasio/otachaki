@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
+import '../models/training_position.dart';
+import '../models/position_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../core/game_result_parser.dart';
@@ -15,6 +17,8 @@ class ScoreDisplayButtons extends StatelessWidget {
   final int? blackTerritory;
   final int? whiteTerritory;
   final double? komi;
+  final TrainingPosition? trainingPosition;
+  final PositionType? positionType;
 
   const ScoreDisplayButtons({
     super.key,
@@ -26,6 +30,8 @@ class ScoreDisplayButtons extends StatelessWidget {
     this.blackTerritory,
     this.whiteTerritory,
     this.komi,
+    this.trainingPosition,
+    this.positionType,
   });
 
   @override
@@ -262,7 +268,14 @@ class ScoreDisplayButtons extends StatelessWidget {
 
   @visibleForTesting
   ScoreInfo parseScoreInfo(String result) {
-    // If we have territory data, use the new format
+    // If we have complete position and type data, use the proper scoring text
+    if (trainingPosition != null && positionType != null) {
+      final blackText = trainingPosition!.getBlackScoringText(positionType!);
+      final whiteText = trainingPosition!.getWhiteScoringText(positionType!);
+      return ScoreInfo(whiteScore: whiteText, blackScore: blackText);
+    }
+
+    // Fallback: if we have territory data, use the legacy format
     if (blackTerritory != null && whiteTerritory != null) {
       final blackText = "Black's territory: $blackTerritory points";
 
@@ -280,7 +293,7 @@ class ScoreDisplayButtons extends StatelessWidget {
       return ScoreInfo(whiteScore: whiteText, blackScore: blackText);
     }
 
-    // Fallback to old format if territory data is not available
+    // Fallback to old format if no territory data is available
     if (result.isEmpty) {
       return ScoreInfo(whiteScore: 'W: ?', blackScore: 'B: ?');
     }
