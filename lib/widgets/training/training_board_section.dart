@@ -9,7 +9,6 @@ import '../../models/sequence_display_mode.dart';
 import '../../models/board_view_mode.dart';
 import '../../models/ownership_display_mode.dart';
 import '../../models/position_type.dart';
-import '../../themes/unified_theme_provider.dart';
 import '../game_board_container.dart';
 
 /// Board section component for the training screen
@@ -35,15 +34,12 @@ class TrainingBoardSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentSkin = globalConfig?.appSkin ?? AppSkin.classic;
-    final themeProvider = UnifiedThemeProvider(
-      skin: currentSkin,
-      layoutType: globalConfig?.layoutType ?? LayoutType.vertical,
-    );
+    // Note: themeProvider is created inside GameBoardContainer
 
     // Determine board view mode based on current state
     BoardViewMode viewMode;
     if (showFeedbackOverlay) {
-      viewMode = isCorrectAnswer ? BoardViewMode.correctAnswer : BoardViewMode.incorrectAnswer;
+      viewMode = BoardViewMode.review; // Use review mode for feedback
     } else {
       viewMode = BoardViewMode.problem;
     }

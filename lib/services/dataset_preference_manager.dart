@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/dataset_type.dart';
+import 'logger_service.dart';
 
 class DatasetInfo {
   final String name;
@@ -79,7 +80,7 @@ class DatasetPreferenceManager {
           }
         }
       } catch (e) {
-        print('Error loading user datasets: $e');
+        LoggerService.error('Failed to load user datasets', error: e, context: 'DatasetPreferenceManager');
         _userDatasets.clear();
       }
     }
@@ -96,7 +97,7 @@ class DatasetPreferenceManager {
       final datasetsJson = jsonEncode(_userDatasets.map((d) => d.toJson()).toList());
       await _prefs?.setString(_userDatasetsKey, datasetsJson);
     } catch (e) {
-      print('Error saving user datasets: $e');
+      LoggerService.error('Failed to save user datasets', error: e, context: 'DatasetPreferenceManager');
     }
   }
 
@@ -226,7 +227,7 @@ class DatasetPreferenceManager {
         return DatasetType.fromString(datasetTypeString);
       }
     } catch (e) {
-      print('Error reading dataset type from $path: $e');
+      LoggerService.error('Failed to read dataset type from $path', error: e, context: 'DatasetPreferenceManager');
     }
     return null;
   }

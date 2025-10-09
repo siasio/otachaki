@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/problem_attempt.dart';
 import '../models/daily_statistics.dart';
 import '../models/dataset_type.dart';
+import 'logger_service.dart';
 
 /// Manages user performance statistics with persistent storage
 class StatisticsManager {
@@ -146,8 +147,9 @@ class StatisticsManager {
         _attempts = attemptsList
             .map((json) => ProblemAttempt.fromJson(json as Map<String, dynamic>))
             .toList();
-      } catch (e) {
-        print('Error loading attempts: $e');
+      } catch (e, stackTrace) {
+        LoggerService.error('Failed to load problem attempts from storage',
+          error: e, stackTrace: stackTrace, context: 'StatisticsManager');
         _attempts = [];
       }
     }
@@ -158,8 +160,9 @@ class StatisticsManager {
     try {
       final attemptsJson = json.encode(_attempts.map((a) => a.toJson()).toList());
       await _prefs!.setString(_attemptsKey, attemptsJson);
-    } catch (e) {
-      print('Error saving attempts: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to save problem attempts to storage',
+        error: e, stackTrace: stackTrace, context: 'StatisticsManager');
     }
   }
 
@@ -175,8 +178,9 @@ class StatisticsManager {
             DailyStatistics.fromJson(value as Map<String, dynamic>)
           )
         );
-      } catch (e) {
-        print('Error loading daily statistics: $e');
+      } catch (e, stackTrace) {
+        LoggerService.error('Failed to load daily statistics from storage',
+          error: e, stackTrace: stackTrace, context: 'StatisticsManager');
         _dailyStats = {};
         // Rebuild from attempts if available
         _rebuildDailyStatistics();
@@ -195,8 +199,9 @@ class StatisticsManager {
       );
       final statsJson = json.encode(statsMap);
       await _prefs!.setString(_dailyStatsKey, statsJson);
-    } catch (e) {
-      print('Error saving daily statistics: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to save daily statistics to storage',
+        error: e, stackTrace: stackTrace, context: 'StatisticsManager');
     }
   }
 

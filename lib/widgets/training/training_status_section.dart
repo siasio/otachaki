@@ -3,6 +3,7 @@ import '../../models/global_configuration.dart';
 import '../../models/dataset_configuration.dart';
 import '../../models/app_skin.dart';
 import '../../models/layout_type.dart';
+import '../../models/timer_type.dart';
 import '../../widgets/timer_bar.dart';
 import '../../widgets/game_status_bar.dart';
 
@@ -34,10 +35,9 @@ class TrainingStatusSection extends StatelessWidget {
         // Timer bar (if enabled)
         if (currentConfig?.timerEnabled == true)
           TimerBar(
-            timerType: currentConfig?.timerType,
-            duration: currentConfig?.timerDurationSeconds,
-            isRunning: timerRunning,
-            onTimerComplete: onTimerComplete,
+            timerType: globalConfig?.timerType ?? TimerType.smooth,
+            duration: Duration(seconds: currentConfig?.timePerProblemSeconds ?? 30),
+            onComplete: timerRunning ? onTimerComplete : null,
             appSkin: currentSkin,
             layoutType: layoutType,
           ),
@@ -47,6 +47,7 @@ class TrainingStatusSection extends StatelessWidget {
         // Game status bar
         if (!loading)
           GameStatusBar(
+            position: null, // Will display demo position placeholder
             appSkin: currentSkin,
             layoutType: layoutType,
           ),

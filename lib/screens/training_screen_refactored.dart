@@ -4,6 +4,8 @@ import '../models/game_result_option.dart';
 import '../models/rough_lead_button_state.dart';
 import '../models/prediction_type.dart';
 import '../models/auto_advance_mode.dart';
+import '../models/layout_type.dart';
+import '../models/scoring_config.dart';
 import '../widgets/adaptive_layout.dart';
 import '../widgets/training/training_app_bar.dart';
 import '../widgets/training/training_board_section.dart';
@@ -117,7 +119,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final autoAdvanceMode = _stateManager.globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
 
     if (autoAdvanceMode == AutoAdvanceMode.always ||
-        (autoAdvanceMode == AutoAdvanceMode.onlyCorrect && isCorrect)) {
+        (autoAdvanceMode == AutoAdvanceMode.onCorrectOnly && isCorrect)) {
 
       final markDisplayTime = _stateManager.globalConfig?.markDisplayTime ?? 1.0;
       Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
@@ -225,8 +227,18 @@ class _TrainingScreenState extends State<TrainingScreen> {
           ),
         ),
         body: AdaptiveLayout(
-          layoutType: _stateManager.globalConfig?.layoutType,
-          boardWidget: TrainingBoardSection(
+          layoutType: _stateManager.globalConfig?.layoutType ?? LayoutType.vertical,
+          timerBar: TrainingStatusSection(
+            globalConfig: _stateManager.globalConfig,
+            currentConfig: _stateManager.currentConfig,
+            timerRunning: _stateManager.timerRunning,
+            loading: _stateManager.loading,
+            onTimerComplete: () {
+              _stateManager.onTimerComplete();
+              setState(() {});
+            },
+          ),
+          board: TrainingBoardSection(
             currentPosition: _stateManager.currentPosition!,
             trainingPosition: _stateManager.trainingPosition,
             globalConfig: _stateManager.globalConfig,
@@ -234,7 +246,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             showFeedbackOverlay: _stateManager.showFeedbackOverlay,
             isCorrectAnswer: _stateManager.isCorrectAnswer,
           ),
-          controlsWidget: TrainingControlsSection(
+          buttons: TrainingControlsSection(
             globalConfig: _stateManager.globalConfig,
             currentConfig: _stateManager.currentConfig,
             currentScoreOptions: _stateManager.currentScoreOptions,
@@ -249,16 +261,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
             onRoughLeadButtonPressed: _onRoughLeadButtonPressed,
             onPausePressed: _onPausePressed,
             onNextPressed: _onNextPressed,
-          ),
-          statusWidget: TrainingStatusSection(
-            globalConfig: _stateManager.globalConfig,
-            currentConfig: _stateManager.currentConfig,
-            timerRunning: _stateManager.timerRunning,
-            loading: _stateManager.loading,
-            onTimerComplete: () {
-              _stateManager.onTimerComplete();
-              setState(() {});
-            },
           ),
         ),
       ),

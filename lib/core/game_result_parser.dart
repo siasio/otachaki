@@ -1,3 +1,8 @@
+import '../models/scoring_config.dart';
+import '../models/game_result_option.dart';
+import '../models/go_position.dart';
+import '../models/training_position.dart';
+
 /// Pure functions for parsing Go game results without Flutter dependencies
 class GameResultParser {
   /// Parse the winner from a result string
@@ -108,6 +113,23 @@ class GameResultParser {
     ];
 
     return patterns.any((pattern) => pattern.hasMatch(result));
+  }
+
+  /// Parse GameResultOption to GameResult enum
+  /// Added to support refactored TrainingScreen architecture
+  static GameResult parseGameResultOption(
+    GameResultOption option,
+    GoPosition position,
+    TrainingPosition trainingPosition,
+  ) {
+    switch (option.buttonType) {
+      case ButtonType.blackWins:
+        return GameResult.blackWins;
+      case ButtonType.whiteWins:
+        return GameResult.whiteWins;
+      case ButtonType.draw:
+        return GameResult.draw;
+    }
   }
 
   /// Parse multiple results and return statistics

@@ -29,26 +29,11 @@ class TrainingAppBar extends StatelessWidget {
     );
 
     return AdaptiveAppBar(
-      title: 'Go Position Evaluation',
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.info_outline,
-            color: themeProvider.getElementStyle(UIElement.appBarActionButton).color,
-          ),
-          onPressed: onInfoPressed,
-          tooltip: 'Information',
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.settings,
-            color: themeProvider.getElementStyle(UIElement.appBarActionButton).color,
-          ),
-          onPressed: onConfigPressed,
-          tooltip: 'Settings',
-        ),
-      ],
-      themeProvider: themeProvider,
+      layoutType: globalConfig?.layoutType ?? LayoutType.vertical,
+      onInfoPressed: onInfoPressed,
+      onSettingsPressed: onConfigPressed,
+      backgroundColor: themeProvider.getElementStyle(UIElement.appBarContainer).backgroundColor,
+      foregroundColor: themeProvider.getElementStyle(UIElement.textHeading).color,
     );
   }
 }

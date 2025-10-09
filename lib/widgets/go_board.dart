@@ -455,30 +455,6 @@ class GoBoardPainter extends CustomPainter {
     canvas.drawPath(path, trianglePaint);
   }
 
-  void _drawMoveNumber(Canvas canvas, double x, double y, int moveNumber, double stoneRadius) {
-    final moveNumberStyle = themeProvider.getElementStyle(UIElement.moveNumber);
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: '$moveNumber',
-        style: TextStyle(
-          color: moveNumberStyle.color,
-          fontSize: moveNumberStyle.fontSize ?? (stoneRadius * 1.2),
-          fontWeight: moveNumberStyle.fontWeight,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(
-        x - textPainter.width / 2,
-        y - textPainter.height / 2,
-      ),
-    );
-  }
-
   void _drawMoveNumberOnEmptyIntersection(Canvas canvas, double x, double y, int moveNumber, double stoneRadius) {
     // Draw background circle to hide grid lines
     final boardStyle = themeProvider.getElementStyle(UIElement.boardBackground);

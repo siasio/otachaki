@@ -2,6 +2,8 @@ import 'timer_type.dart';
 import 'layout_type.dart';
 import 'app_skin.dart';
 import 'auto_advance_mode.dart';
+import 'sequence_display_mode.dart';
+import 'ownership_display_mode.dart';
 
 class GlobalConfiguration {
   final double markDisplayTimeSeconds;
@@ -10,6 +12,12 @@ class GlobalConfiguration {
   final AppSkin appSkin;
   final AutoAdvanceMode autoAdvanceMode;
   final bool markDisplayEnabled;
+  final SequenceDisplayMode sequenceDisplayMode;
+  final OwnershipDisplayMode ownershipDisplayMode;
+  final bool showMoveNumbers;
+
+  /// Convenience getter for compatibility with refactored code
+  double get markDisplayTime => markDisplayTimeSeconds;
 
   const GlobalConfiguration({
     required this.markDisplayTimeSeconds,
@@ -18,6 +26,9 @@ class GlobalConfiguration {
     required this.appSkin,
     required this.autoAdvanceMode,
     this.markDisplayEnabled = true,
+    this.sequenceDisplayMode = SequenceDisplayMode.numbersOnly,
+    this.ownershipDisplayMode = OwnershipDisplayMode.none,
+    this.showMoveNumbers = true,
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(
@@ -35,6 +46,9 @@ class GlobalConfiguration {
     AppSkin? appSkin,
     AutoAdvanceMode? autoAdvanceMode,
     bool? markDisplayEnabled,
+    SequenceDisplayMode? sequenceDisplayMode,
+    OwnershipDisplayMode? ownershipDisplayMode,
+    bool? showMoveNumbers,
   }) {
     return GlobalConfiguration(
       markDisplayTimeSeconds: markDisplayTimeSeconds ?? this.markDisplayTimeSeconds,
@@ -43,6 +57,9 @@ class GlobalConfiguration {
       appSkin: appSkin ?? this.appSkin,
       autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
       markDisplayEnabled: markDisplayEnabled ?? this.markDisplayEnabled,
+      sequenceDisplayMode: sequenceDisplayMode ?? this.sequenceDisplayMode,
+      ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
+      showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
     );
   }
 
@@ -54,6 +71,9 @@ class GlobalConfiguration {
       'appSkin': appSkin.value,
       'autoAdvanceMode': autoAdvanceMode.value,
       'markDisplayEnabled': markDisplayEnabled,
+      'sequenceDisplayMode': sequenceDisplayMode.name,
+      'ownershipDisplayMode': ownershipDisplayMode.name,
+      'showMoveNumbers': showMoveNumbers,
     };
   }
 
@@ -65,7 +85,34 @@ class GlobalConfiguration {
       appSkin: AppSkin.fromString(json['appSkin'] as String?) ?? defaultConfig.appSkin,
       autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
       markDisplayEnabled: json['markDisplayEnabled'] as bool? ?? true,
+      sequenceDisplayMode: _parseSequenceDisplayMode(json['sequenceDisplayMode'] as String?),
+      ownershipDisplayMode: _parseOwnershipDisplayMode(json['ownershipDisplayMode'] as String?),
+      showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
     );
+  }
+
+  static SequenceDisplayMode _parseSequenceDisplayMode(String? value) {
+    switch (value) {
+      case 'numbersOnly':
+        return SequenceDisplayMode.numbersOnly;
+      case 'stonesWithNumbers':
+        return SequenceDisplayMode.stonesWithNumbers;
+      default:
+        return SequenceDisplayMode.numbersOnly;
+    }
+  }
+
+  static OwnershipDisplayMode _parseOwnershipDisplayMode(String? value) {
+    switch (value) {
+      case 'none':
+        return OwnershipDisplayMode.none;
+      case 'squares':
+        return OwnershipDisplayMode.squares;
+      case 'overlay':
+        return OwnershipDisplayMode.overlay;
+      default:
+        return OwnershipDisplayMode.none;
+    }
   }
 
   bool isValidConfiguration() {

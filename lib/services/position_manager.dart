@@ -5,6 +5,7 @@ import '../models/position_type.dart';
 import 'position_loader.dart';
 import 'dataset_preference_manager.dart';
 import 'configuration_manager.dart';
+import 'logger_service.dart';
 
 class PositionManager {
   GoPosition? _currentPosition;
@@ -57,14 +58,16 @@ class PositionManager {
       // Create GoPosition with appropriate position type
       _currentPosition = GoPosition.fromTrainingPositionWithType(_currentTrainingPosition!, positionType);
 
-      print('Loaded position: ${_currentTrainingPosition!.id}');
-      print('Position type: ${positionType.value}');
-      print('Result: ${_currentTrainingPosition!.getResult(positionType)}');
-      print('Dataset type: ${_currentDataset!.metadata.datasetType}');
+      LoggerService.debug('Position loaded successfully',
+        context: 'PositionManager');
+      LoggerService.debug('Position details: ID=${_currentTrainingPosition!.id}, '
+        'Type=${positionType.value}, Result=${_currentTrainingPosition!.getResult(positionType)}, '
+        'Dataset=${_currentDataset!.metadata.datasetType}', context: 'PositionManager');
 
       return _currentPosition!;
-    } catch (e) {
-      print('Error loading position: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to load position, falling back to demo position',
+        error: e, stackTrace: stackTrace, context: 'PositionManager');
       // Fallback to demo position
       _currentPosition = GoPosition.demo();
       _currentTrainingPosition = null;
@@ -120,9 +123,10 @@ class PositionManager {
       // Try to load the previously selected dataset, or use a default
       await _loadDefaultOrSelectedDataset();
       await PositionLoader.preloadDataset();
-      print('Position manager initialized successfully');
+      LoggerService.info('Position manager initialized successfully', context: 'PositionManager');
     } catch (e) {
-      print('Warning: Failed to preload positions: $e');
+      LoggerService.warning('Failed to preload positions during initialization',
+        error: e, context: 'PositionManager');
     }
   }
 
@@ -141,15 +145,16 @@ class PositionManager {
         try {
           if (lastDataset.startsWith('assets/')) {
             PositionLoader.setDatasetFile(lastDataset.substring(7));
-            print('Loaded last session dataset: $lastDataset');
+            LoggerService.info('Loaded last session dataset: $lastDataset', context: 'PositionManager');
             return;
           } else {
             await PositionLoader.loadFromFile(lastDataset);
-            print('Loaded last session dataset from file: $lastDataset');
+            LoggerService.info('Loaded last session dataset from file: $lastDataset', context: 'PositionManager');
             return;
           }
         } catch (e) {
-          print('Failed to load last session dataset: $e');
+          LoggerService.warning('Failed to load last session dataset, using default',
+            error: e, context: 'PositionManager');
           // Fall through to default
         }
       }
@@ -159,10 +164,11 @@ class PositionManager {
       const defaultDataset = 'final_9x9_katago.json';
       PositionLoader.setDatasetFile(defaultDataset);
       await preferenceManager.setSelectedDataset('assets/$defaultDataset');
-      print('Loaded default dataset: $defaultDataset');
+      LoggerService.info('Loaded default dataset: $defaultDataset', context: 'PositionManager');
 
-    } catch (e) {
-      print('Error in default dataset loading: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Error in default dataset loading',
+        error: e, stackTrace: stackTrace, context: 'PositionManager');
       // PositionLoader will fall back to its default behavior
     }
   }

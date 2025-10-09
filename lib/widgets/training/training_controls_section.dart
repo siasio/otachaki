@@ -4,11 +4,11 @@ import '../../models/dataset_configuration.dart';
 import '../../models/positioned_score_options.dart';
 import '../../models/rough_lead_button_state.dart';
 import '../../models/game_result_option.dart';
-import '../../models/prediction_type.dart';
 import '../../models/auto_advance_mode.dart';
-import '../../widgets/adaptive_result_buttons.dart';
+import '../../models/app_skin.dart';
+import '../../models/layout_type.dart';
+import '../../widgets/adaptive_result_buttons.dart'; // ButtonStateManager is in this file
 import '../../widgets/pause_button.dart';
-import '../../models/button_state_manager.dart';
 
 /// Controls section component for the training screen
 /// Handles result buttons, pause button, and next button
@@ -48,19 +48,20 @@ class TrainingControlsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final predictionType = currentConfig?.predictionType ?? PredictionType.winnerPrediction;
+    // Note: predictionType will be used for keyboard handling logic
 
     return Column(
       children: [
         // Result buttons
         AdaptiveResultButtons(
-          globalConfig: globalConfig,
-          currentConfig: currentConfig,
-          currentScoreOptions: currentScoreOptions,
-          currentRoughLeadState: currentRoughLeadState,
+          appSkin: globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: globalConfig?.layoutType ?? LayoutType.vertical,
+          displayMode: ButtonDisplayMode.choices,
           onResultOptionSelected: onResultOptionSelected,
           onExactScoreButtonPressed: onExactScoreButtonPressed,
           onRoughLeadButtonPressed: onRoughLeadButtonPressed,
+          positionedScoreOptions: currentScoreOptions,
+          roughLeadPredictionState: currentRoughLeadState,
         ),
 
         const SizedBox(height: 8),
@@ -86,8 +87,7 @@ class TrainingControlsSection extends StatelessWidget {
         // Pause button (conditional)
         if (showFeedbackOverlay && stateManager.shouldAutoAdvance() && !pausePressed)
           PauseButton(
-            appSkin: globalConfig?.appSkin,
-            layoutType: globalConfig?.layoutType,
+            appSkin: globalConfig?.appSkin ?? AppSkin.classic,
             onPressed: onPausePressed,
           ),
 

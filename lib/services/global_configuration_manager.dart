@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/global_configuration.dart';
+import 'logger_service.dart';
 
 class GlobalConfigurationManager {
   static const String _globalConfigKey = 'global_configuration';
@@ -26,8 +27,9 @@ class GlobalConfigurationManager {
       try {
         final configMap = jsonDecode(configString) as Map<String, dynamic>;
         _configuration = GlobalConfiguration.fromJson(configMap);
-      } catch (e) {
-        print('Error loading global configuration: $e');
+      } catch (e, stackTrace) {
+        LoggerService.error('Failed to load global configuration, using defaults',
+          error: e, stackTrace: stackTrace, context: 'GlobalConfigurationManager');
         _configuration = GlobalConfiguration.defaultConfig;
       }
     } else {
@@ -38,8 +40,9 @@ class GlobalConfigurationManager {
   Future<void> _saveConfiguration() async {
     try {
       await _prefs?.setString(_globalConfigKey, jsonEncode(_configuration.toJson()));
-    } catch (e) {
-      print('Error saving global configuration: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to save global configuration',
+        error: e, stackTrace: stackTrace, context: 'GlobalConfigurationManager');
     }
   }
 

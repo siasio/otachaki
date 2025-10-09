@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../../models/go_position.dart';
 import '../../models/training_position.dart';
 import '../../models/positioned_score_options.dart';

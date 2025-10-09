@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'screens/training_screen.dart';
 import 'services/position_manager.dart';
 import 'services/global_configuration_manager.dart';
+import 'services/logger_service.dart';
 import 'themes/app_theme.dart';
 import 'themes/theme_enforcement.dart';
 import 'models/app_skin.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure logger based on build mode
+  LoggerService.setDebugMode(kDebugMode);
+  LoggerService.info('Starting Go Position Evaluation App', context: 'Application');
 
   ThemeEnforcement.initialize();
   await PositionManager.initialize();
@@ -38,8 +44,9 @@ class _GoCountingAppState extends State<GoCountingApp> {
         _globalConfigManager = manager;
         _currentSkin = manager.getConfiguration().appSkin;
       });
-    } catch (e) {
-      debugPrint('Error loading global configuration: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to load global configuration in main app',
+        error: e, stackTrace: stackTrace, context: 'GoCountingApp');
     }
   }
 

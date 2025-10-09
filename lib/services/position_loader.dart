@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/training_position.dart';
 import '../core/dataset_parser.dart' as parser;
+import 'logger_service.dart';
 
 enum DatasetSource {
   asset,
@@ -105,13 +106,15 @@ class PositionLoader {
       final metadata = jsonData['metadata'] as Map<String, dynamic>?;
       _currentDatasetType = metadata?['dataset_type'] as String?;
 
-      print('Loaded dataset from $_datasetFile: ${_cachedDataset!.metadata.totalPositions} positions');
-      print('Dataset name: ${_cachedDataset!.metadata.name}');
-      print('Dataset type: $_currentDatasetType');
+      LoggerService.info('Dataset loaded successfully from $_datasetFile: '
+        '${_cachedDataset!.metadata.totalPositions} positions', context: 'PositionLoader');
+      LoggerService.debug('Dataset details: name=${_cachedDataset!.metadata.name}, '
+        'type=$_currentDatasetType', context: 'PositionLoader');
 
       return _cachedDataset!;
-    } catch (e) {
-      print('Error loading dataset: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to load dataset from $_datasetFile',
+        error: e, stackTrace: stackTrace, context: 'PositionLoader');
       rethrow;
     }
   }

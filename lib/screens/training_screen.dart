@@ -9,6 +9,7 @@ import '../services/position_manager.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/statistics_manager.dart';
+import '../services/logger_service.dart';
 import '../models/global_configuration.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
@@ -95,9 +96,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _globalConfig = _globalConfigManager!.getConfiguration();
       _statisticsManager = await StatisticsManager.getInstance();
       _loadInitialPosition();
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Gracefully handle configuration manager errors
-      debugPrint('Error initializing configuration manager: $e');
+      LoggerService.error('Failed to initialize configuration manager',
+        error: e, stackTrace: stackTrace, context: 'TrainingScreen');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -276,8 +278,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _focusNode.requestFocus();
         }
       });
-    } catch (e) {
-      debugPrint('Error loading initial position: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to load initial position',
+        error: e, stackTrace: stackTrace, context: 'TrainingScreen');
       setState(() {
         _currentPosition = GoPosition.demo();
         _loading = false;
@@ -611,8 +614,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _focusNode.requestFocus();
         }
       });
-    } catch (e) {
-      debugPrint('Error loading next position: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to load next position',
+        error: e, stackTrace: stackTrace, context: 'TrainingScreen');
       setState(() {
         _currentPosition = GoPosition.demo();
         _timerRunning = true;
@@ -663,8 +667,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
         timeSpentMs: cappedTimeMs,
         wasTimeout: wasTimeout,
       );
-    } catch (e) {
-      debugPrint('Error recording attempt: $e');
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to record attempt statistics',
+        error: e, stackTrace: stackTrace, context: 'TrainingScreen');
     }
   }
 
