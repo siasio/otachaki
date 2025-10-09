@@ -6,10 +6,12 @@ import '../models/layout_type.dart';
 import '../models/auto_advance_mode.dart';
 import '../models/scoring_config.dart';
 import '../models/positioned_score_options.dart';
+import '../models/rough_lead_button_state.dart';
 import 'result_buttons.dart';
 import 'context_aware_result_buttons.dart';
 import 'score_display_buttons.dart';
 import 'exact_score_buttons.dart';
+import 'rough_lead_prediction_buttons.dart';
 
 enum ButtonDisplayMode {
   choices,
@@ -23,8 +25,10 @@ class AdaptiveResultButtons extends StatelessWidget {
   final Function(GameResultOption)? onResultOptionSelected;
   final Function(GameResult)? onResultSelected;
   final Function(int)? onExactScoreButtonPressed; // Takes button position
+  final Function(RoughLeadButtonType)? onRoughLeadButtonPressed;
   final VoidCallback? onNextPressed;
   final PositionedScoreOptions? positionedScoreOptions;
+  final RoughLeadPredictionState? roughLeadPredictionState;
   final AppSkin appSkin;
   final LayoutType layoutType;
   final ButtonDisplayMode displayMode;
@@ -41,8 +45,10 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.onResultOptionSelected,
     this.onResultSelected,
     this.onExactScoreButtonPressed,
+    this.onRoughLeadButtonPressed,
     this.onNextPressed,
     this.positionedScoreOptions,
+    this.roughLeadPredictionState,
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
     this.displayMode = ButtonDisplayMode.choices,
@@ -58,6 +64,8 @@ class AdaptiveResultButtons extends StatelessWidget {
     String? resultString,
     Function(GameResultOption)? onResultOptionSelected,
     Function(GameResult)? onResultSelected,
+    Function(RoughLeadButtonType)? onRoughLeadButtonPressed,
+    RoughLeadPredictionState? roughLeadPredictionState,
     AppSkin appSkin = AppSkin.classic,
     LayoutType layoutType = LayoutType.vertical,
   }) {
@@ -67,6 +75,8 @@ class AdaptiveResultButtons extends StatelessWidget {
       resultString: resultString,
       onResultOptionSelected: onResultOptionSelected,
       onResultSelected: onResultSelected,
+      onRoughLeadButtonPressed: onRoughLeadButtonPressed,
+      roughLeadPredictionState: roughLeadPredictionState,
       appSkin: appSkin,
       layoutType: layoutType,
       displayMode: ButtonDisplayMode.choices,
@@ -126,6 +136,13 @@ class AdaptiveResultButtons extends StatelessWidget {
       return ExactScoreButtons(
         scoreOptions: positionedScoreOptions!,
         onButtonPressed: onExactScoreButtonPressed!,
+        appSkin: appSkin,
+        layoutType: layoutType,
+      );
+    } else if (roughLeadPredictionState != null && onRoughLeadButtonPressed != null) {
+      return RoughLeadPredictionButtons(
+        predictionState: roughLeadPredictionState!,
+        onButtonPressed: onRoughLeadButtonPressed!,
         appSkin: appSkin,
         layoutType: layoutType,
       );

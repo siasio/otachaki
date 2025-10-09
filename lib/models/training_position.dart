@@ -1,14 +1,16 @@
 import '../core/dataset_parser.dart' as core;
 import '../core/go_logic.dart';
 import '../core/game_result_parser.dart';
+import '../core/position_scoring.dart';
 import 'dataset_type.dart';
+import 'position_type.dart';
+
 
 class TrainingPosition {
   final String id;
   final int boardSize;
   final String stonesBase64;
   final double score;
-  final String result;
   final GameInfo? gameInfo;
   final String? movesBase64;
   final int numberOfMoves;
@@ -17,12 +19,21 @@ class TrainingPosition {
   final int? whiteTerritory;
   final String? ultimateStonesBase64;
 
+  // Captured stones and komi (required fields)
+  final int blackCaptured;
+  final int whiteCaptured;
+  final double komi;
+
+  // Final position generator fields (optional)
+  final int? ultimateBlackCaptured;
+  final int? ultimateWhiteCaptured;
+  final bool? additionalWhiteMove;
+
   const TrainingPosition({
     required this.id,
     required this.boardSize,
     required this.stonesBase64,
     required this.score,
-    required this.result,
     this.gameInfo,
     this.movesBase64,
     this.numberOfMoves = 0,
@@ -30,6 +41,12 @@ class TrainingPosition {
     this.blackTerritory,
     this.whiteTerritory,
     this.ultimateStonesBase64,
+    required this.blackCaptured,
+    required this.whiteCaptured,
+    required this.komi,
+    this.ultimateBlackCaptured,
+    this.ultimateWhiteCaptured,
+    this.additionalWhiteMove,
   });
 
   factory TrainingPosition.fromJson(Map<String, dynamic> json) {
@@ -39,7 +56,6 @@ class TrainingPosition {
       boardSize: parsed['board_size'] as int,
       stonesBase64: parsed['stones'] as String,
       score: parsed['score'] as double,
-      result: parsed['result'] as String,
       gameInfo: parsed['game_info'] != null
           ? GameInfo.fromJson(parsed['game_info'] as Map<String, dynamic>)
           : null,
@@ -49,6 +65,12 @@ class TrainingPosition {
       blackTerritory: parsed['black_territory'] as int?,
       whiteTerritory: parsed['white_territory'] as int?,
       ultimateStonesBase64: parsed['ultimate_stones'] as String?,
+      blackCaptured: parsed['black_captured'] as int,
+      whiteCaptured: parsed['white_captured'] as int,
+      komi: parsed['komi'] as double,
+      ultimateBlackCaptured: parsed['ultimate_black_captured'] as int?,
+      ultimateWhiteCaptured: parsed['ultimate_white_captured'] as int?,
+      additionalWhiteMove: parsed['additional_white_move'] as bool?,
     );
   }
 
@@ -89,14 +111,89 @@ class TrainingPosition {
     return 'Position ${id.split('_').first}';
   }
 
-  /// Get the winner from the result
+  /// Convert score to result string format
+  /// Negative score = White wins, Positive score = Black wins, 0 = Draw
+  String get result {
+    if (score == 0) {
+      return 'Draw';
+    } else if (score > 0) {
+      // Black wins
+      return 'B+${_formatScore(score)}';
+    } else {
+      // White wins
+      return 'W+${_formatScore(-score)}';
+    }
+  }
+
+  /// Format score for display (no decimal places for integers, one decimal place for non-integers)
+  String _formatScore(double score) {
+    if (score == score.roundToDouble()) {
+      return score.round().toString();
+    } else {
+      return score.toStringAsFixed(1);
+    }
+  }
+
+  /// Get the winner from the score
   String get winner {
     return GameResultParser.parseWinner(result);
   }
 
-  /// Get the margin of victory
+  /// Get the margin of victory from the score
   String get margin {
     return GameResultParser.parseMargin(result);
+  }
+
+  /// Check if this position has ultimate capture data (final position generators)
+  bool get hasUltimateCaptureData => ultimateBlackCaptured != null && ultimateWhiteCaptured != null;
+
+  /// Check if this position supports position type modes (has ultimate stones data)
+  bool get supportsPositionTypes => ultimateStonesBase64 != null;
+
+  /// Get stones to display based on position type
+  List<List<int>> getStonesToDisplay(PositionType positionType) {
+    switch (positionType) {
+      case PositionType.withFilledNeutralPoints:
+        if (ultimateStonesBase64 != null) {
+          return GoLogic.decodeStones(ultimateStonesBase64!, boardSize);
+        }
+        // Fallback to regular stones if ultimate stones not available
+        return decodeStones();
+
+      case PositionType.beforeFillingNeutralPoints:
+        return decodeStones();
+    }
+  }
+
+  /// Get the effective score for correctness checking based on position type
+  double getEffectiveScore(PositionType positionType) {
+    return PositionScoring.calculateEffectiveScore(this, positionType);
+  }
+
+  /// Get the result string based on position type
+  String getResult(PositionType positionType) {
+    final effectiveScore = getEffectiveScore(positionType);
+    return PositionScoring.scoreToResult(effectiveScore);
+  }
+
+  /// Get Black's scoring text for feedback display
+  String getBlackScoringText(PositionType positionType) {
+    return PositionScoring.generateBlackScoringText(this, positionType);
+  }
+
+  /// Get White's scoring text for feedback display
+  String getWhiteScoringText(PositionType positionType) {
+    return PositionScoring.generateWhiteScoringText(this, positionType);
+  }
+
+  /// Check if game info should be shown based on position type
+  bool shouldShowGameInfo(PositionType positionType) {
+    return positionType.showGameInfo;
+  }
+
+  /// Check if move sequence selection should be shown based on position type
+  bool shouldShowMoveSequenceSelection(PositionType positionType) {
+    return positionType.showMoveSequenceSelection;
   }
 
   /// Extract recent move sequence for display

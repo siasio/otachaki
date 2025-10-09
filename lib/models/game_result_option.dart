@@ -35,6 +35,51 @@ class GameResultOption {
     }
   }
 
+  /// Generates options for rough lead prediction mode with custom threshold logic.
+  ///
+  /// This method creates three options (White, Close, Black) where multiple
+  /// options can be correct simultaneously based on the score and thresholds.
+  ///
+  /// Parameters:
+  /// - [actualScore]: The actual game score (negative = White advantage)
+  /// - [thresholdGood]: Minimum absolute score difference for a "good" position
+  /// - [thresholdClose]: Maximum absolute score difference for a "close" position
+  ///
+  /// Logic:
+  /// - White: correct if score < 0 AND abs(score) > thresholdGood
+  /// - Close: correct if abs(score) <= thresholdClose
+  /// - Black: correct if score > 0 AND abs(score) > thresholdGood
+  ///
+  /// Example: score = -3.5, thresholdGood = 2.0, thresholdClose = 5.0
+  /// - White: correct (score < 0 and 3.5 > 2.0)
+  /// - Close: correct (3.5 <= 5.0)
+  /// - Black: incorrect (score is not > 0)
+  static List<GameResultOption> generateRoughLeadOptions(
+    double actualScore,
+    double thresholdGood,
+    double thresholdClose,
+  ) {
+    final absScore = actualScore.abs();
+
+    return [
+      GameResultOption(
+        displayText: 'White',
+        buttonType: ButtonType.whiteWins,
+        isCorrect: actualScore < 0 && absScore > thresholdGood,
+      ),
+      GameResultOption(
+        displayText: 'Close',
+        buttonType: ButtonType.draw,
+        isCorrect: absScore <= thresholdClose,
+      ),
+      GameResultOption(
+        displayText: 'Black',
+        buttonType: ButtonType.blackWins,
+        isCorrect: actualScore > 0 && absScore > thresholdGood,
+      ),
+    ];
+  }
+
   static List<GameResultOption> _generateMidgameOptions(double actualScore) {
     return [
       GameResultOption(

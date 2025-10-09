@@ -1,6 +1,7 @@
 import 'dataset_type.dart';
 import 'ownership_display_mode.dart';
 import 'prediction_type.dart';
+import 'position_type.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
@@ -12,6 +13,7 @@ class DatasetConfiguration {
   final bool timerEnabled;
   final PredictionType predictionType;
   final int scoreGranularity;
+  final PositionType positionType;
 
   const DatasetConfiguration({
     required this.thresholdGood,
@@ -23,6 +25,7 @@ class DatasetConfiguration {
     this.timerEnabled = true,
     this.predictionType = PredictionType.winnerPrediction,
     this.scoreGranularity = 1,
+    this.positionType = PositionType.withFilledNeutralPoints,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
@@ -75,6 +78,7 @@ class DatasetConfiguration {
     bool? timerEnabled,
     PredictionType? predictionType,
     int? scoreGranularity,
+    PositionType? positionType,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
@@ -86,6 +90,7 @@ class DatasetConfiguration {
       timerEnabled: timerEnabled ?? this.timerEnabled,
       predictionType: predictionType ?? this.predictionType,
       scoreGranularity: scoreGranularity ?? this.scoreGranularity,
+      positionType: positionType ?? this.positionType,
     );
   }
 
@@ -100,6 +105,7 @@ class DatasetConfiguration {
       'timerEnabled': timerEnabled,
       'predictionType': predictionType.value,
       'scoreGranularity': scoreGranularity,
+      'positionType': positionType.value,
     };
   }
 
@@ -123,6 +129,7 @@ class DatasetConfiguration {
       timerEnabled: json['timerEnabled'] as bool? ?? true,
       predictionType: PredictionType.fromString(json['predictionType'] as String?) ?? PredictionType.winnerPrediction,
       scoreGranularity: json['scoreGranularity'] as int? ?? 1,
+      positionType: PositionType.fromString(json['positionType'] as String?) ?? PositionType.withFilledNeutralPoints,
     );
   }
 

@@ -28,6 +28,7 @@ import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
 import '../models/prediction_type.dart';
 import '../models/positioned_score_options.dart';
+import '../models/rough_lead_button_state.dart';
 import './info_screen.dart';
 import './config_screen.dart';
 
@@ -65,6 +66,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   bool _waitingForNext = false;
   bool _pausePressed = false;
   PositionedScoreOptions? _currentScoreOptions;
+  RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
   final FocusNode _focusNode = FocusNode();
   ConfigurationManager? _configManager;
   DatasetConfiguration? _currentConfig;
@@ -152,6 +154,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
         } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
           _onExactScoreButtonPressed(2); // Right button
         }
+      }
+      // Handle rough lead prediction mode
+      else if (predictionType == PredictionType.roughLeadPrediction && _currentRoughLeadState != null) {
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          _onRoughLeadButtonPressed(RoughLeadButtonType.white); // Left arrow - White
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _onRoughLeadButtonPressed(RoughLeadButtonType.close); // Down arrow - Close
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          _onRoughLeadButtonPressed(RoughLeadButtonType.black); // Right arrow - Black
+        }
       } else if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
         final options = GameResultOption.generateOptions(
@@ -231,10 +243,23 @@ class _TrainingScreenState extends State<TrainingScreen> {
         );
       }
 
+      // Generate rough lead prediction state (if needed)
+      RoughLeadPredictionState? roughLeadState;
+      if (_currentConfig?.predictionType == PredictionType.roughLeadPrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        final actualScore = ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result);
+        roughLeadState = RoughLeadPredictionState.generate(
+          actualScore: actualScore,
+          thresholdGood: _currentConfig?.thresholdGood ?? 2.0,
+          thresholdClose: _currentConfig?.thresholdClose ?? 5.0,
+        );
+      }
+
       setState(() {
         _currentPosition = position;
         _loading = false;
         _currentScoreOptions = scoreOptions;
+        _currentRoughLeadState = roughLeadState;
       });
       // Start timing the problem
       _problemStartTime = DateTime.now();
@@ -329,6 +354,33 @@ class _TrainingScreenState extends State<TrainingScreen> {
     });
 
     _handlePostAnswerFlow(isCorrect);
+  }
+
+  /// Handles button presses in rough lead prediction mode.
+  ///
+  /// Updates the prediction state to mark the pressed button and determines
+  /// if the answer was correct based on the rough lead prediction logic.
+  void _onRoughLeadButtonPressed(RoughLeadButtonType buttonType) {
+    setState(() {
+      _timerRunning = false;
+      _hasAnswered = true;
+    });
+
+    if (_currentRoughLeadState != null) {
+      final updatedState = _currentRoughLeadState!.markButtonPressed(buttonType);
+      final isCorrect = updatedState.wasAnswerCorrect;
+
+      _recordAttempt(isCorrect, false);
+
+      final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
+      setState(() {
+        _currentRoughLeadState = updatedState;
+        _showFeedbackOverlay = markDisplayEnabled;
+        _isCorrectAnswer = isCorrect;
+      });
+
+      _handlePostAnswerFlow(isCorrect);
+    }
   }
 
   bool _checkResultUsingNewSystem(GameResult selectedResult) {
@@ -461,6 +513,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
         );
+      } else if (predictionType == PredictionType.roughLeadPrediction && _currentRoughLeadState != null) {
+        return AdaptiveResultButtons.forChoices(
+          roughLeadPredictionState: _currentRoughLeadState!,
+          onRoughLeadButtonPressed: isEnabled ? _onRoughLeadButtonPressed : (_) {},
+          appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        );
       } else if (_positionManager.currentDataset != null &&
           _positionManager.currentTrainingPosition != null) {
         return AdaptiveResultButtons.forChoices(
@@ -489,6 +548,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _waitingForNext = false;
       _pausePressed = false;
       _currentScoreOptions = null;
+      _currentRoughLeadState = null;
     });
 
     try {
@@ -505,11 +565,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
         );
       }
 
+      // Generate rough lead prediction state (if needed)
+      RoughLeadPredictionState? roughLeadState;
+      if (_currentConfig?.predictionType == PredictionType.roughLeadPrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        final actualScore = ScoringConfig.parseScore(_positionManager.currentTrainingPosition!.result);
+        roughLeadState = RoughLeadPredictionState.generate(
+          actualScore: actualScore,
+          thresholdGood: _currentConfig?.thresholdGood ?? 2.0,
+          thresholdClose: _currentConfig?.thresholdClose ?? 5.0,
+        );
+      }
+
       setState(() {
         _currentPosition = position;
         _timerRunning = true;
         _loading = false;
         _currentScoreOptions = scoreOptions;
+        _currentRoughLeadState = roughLeadState;
       });
       // Start timing the new problem
       _problemStartTime = DateTime.now();

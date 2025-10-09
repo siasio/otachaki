@@ -9,6 +9,7 @@ import '../models/app_skin.dart';
 import '../models/auto_advance_mode.dart';
 import '../models/ownership_display_mode.dart';
 import '../models/prediction_type.dart';
+import '../models/position_type.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/position_loader.dart';
@@ -350,6 +351,48 @@ class _ConfigScreenState extends State<ConfigScreen> {
     }
   }
 
+  /// Check if current dataset type is a final dataset that supports position types
+  bool _isFinalDataset() {
+    return _currentDatasetType == DatasetType.final9x9Area ||
+           _currentDatasetType == DatasetType.final19x19Area ||
+           _currentDatasetType == DatasetType.final9x9AreaVars;
+  }
+
+  /// Get available ownership display modes based on position type
+  List<OwnershipDisplayMode> _getAvailableOwnershipModes() {
+    if (!_isFinalDataset()) {
+      return OwnershipDisplayMode.values;
+    }
+
+    final positionType = _currentDatasetConfig?.positionType ?? PositionType.withFilledNeutralPoints;
+    if (positionType == PositionType.beforeFillingNeutralPoints) {
+      // Only squares mode for "before filling" mode
+      return [OwnershipDisplayMode.none, OwnershipDisplayMode.squares];
+    }
+
+    return OwnershipDisplayMode.values;
+  }
+
+  /// Get a compatible ownership mode when position type changes
+  OwnershipDisplayMode _getCompatibleOwnershipMode(PositionType positionType) {
+    final currentMode = _currentDatasetConfig?.ownershipDisplayMode ?? OwnershipDisplayMode.none;
+
+    // Get available modes for the new position type
+    List<OwnershipDisplayMode> availableModes;
+    if (positionType == PositionType.beforeFillingNeutralPoints) {
+      availableModes = [OwnershipDisplayMode.none, OwnershipDisplayMode.squares];
+    } else {
+      availableModes = OwnershipDisplayMode.values;
+    }
+
+    if (availableModes.contains(currentMode)) {
+      return currentMode;
+    }
+
+    // Return the first available mode if current is not compatible
+    return availableModes.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Apply current theme
@@ -427,37 +470,83 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       const SizedBox(height: 16),
 
                       if (_currentDatasetConfig != null) ...[
-                        // Threshold Good
-                        TextFormField(
-                          controller: _thresholdGoodController,
+                        // Prediction Type
+                        DropdownButtonFormField<PredictionType>(
+                          value: _currentDatasetConfig!.predictionType,
                           decoration: const InputDecoration(
-                            labelText: 'Threshold for Good Position',
-                            helperText: 'Score difference to consider position as good for one color',
+                            labelText: 'Button Type',
+                            helperText: 'Type of buttons to display for answers',
                             border: OutlineInputBorder(),
-                            suffix: Text('points'),
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                          ],
+                          items: PredictionType.values.map((type) {
+                            return DropdownMenuItem<PredictionType>(
+                              value: type,
+                              child: Text(type.displayName),
+                            );
+                          }).toList(),
+                          onChanged: (PredictionType? value) {
+                            if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                              final newConfig = _currentDatasetConfig!.copyWith(
+                                predictionType: value,
+                              );
+                              _autoSaveDatasetConfiguration(newConfig);
+                            }
+                          },
                         ),
                         const SizedBox(height: 16),
 
-                        // Threshold Close
-                        TextFormField(
-                          controller: _thresholdCloseController,
-                          decoration: const InputDecoration(
-                            labelText: 'Threshold for Close Position',
-                            helperText: 'Score difference to consider position as close (must be ≥ good threshold)',
-                            border: OutlineInputBorder(),
-                            suffix: Text('points'),
+                        // Threshold fields (only show if rough lead prediction is selected)
+                        if (_currentDatasetConfig!.predictionType == PredictionType.roughLeadPrediction) ...[
+                          // Threshold Good
+                          TextFormField(
+                            controller: _thresholdGoodController,
+                            decoration: const InputDecoration(
+                              labelText: 'Threshold for Good Position',
+                              helperText: 'Score difference to consider position as good for one color',
+                              border: OutlineInputBorder(),
+                              suffix: Text('points'),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                            ],
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                          const SizedBox(height: 16),
+
+                          // Threshold Close
+                          TextFormField(
+                            controller: _thresholdCloseController,
+                            decoration: const InputDecoration(
+                              labelText: 'Threshold for Close Position',
+                              helperText: 'Score difference to consider position as close (must be ≥ good threshold)',
+                              border: OutlineInputBorder(),
+                              suffix: Text('points'),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Score Granularity (only show if exact score prediction is selected)
+                        if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction) ...[
+                          TextFormField(
+                            controller: _scoreGranularityController,
+                            decoration: const InputDecoration(
+                              labelText: 'Score Granularity',
+                              helperText: 'Point difference between score options',
+                              border: OutlineInputBorder(),
+                              suffix: Text('points'),
+                            ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
                         // Time per Problem with enable checkbox
                         Row(
@@ -499,61 +588,60 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Sequence Length
-                        TextFormField(
-                          controller: _sequenceLengthController,
-                          decoration: const InputDecoration(
-                            labelText: 'Move Sequence Length',
-                            helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
-                            border: OutlineInputBorder(),
-                            suffix: Text('moves'),
-                          ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Prediction Type
-                        DropdownButtonFormField<PredictionType>(
-                          value: _currentDatasetConfig!.predictionType,
-                          decoration: const InputDecoration(
-                            labelText: 'Button Type',
-                            helperText: 'Type of buttons to display for answers',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: PredictionType.values.map((type) {
-                            return DropdownMenuItem<PredictionType>(
-                              value: type,
-                              child: Text(type.displayName),
-                            );
-                          }).toList(),
-                          onChanged: (PredictionType? value) {
-                            if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
-                              final newConfig = _currentDatasetConfig!.copyWith(
-                                predictionType: value,
-                              );
-                              _autoSaveDatasetConfiguration(newConfig);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Score Granularity (only show if exact score prediction is selected)
-                        if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction) ...[
+                        // Sequence Length (hide for "with filled neutral points" mode)
+                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
                           TextFormField(
-                            controller: _scoreGranularityController,
+                            controller: _sequenceLengthController,
                             decoration: const InputDecoration(
-                              labelText: 'Score Granularity',
-                              helperText: 'Point difference between score options',
+                              labelText: 'Move Sequence Length',
+                              helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
                               border: OutlineInputBorder(),
-                              suffix: Text('points'),
+                              suffix: Text('moves'),
                             ),
                             keyboardType: TextInputType.number,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                             ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Position Type (only for final datasets)
+                        if (_isFinalDataset()) ...[
+                          DropdownButtonFormField<PositionType>(
+                            value: _currentDatasetConfig!.positionType,
+                            decoration: const InputDecoration(
+                              labelText: 'Position Type',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: PositionType.values.map((type) {
+                              return DropdownMenuItem<PositionType>(
+                                value: type,
+                                child: Text(type.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (PositionType? value) {
+                              if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                                final newConfig = _currentDatasetConfig!.copyWith(
+                                  positionType: value,
+                                  // Reset ownership mode if not compatible
+                                  ownershipDisplayMode: _getCompatibleOwnershipMode(value),
+                                );
+                                _autoSaveDatasetConfiguration(newConfig);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Explanation text for position type
+                          Padding(
+                            padding: const EdgeInsets.only(left: 12.0),
+                            child: Text(
+                              _currentDatasetConfig!.positionType.explanationText,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -566,7 +654,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             helperText: 'How ownership information is shown in review view',
                             border: OutlineInputBorder(),
                           ),
-                          items: OwnershipDisplayMode.values.map((mode) {
+                          items: _getAvailableOwnershipModes().map((mode) {
                             return DropdownMenuItem<OwnershipDisplayMode>(
                               value: mode,
                               child: Text(mode.displayName),
@@ -583,23 +671,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Hide Game Info Bar
-                        CheckboxListTile(
-                          title: const Text('Hide Game Info Bar'),
-                          subtitle: const Text(
-                            'Hide the bar showing captured stones and komi',
+                        // Hide Game Info Bar (hide for final datasets - controlled by position type)
+                        if (!_isFinalDataset()) ...[
+                          CheckboxListTile(
+                            title: const Text('Hide Game Info Bar'),
+                            subtitle: const Text(
+                              'Hide the bar showing captured stones and komi',
+                            ),
+                            value: _currentDatasetConfig!.hideGameInfoBar,
+                            onChanged: (bool? value) {
+                              if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
+                                final newConfig = _currentDatasetConfig!.copyWith(
+                                  hideGameInfoBar: value,
+                                );
+                                _autoSaveDatasetConfiguration(newConfig);
+                              }
+                            },
+                            contentPadding: EdgeInsets.zero,
                           ),
-                          value: _currentDatasetConfig!.hideGameInfoBar,
-                          onChanged: (bool? value) {
-                            if (value != null && _currentDatasetConfig != null && _currentDatasetType != null) {
-                              final newConfig = _currentDatasetConfig!.copyWith(
-                                hideGameInfoBar: value,
-                              );
-                              _autoSaveDatasetConfiguration(newConfig);
-                            }
-                          },
-                          contentPadding: EdgeInsets.zero,
-                        ),
+                        ],
                       ],
                     ],
                   ),

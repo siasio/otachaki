@@ -1,4 +1,5 @@
 import 'training_position.dart';
+import 'position_type.dart';
 import '../core/game_result_parser.dart';
 
 enum StoneColor { empty, black, white }
@@ -52,6 +53,34 @@ class GoPosition {
     );
   }
 
+  /// Create a GoPosition from TrainingPosition data with specific position type
+  factory GoPosition.fromTrainingPositionWithType(TrainingPosition position, PositionType positionType) {
+    final decodedBoard = position.getStonesToDisplay(positionType);
+    final boardSize = position.boardSize;
+    final board = List.generate(
+      boardSize,
+      (row) => List.generate(
+        boardSize,
+        (col) {
+          switch (decodedBoard[row][col]) {
+            case 1:
+              return StoneColor.black;
+            case 2:
+              return StoneColor.white;
+            default:
+              return StoneColor.empty;
+          }
+        },
+      ),
+    );
+
+    return GoPosition(
+      board: board,
+      size: boardSize,
+      trainingData: position,
+    );
+  }
+
   factory GoPosition.demo() {
     // Simplified demo for fallback only
     return GoPosition(
@@ -79,10 +108,26 @@ class GoPosition {
     return 'Unknown';
   }
 
+  /// Get the correct result for this position with specific position type
+  String getCorrectResultWithType(PositionType positionType) {
+    if (trainingData != null) {
+      return trainingData!.getResult(positionType);
+    }
+    return 'Unknown';
+  }
+
   /// Check if a user's guess matches the correct result
   bool isCorrectGuess(String userResult) {
     if (trainingData == null) return false;
 
     return GameResultParser.isCorrectGuess(userResult, trainingData!.result);
+  }
+
+  /// Check if a user's guess matches the correct result with specific position type
+  bool isCorrectGuessWithType(String userResult, PositionType positionType) {
+    if (trainingData == null) return false;
+
+    final correctResult = trainingData!.getResult(positionType);
+    return GameResultParser.isCorrectGuess(userResult, correctResult);
   }
 }

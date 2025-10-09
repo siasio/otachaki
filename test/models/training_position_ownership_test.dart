@@ -11,7 +11,9 @@ void main() {
         boardSize: 9,
         stonesBase64: 'AAAA',
         score: 0.0,
-        result: 'Draw',
+        blackCaptured: 0,
+        whiteCaptured: 0,
+        komi: 6.5,
         ownershipBase64: 'AAAA',
       );
 
@@ -20,7 +22,9 @@ void main() {
         boardSize: 9,
         stonesBase64: 'AAAA',
         score: 0.0,
-        result: 'Draw',
+        blackCaptured: 0,
+        whiteCaptured: 0,
+        komi: 6.5,
         ownershipBase64: null,
       );
 
@@ -34,7 +38,9 @@ void main() {
         boardSize: 9,
         stonesBase64: 'AAAA',
         score: 0.0,
-        result: 'Draw',
+        blackCaptured: 0,
+        whiteCaptured: 0,
+        komi: 6.5,
         ownershipBase64: null,
       );
 
@@ -55,7 +61,9 @@ void main() {
         boardSize: 2, // 2x2 board for simplicity
         stonesBase64: 'AAAA',
         score: 0.0,
-        result: 'Draw',
+        blackCaptured: 0,
+        whiteCaptured: 0,
+        komi: 6.5,
         ownershipBase64: base64String,
       );
 

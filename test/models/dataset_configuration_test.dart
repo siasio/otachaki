@@ -9,7 +9,7 @@ void main() {
 
       expect(config.thresholdGood, 0.0);
       expect(config.thresholdClose, 0.0);
-      expect(config.timePerProblemSeconds, 7);
+      expect(config.timePerProblemSeconds, 15);
       expect(config.hideGameInfoBar, isTrue);
     });
 
@@ -17,7 +17,7 @@ void main() {
       final config = DatasetConfiguration.getDefaultFor(DatasetType.midgame19x19Estimation);
 
       expect(config.thresholdGood, 1.5);
-      expect(config.thresholdClose, 4.0);
+      expect(config.thresholdClose, 5.0);
       expect(config.timePerProblemSeconds, 15);
       expect(config.hideGameInfoBar, isFalse);
     });

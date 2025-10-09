@@ -1,8 +1,10 @@
 import 'dart:async';
 import '../models/go_position.dart';
 import '../models/training_position.dart';
+import '../models/position_type.dart';
 import 'position_loader.dart';
 import 'dataset_preference_manager.dart';
+import 'configuration_manager.dart';
 
 class PositionManager {
   GoPosition? _currentPosition;
@@ -22,6 +24,22 @@ class PositionManager {
   /// Check if currently loading a position
   bool get isLoading => _isLoading;
 
+  /// Get the current position type from configuration
+  Future<PositionType> getCurrentPositionType() async {
+    try {
+      if (_currentDataset == null) {
+        return PositionType.withFilledNeutralPoints;
+      }
+
+      final configManager = await ConfigurationManager.getInstance();
+      final datasetType = _currentDataset!.metadata.datasetType;
+      final config = configManager.getConfiguration(datasetType);
+      return config.positionType;
+    } catch (e) {
+      return PositionType.withFilledNeutralPoints;
+    }
+  }
+
   /// Load and return a random position
   Future<GoPosition> loadRandomPosition() async {
     _isLoading = true;
@@ -29,10 +47,19 @@ class PositionManager {
     try {
       _currentDataset = await PositionLoader.loadDataset();
       _currentTrainingPosition = await PositionLoader.getRandomPosition();
-      _currentPosition = GoPosition.fromTrainingPosition(_currentTrainingPosition!);
+
+      // Get position type from configuration
+      final configManager = await ConfigurationManager.getInstance();
+      final datasetType = _currentDataset!.metadata.datasetType;
+      final config = configManager.getConfiguration(datasetType);
+      final positionType = config.positionType;
+
+      // Create GoPosition with appropriate position type
+      _currentPosition = GoPosition.fromTrainingPositionWithType(_currentTrainingPosition!, positionType);
 
       print('Loaded position: ${_currentTrainingPosition!.id}');
-      print('Result: ${_currentTrainingPosition!.result}');
+      print('Position type: ${positionType.value}');
+      print('Result: ${_currentTrainingPosition!.getResult(positionType)}');
       print('Dataset type: ${_currentDataset!.metadata.datasetType}');
 
       return _currentPosition!;
