@@ -22,15 +22,15 @@ class GameResultOption {
     String resultString,
   ) {
     switch (datasetType) {
-      case DatasetType.midgame19x19Estimation:
+      case DatasetType.midgame19x19:
         return _generateMidgameOptions(actualScore);
 
-      case DatasetType.final9x9Area:
-      case DatasetType.final9x9AreaVars:
-      case DatasetType.final19x19Area:
+      case DatasetType.final9x9:
+      case DatasetType.final13x13:
+      case DatasetType.final19x19:
         return _generateFinalOptions(actualScore, true);
 
-      case DatasetType.partialArea:
+      case DatasetType.partialPositions:
         return _generateScoreOptions(actualScore, resultString);
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/statistics_manager.dart';
 import '../models/dataset_type.dart';
+import '../models/dataset_registry.dart';
 import '../models/daily_statistics.dart';
 import './detailed_statistics_screen.dart';
 
@@ -385,18 +386,7 @@ class _InfoScreenState extends State<InfoScreen> {
   }
 
   String _getDatasetDisplayName(DatasetType datasetType) {
-    switch (datasetType) {
-      case DatasetType.final9x9Area:
-        return 'Final 9x9 Positions';
-      case DatasetType.final19x19Area:
-        return 'Final 19x19 Positions';
-      case DatasetType.midgame19x19Estimation:
-        return 'Midgame 19x19 Estimation';
-      case DatasetType.final9x9AreaVars:
-        return 'Final 9x9 with Variations';
-      case DatasetType.partialArea:
-        return 'Partial Area Analysis';
-    }
+    return DatasetRegistry.getBaseDisplayName(datasetType);
   }
 
   Future<void> _navigateToDetailedStats(DatasetType datasetType) async {

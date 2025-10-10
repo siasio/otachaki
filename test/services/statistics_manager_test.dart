@@ -30,20 +30,20 @@ void main() {
 
       // Record some attempts
       await manager.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
       );
 
       await manager.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: false,
         timeSpentMs: 8000,
         wasTimeout: true,
       );
 
       await manager.recordAttempt(
-        datasetType: DatasetType.final19x19Area,
+        datasetType: DatasetType.final19x19,
         isCorrect: true,
         timeSpentMs: 12000,
       );
@@ -54,14 +54,14 @@ void main() {
       expect(todayStats.activeDatasetTypes.length, equals(2));
 
       // Check specific dataset statistics
-      final stats9x9 = manager.getTodayStatsForDataset(DatasetType.final9x9Area);
+      final stats9x9 = manager.getTodayStatsForDataset(DatasetType.final9x9);
       expect(stats9x9, isNotNull);
       expect(stats9x9!.totalAttempts, equals(2));
       expect(stats9x9.correctAttempts, equals(1));
       expect(stats9x9.accuracyPercentage, closeTo(50.0, 0.01));
       expect(stats9x9.averageTimeSeconds, closeTo(6.5, 0.01)); // (5+8)/2
 
-      final stats19x19 = manager.getTodayStatsForDataset(DatasetType.final19x19Area);
+      final stats19x19 = manager.getTodayStatsForDataset(DatasetType.final19x19);
       expect(stats19x19, isNotNull);
       expect(stats19x19!.totalAttempts, equals(1));
       expect(stats19x19.correctAttempts, equals(1));
@@ -75,13 +75,13 @@ void main() {
 
       // Record attempts for today
       await manager.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
       );
 
       // Get historical data
-      final historical = manager.getHistoricalStats(DatasetType.final9x9Area, 7);
+      final historical = manager.getHistoricalStats(DatasetType.final9x9, 7);
       expect(historical.length, equals(7)); // Should return 7 days worth
 
       // Check that today has data
@@ -101,13 +101,13 @@ void main() {
 
       // Record a timeout attempt (capping should be done by the calling code)
       await manager.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: false,
         timeSpentMs: 15000, // 15 seconds timeout (pre-capped)
         wasTimeout: true,
       );
 
-      final stats = manager.getTodayStatsForDataset(DatasetType.final9x9Area);
+      final stats = manager.getTodayStatsForDataset(DatasetType.final9x9);
       expect(stats, isNotNull);
       expect(stats!.totalAttempts, equals(1));
       expect(stats.correctAttempts, equals(0));
@@ -123,21 +123,21 @@ void main() {
 
       // Record attempts for different dataset types
       await manager.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
       );
 
       await manager.recordAttempt(
-        datasetType: DatasetType.midgame19x19Estimation,
+        datasetType: DatasetType.midgame19x19,
         isCorrect: false,
         timeSpentMs: 8000,
       );
 
       final availableTypes = manager.getAvailableDatasetTypes();
       expect(availableTypes.length, equals(2));
-      expect(availableTypes.contains(DatasetType.final9x9Area), equals(true));
-      expect(availableTypes.contains(DatasetType.midgame19x19Estimation), equals(true));
+      expect(availableTypes.contains(DatasetType.final9x9), equals(true));
+      expect(availableTypes.contains(DatasetType.midgame19x19), equals(true));
     });
 
     test('should clear all statistics correctly', () async {
@@ -145,7 +145,7 @@ void main() {
 
       // Record some attempts
       await manager.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
       );
@@ -169,7 +169,7 @@ void main() {
       await manager1.clearAllStatistics(); // Start clean
 
       await manager1.recordAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
       );
@@ -182,7 +182,7 @@ void main() {
       final manager2 = await StatisticsManager.getInstance();
       expect(manager2.totalAttemptsCount, equals(1)); // Should be same instance
 
-      final stats = manager2.getTodayStatsForDataset(DatasetType.final9x9Area);
+      final stats = manager2.getTodayStatsForDataset(DatasetType.final9x9);
       expect(stats, isNotNull);
       expect(stats!.totalAttempts, equals(1));
     });

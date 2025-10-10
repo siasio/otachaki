@@ -48,12 +48,14 @@ class StatisticsManager {
   /// Record a problem attempt
   Future<void> recordAttempt({
     required DatasetType datasetType,
+    String? datasetId, // Custom dataset ID, null for built-in datasets
     required bool isCorrect,
     required int timeSpentMs,
     bool wasTimeout = false,
   }) async {
     final attempt = ProblemAttempt(
       datasetType: datasetType,
+      datasetId: datasetId,
       isCorrect: isCorrect,
       timeSpentMs: timeSpentMs,
       timestamp: DateTime.now(),
@@ -75,7 +77,7 @@ class StatisticsManager {
   DailyStatistics getTodayStatistics() {
     final today = getCurrentAppDay();
     return _dailyStats[_formatDateKey(today)] ??
-           DailyStatistics(date: today, datasetStats: {});
+           DailyStatistics(date: today, datasetStats: {}, datasetStatsById: {});
   }
 
   /// Get statistics for a specific dataset type for today
@@ -115,13 +117,61 @@ class StatisticsManager {
     return stats.reversed.toList(); // Return in chronological order
   }
 
-  /// Get all available dataset types that have been used
+  /// Get statistics for a specific dataset ID for today
+  DailyDatasetStatistics? getTodayStatsForDatasetId(String datasetId) {
+    return getTodayStatistics().getStatsForDatasetId(datasetId);
+  }
+
+  /// Get historical statistics for a dataset ID over the last N days
+  List<DailyDatasetStatistics> getHistoricalStatsById(
+    String datasetId,
+    DatasetType datasetType,
+    int days,
+  ) {
+    final List<DailyDatasetStatistics> stats = [];
+    final currentDay = getCurrentAppDay();
+
+    for (int i = 0; i < days; i++) {
+      final date = currentDay.subtract(Duration(days: i));
+      final dateKey = _formatDateKey(date);
+      final dailyStats = _dailyStats[dateKey];
+      final datasetStats = dailyStats?.getStatsForDatasetId(datasetId);
+
+      if (datasetStats != null) {
+        stats.add(datasetStats);
+      } else {
+        // Add empty stats for this day
+        stats.add(DailyDatasetStatistics(
+          datasetType: datasetType,
+          datasetId: datasetId.startsWith('builtin_') ? null : datasetId,
+          date: date,
+          totalAttempts: 0,
+          correctAttempts: 0,
+          totalTimeSeconds: 0.0,
+          attempts: [],
+        ));
+      }
+    }
+
+    return stats.reversed.toList(); // Return in chronological order
+  }
+
+  /// Get all available dataset types that have been used (legacy method)
   Set<DatasetType> getAvailableDatasetTypes() {
     final Set<DatasetType> types = {};
     for (final stats in _dailyStats.values) {
       types.addAll(stats.activeDatasetTypes);
     }
     return types;
+  }
+
+  /// Get all available dataset IDs that have been used
+  Set<String> getAvailableDatasetIds() {
+    final Set<String> ids = {};
+    for (final stats in _dailyStats.values) {
+      ids.addAll(stats.activeDatasetIds);
+    }
+    return ids;
   }
 
   /// Clear all statistics (useful for testing)

@@ -367,7 +367,7 @@ class DatasetMetadata {
       version: parsed['version'] as String,
       createdAt: DateTime.parse(parsed['created_at'] as String),
       totalPositions: parsed['total_positions'] as int,
-      datasetType: DatasetType.fromString(parsed['dataset_type'] as String?) ?? DatasetType.final9x9Area,
+      datasetType: DatasetType.fromString(parsed['dataset_type'] as String?) ?? DatasetType.final9x9,
     );
   }
 }

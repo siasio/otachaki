@@ -9,33 +9,33 @@ void main() {
       final date = DateTime(2024, 1, 15);
       final attempts = [
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
         ),
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: false,
           timeSpentMs: 8000,
           timestamp: DateTime(2024, 1, 15, 11, 45),
         ),
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 3000,
           timestamp: DateTime(2024, 1, 15, 14, 20),
         ),
         // Different dataset type - should be ignored
         ProblemAttempt(
-          datasetType: DatasetType.final19x19Area,
+          datasetType: DatasetType.final19x19,
           isCorrect: true,
           timeSpentMs: 6000,
           timestamp: DateTime(2024, 1, 15, 12, 0),
         ),
         // Different date - should be ignored
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 4000,
           timestamp: DateTime(2024, 1, 16, 9, 0),
@@ -43,12 +43,12 @@ void main() {
       ];
 
       final stats = DailyDatasetStatistics.fromAttempts(
-        DatasetType.final9x9Area,
+        DatasetType.final9x9,
         date,
         attempts,
       );
 
-      expect(stats.datasetType, equals(DatasetType.final9x9Area));
+      expect(stats.datasetType, equals(DatasetType.final9x9));
       expect(stats.date, equals(date));
       expect(stats.totalAttempts, equals(3));
       expect(stats.correctAttempts, equals(2));
@@ -58,7 +58,7 @@ void main() {
 
     test('should calculate accuracy percentage correctly', () {
       final stats = DailyDatasetStatistics(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         date: DateTime(2024, 1, 15),
         totalAttempts: 5,
         correctAttempts: 3,
@@ -71,7 +71,7 @@ void main() {
 
     test('should calculate average time correctly', () {
       final stats = DailyDatasetStatistics(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         date: DateTime(2024, 1, 15),
         totalAttempts: 4,
         correctAttempts: 2,
@@ -84,7 +84,7 @@ void main() {
 
     test('should handle zero attempts correctly', () {
       final stats = DailyDatasetStatistics(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         date: DateTime(2024, 1, 15),
         totalAttempts: 0,
         correctAttempts: 0,
@@ -99,14 +99,14 @@ void main() {
 
     test('should convert to and from JSON correctly', () {
       final originalStats = DailyDatasetStatistics(
-        datasetType: DatasetType.midgame19x19Estimation,
+        datasetType: DatasetType.midgame19x19,
         date: DateTime(2024, 1, 15),
         totalAttempts: 3,
         correctAttempts: 2,
         totalTimeSeconds: 15.5,
         attempts: [
           ProblemAttempt(
-            datasetType: DatasetType.midgame19x19Estimation,
+            datasetType: DatasetType.midgame19x19,
             isCorrect: true,
             timeSpentMs: 5000,
             timestamp: DateTime(2024, 1, 15, 10, 30),
@@ -131,19 +131,19 @@ void main() {
       final date = DateTime(2024, 1, 15);
       final attempts = [
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
         ),
         ProblemAttempt(
-          datasetType: DatasetType.final19x19Area,
+          datasetType: DatasetType.final19x19,
           isCorrect: false,
           timeSpentMs: 8000,
           timestamp: DateTime(2024, 1, 15, 11, 45),
         ),
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 3000,
           timestamp: DateTime(2024, 1, 15, 14, 20),
@@ -155,15 +155,15 @@ void main() {
       expect(dailyStats.date, equals(date));
       expect(dailyStats.hasAttempts, equals(true));
       expect(dailyStats.activeDatasetTypes.length, equals(2));
-      expect(dailyStats.activeDatasetTypes.contains(DatasetType.final9x9Area), equals(true));
-      expect(dailyStats.activeDatasetTypes.contains(DatasetType.final19x19Area), equals(true));
+      expect(dailyStats.activeDatasetTypes.contains(DatasetType.final9x9), equals(true));
+      expect(dailyStats.activeDatasetTypes.contains(DatasetType.final19x19), equals(true));
 
-      final stats9x9 = dailyStats.getStatsForDataset(DatasetType.final9x9Area);
+      final stats9x9 = dailyStats.getStatsForDataset(DatasetType.final9x9);
       expect(stats9x9, isNotNull);
       expect(stats9x9!.totalAttempts, equals(2));
       expect(stats9x9.correctAttempts, equals(2));
 
-      final stats19x19 = dailyStats.getStatsForDataset(DatasetType.final19x19Area);
+      final stats19x19 = dailyStats.getStatsForDataset(DatasetType.final19x19);
       expect(stats19x19, isNotNull);
       expect(stats19x19!.totalAttempts, equals(1));
       expect(stats19x19.correctAttempts, equals(0));
@@ -173,7 +173,7 @@ void main() {
       final date = DateTime(2024, 1, 15);
       final attempts = [
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
@@ -181,7 +181,7 @@ void main() {
       ];
 
       final dailyStats = DailyStatistics.fromAttempts(date, attempts);
-      final stats = dailyStats.getStatsForDataset(DatasetType.midgame19x19Estimation);
+      final stats = dailyStats.getStatsForDataset(DatasetType.midgame19x19);
 
       expect(stats, isNull);
     });
@@ -198,7 +198,7 @@ void main() {
       final date = DateTime(2024, 1, 15);
       final attempts = [
         ProblemAttempt(
-          datasetType: DatasetType.final9x9Area,
+          datasetType: DatasetType.final9x9,
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
@@ -213,8 +213,8 @@ void main() {
       expect(restoredStats.hasAttempts, equals(originalStats.hasAttempts));
       expect(restoredStats.activeDatasetTypes, equals(originalStats.activeDatasetTypes));
 
-      final originalDatasetStats = originalStats.getStatsForDataset(DatasetType.final9x9Area);
-      final restoredDatasetStats = restoredStats.getStatsForDataset(DatasetType.final9x9Area);
+      final originalDatasetStats = originalStats.getStatsForDataset(DatasetType.final9x9);
+      final restoredDatasetStats = restoredStats.getStatsForDataset(DatasetType.final9x9);
 
       expect(restoredDatasetStats, isNotNull);
       expect(restoredDatasetStats!.totalAttempts, equals(originalDatasetStats!.totalAttempts));

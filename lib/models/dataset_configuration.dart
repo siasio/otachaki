@@ -2,6 +2,7 @@ import 'dataset_type.dart';
 import 'ownership_display_mode.dart';
 import 'prediction_type.dart';
 import 'position_type.dart';
+import 'auto_advance_mode.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
@@ -15,6 +16,7 @@ class DatasetConfiguration {
   final int scoreGranularity;
   final PositionType positionType;
   final bool showMoveNumbers;
+  final AutoAdvanceMode autoAdvanceMode;
 
   const DatasetConfiguration({
     required this.thresholdGood,
@@ -28,44 +30,50 @@ class DatasetConfiguration {
     this.scoreGranularity = 1,
     this.positionType = PositionType.withFilledNeutralPoints,
     this.showMoveNumbers = true,
+    this.autoAdvanceMode = AutoAdvanceMode.always,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
     switch (datasetType) {
-      case DatasetType.final9x9Area:
+      case DatasetType.final9x9:
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 15,
           hideGameInfoBar: true,
+          predictionType: PredictionType.winnerPrediction,
         );
-      case DatasetType.final19x19Area:
+      case DatasetType.final13x13:
+        return const DatasetConfiguration(
+          thresholdGood: 0.0,
+          thresholdClose: 0.0,
+          timePerProblemSeconds: 30,
+          hideGameInfoBar: true,
+          predictionType: PredictionType.winnerPrediction,
+        );
+      case DatasetType.final19x19:
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 60,
           hideGameInfoBar: true,
+          predictionType: PredictionType.winnerPrediction,
         );
-      case DatasetType.midgame19x19Estimation:
+      case DatasetType.midgame19x19:
         return const DatasetConfiguration(
           thresholdGood: 1.5,
           thresholdClose: 5.0,
           timePerProblemSeconds: 15,
           hideGameInfoBar: false,
+          predictionType: PredictionType.roughLeadPrediction,
         );
-      case DatasetType.final9x9AreaVars:
+      case DatasetType.partialPositions:
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 10,
-          hideGameInfoBar: true,
-        );
-      case DatasetType.partialArea:
-        return const DatasetConfiguration(
-          thresholdGood: 0.0,
-          thresholdClose: 0.0,
-          timePerProblemSeconds: 7,
           hideGameInfoBar: false,
+          predictionType: PredictionType.winnerPrediction,
         );
     }
   }
@@ -82,6 +90,7 @@ class DatasetConfiguration {
     int? scoreGranularity,
     PositionType? positionType,
     bool? showMoveNumbers,
+    AutoAdvanceMode? autoAdvanceMode,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
@@ -95,6 +104,7 @@ class DatasetConfiguration {
       scoreGranularity: scoreGranularity ?? this.scoreGranularity,
       positionType: positionType ?? this.positionType,
       showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
+      autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
     );
   }
 
@@ -111,6 +121,7 @@ class DatasetConfiguration {
       'scoreGranularity': scoreGranularity,
       'positionType': positionType.value,
       'showMoveNumbers': showMoveNumbers,
+      'autoAdvanceMode': autoAdvanceMode.value,
     };
   }
 
@@ -136,6 +147,7 @@ class DatasetConfiguration {
       scoreGranularity: json['scoreGranularity'] as int? ?? 1,
       positionType: PositionType.fromString(json['positionType'] as String?) ?? PositionType.withFilledNeutralPoints,
       showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
+      autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
     );
   }
 

@@ -7,25 +7,22 @@ import '../models/global_configuration.dart';
 import '../models/timer_type.dart';
 import '../models/layout_type.dart';
 import '../models/app_skin.dart';
-import '../models/auto_advance_mode.dart';
 import '../models/ownership_display_mode.dart';
 import '../models/prediction_type.dart';
 import '../models/position_type.dart';
-import '../models/dataset_registry.dart';
 import '../services/enhanced_configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
-import '../services/custom_dataset_manager.dart';
-import '../widgets/streamlined_dataset_selector.dart';
+import '../widgets/enhanced_dataset_selector.dart';
 import '../themes/app_theme.dart';
 
-class ConfigScreen extends StatefulWidget {
-  const ConfigScreen({super.key});
+class EnhancedConfigScreen extends StatefulWidget {
+  const EnhancedConfigScreen({super.key});
 
   @override
-  State<ConfigScreen> createState() => _ConfigScreenState();
+  State<EnhancedConfigScreen> createState() => _EnhancedConfigScreenState();
 }
 
-class _ConfigScreenState extends State<ConfigScreen> {
+class _EnhancedConfigScreenState extends State<EnhancedConfigScreen> {
   EnhancedConfigurationManager? _configManager;
   GlobalConfigurationManager? _globalConfigManager;
   DatasetConfiguration? _currentDatasetConfig;
@@ -86,7 +83,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
       _markDisplayController.text = _globalConfig!.markDisplayTimeSeconds.toString();
-      await _loadCurrentDataset();
 
       setState(() {
         _loading = false;
@@ -103,45 +99,11 @@ class _ConfigScreenState extends State<ConfigScreen> {
     }
   }
 
-  Future<void> _loadCurrentDataset() async {
-    try {
-      // Get the dataset manager to find the currently selected dataset
-      final datasetManager = await CustomDatasetManager.getInstance();
-      final selectedDataset = datasetManager.getSelectedDataset();
-
-      if (selectedDataset != null) {
-        setState(() {
-          _currentDataset = selectedDataset;
-        });
-        if (_configManager != null) {
-          _loadDatasetConfiguration(selectedDataset);
-        }
-        return;
-      }
-
-      // If no dataset is selected, get the first built-in dataset as fallback
-      final defaultDataset = datasetManager.getBuiltInDataset(DatasetType.final9x9);
-      if (defaultDataset != null) {
-        setState(() {
-          _currentDataset = defaultDataset;
-        });
-        if (_configManager != null) {
-          _loadDatasetConfiguration(defaultDataset);
-        }
-      }
-    } catch (e) {
-      // Create fallback dataset if all else fails
-      final fallbackDataset = CustomDataset.builtIn(
-        datasetType: DatasetType.final9x9,
-        name: 'Final 9x9 Area',
-      );
-      setState(() {
-        _currentDataset = fallbackDataset;
-      });
-      if (_configManager != null) {
-        _loadDatasetConfiguration(fallbackDataset);
-      }
-    }
+  void _onDatasetSelected(CustomDataset dataset) {
+    setState(() {
+      _currentDataset = dataset;
+    });
+    _loadDatasetConfiguration(dataset);
   }
 
   void _loadDatasetConfiguration(CustomDataset dataset) {
@@ -164,7 +126,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
       _sequenceLengthController.text = config.sequenceLength.toString();
       _scoreGranularityController.text = config.scoreGranularity.toString();
     });
-
 
     // Re-add listeners after loading is complete
     _thresholdGoodController.addListener(_onDatasetConfigurationChanged);
@@ -290,22 +251,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
     }
   }
 
-  void _onDatasetChanged() async {
-    // Reload current dataset when dataset is changed
-    await _loadCurrentDataset();
-  }
-
-  void _onDatasetSelected(CustomDataset dataset) {
-    // Directly update dataset when notified by selector
-    setState(() {
-      _currentDataset = dataset;
-    });
-    // Immediately load dataset configuration
-    if (_configManager != null) {
-      _loadDatasetConfiguration(dataset);
-    }
-  }
-
   String _getTimerTypeDisplayName(TimerType type) {
     switch (type) {
       case TimerType.smooth:
@@ -337,15 +282,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
     }
   }
 
-  String _getAutoAdvanceModeDisplayName(AutoAdvanceMode mode) {
-    return mode.displayName;
-  }
-
-
   /// Check if current dataset type is a final dataset that supports position types
   bool _isFinalDataset() {
     if (_currentDataset == null) return false;
-    return DatasetRegistry.isFinalPositionDataset(_currentDataset!.baseDatasetType);
+    return _currentDataset!.baseDatasetType == DatasetType.final9x9 ||
+           _currentDataset!.baseDatasetType == DatasetType.final13x13 ||
+           _currentDataset!.baseDatasetType == DatasetType.final19x19;
   }
 
   /// Get available ownership display modes based on position type
@@ -406,42 +348,47 @@ class _ConfigScreenState extends State<ConfigScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Streamlined Dataset Selection with Custom Dataset Creation
-              StreamlinedDatasetSelector(
-                onDatasetChanged: _onDatasetChanged,
+              // Enhanced Dataset Selection
+              EnhancedDatasetSelector(
+                onDatasetChanged: () {
+                  // Dataset was changed, reload configuration if we have a selected dataset
+                  if (_currentDataset != null) {
+                    _loadDatasetConfiguration(_currentDataset!);
+                  }
+                },
                 onDatasetSelected: _onDatasetSelected,
                 appSkin: currentSkin,
               ),
               const SizedBox(height: 24),
 
               // Dataset Settings Section
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.tune, size: 20),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Dataset Settings',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+              if (_currentDataset != null) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.tune, size: 20),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Dataset Settings',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: _resetDatasetConfiguration,
-                            tooltip: 'Reset to defaults',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (_currentDataset != null)
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: _resetDatasetConfiguration,
+                              tooltip: 'Reset to defaults',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           'Configuration for: ${_currentDataset!.name}',
                           style: TextStyle(
@@ -449,281 +396,259 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             fontSize: 14,
                           ),
                         ),
-                      const SizedBox(height: 16),
-
-                      if (_currentDatasetConfig != null) ...[
-                        // Prediction Type
-                        DropdownButtonFormField<PredictionType>(
-                          value: _currentDatasetConfig!.predictionType,
-                          decoration: const InputDecoration(
-                            labelText: 'Button Type',
-                            helperText: 'Type of buttons to display for answers',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: DatasetRegistry.getAllowedPredictionTypes(_currentDataset!.baseDatasetType).map((type) {
-                            return DropdownMenuItem<PredictionType>(
-                              value: type,
-                              child: Text(type.displayName),
-                            );
-                          }).toList(),
-                          onChanged: (PredictionType? value) {
-                            if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
-                              final newConfig = _currentDatasetConfig!.copyWith(
-                                predictionType: value,
-                              );
-                              _autoSaveDatasetConfiguration(newConfig);
-                            }
-                          },
-                        ),
                         const SizedBox(height: 16),
 
-                        // Threshold fields (only show if rough lead prediction is selected)
-                        if (_currentDatasetConfig!.predictionType == PredictionType.roughLeadPrediction) ...[
-                          // Threshold Good
-                          TextFormField(
-                            controller: _thresholdGoodController,
+                        if (_currentDatasetConfig != null) ...[
+                          // Prediction Type
+                          DropdownButtonFormField<PredictionType>(
+                            value: _currentDatasetConfig!.predictionType,
                             decoration: const InputDecoration(
-                              labelText: 'Threshold for Good Position',
-                              helperText: 'Score difference to consider position as good for one color',
-                              border: OutlineInputBorder(),
-                              suffix: Text('points'),
-                            ),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Threshold Close
-                          TextFormField(
-                            controller: _thresholdCloseController,
-                            decoration: const InputDecoration(
-                              labelText: 'Threshold for Close Position',
-                              helperText: 'Score difference to consider position as close (must be ≥ good threshold)',
-                              border: OutlineInputBorder(),
-                              suffix: Text('points'),
-                            ),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Score Granularity (only show if exact score prediction is selected)
-                        if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction) ...[
-                          TextFormField(
-                            controller: _scoreGranularityController,
-                            decoration: const InputDecoration(
-                              labelText: 'Score Granularity',
-                              helperText: 'Point difference between score options',
-                              border: OutlineInputBorder(),
-                              suffix: Text('points'),
-                            ),
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Time per Problem with enable checkbox
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _timeProblemController,
-                                enabled: _currentDatasetConfig!.timerEnabled,
-                                decoration: InputDecoration(
-                                  labelText: 'Time per Problem (uncheck to disable)',
-                                  helperText: 'Time allowed to solve one problem',
-                                  border: const OutlineInputBorder(),
-                                  suffix: const Text('seconds'),
-                                  filled: !_currentDatasetConfig!.timerEnabled,
-                                  fillColor: !_currentDatasetConfig!.timerEnabled ? Colors.grey[100] : null,
-                                ),
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              height: 56, // Match the height of the TextFormField
-                              child: Checkbox(
-                                value: _currentDatasetConfig!.timerEnabled,
-                                onChanged: (bool? value) {
-                                  if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
-                                    final newConfig = _currentDatasetConfig!.copyWith(
-                                      timerEnabled: value,
-                                    );
-                                    _autoSaveDatasetConfiguration(newConfig);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Position Type (only for final datasets)
-                        if (_isFinalDataset()) ...[
-                          DropdownButtonFormField<PositionType>(
-                            value: _currentDatasetConfig!.positionType,
-                            decoration: const InputDecoration(
-                              labelText: 'Position Type',
+                              labelText: 'Button Type',
+                              helperText: 'Type of buttons to display for answers',
                               border: OutlineInputBorder(),
                             ),
-                            items: PositionType.values.map((type) {
-                              return DropdownMenuItem<PositionType>(
+                            items: PredictionType.values.map((type) {
+                              return DropdownMenuItem<PredictionType>(
                                 value: type,
                                 child: Text(type.displayName),
                               );
                             }).toList(),
-                            onChanged: (PositionType? value) {
+                            onChanged: (PredictionType? value) {
                               if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
                                 final newConfig = _currentDatasetConfig!.copyWith(
-                                  positionType: value,
-                                  // Reset ownership mode if not compatible
-                                  ownershipDisplayMode: _getCompatibleOwnershipMode(value),
+                                  predictionType: value,
                                 );
                                 _autoSaveDatasetConfiguration(newConfig);
                               }
                             },
                           ),
-                          const SizedBox(height: 8),
-
-                          // Explanation text for position type
-                          Padding(
-                            padding: const EdgeInsets.only(left: 12.0),
-                            child: Text(
-                              _currentDatasetConfig!.positionType.explanationText,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 16),
-                        ],
 
-                        // Sequence Length (hide for "with filled neutral points" mode)
-                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
-                          TextFormField(
-                            controller: _sequenceLengthController,
-                            decoration: const InputDecoration(
-                              labelText: 'Move Sequence Length',
-                              helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
-                              border: OutlineInputBorder(),
-                              suffix: Text('moves'),
+                          // Threshold fields (only show if rough lead prediction is selected)
+                          if (_currentDatasetConfig!.predictionType == PredictionType.roughLeadPrediction) ...[
+                            // Threshold Good
+                            TextFormField(
+                              controller: _thresholdGoodController,
+                              decoration: const InputDecoration(
+                                labelText: 'Threshold for Good Position',
+                                helperText: 'Score difference to consider position as good for one color',
+                                border: OutlineInputBorder(),
+                                suffix: Text('points'),
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                              ],
                             ),
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                            const SizedBox(height: 16),
+
+                            // Threshold Close
+                            TextFormField(
+                              controller: _thresholdCloseController,
+                              decoration: const InputDecoration(
+                                labelText: 'Threshold for Close Position',
+                                helperText: 'Score difference to consider position as close (must be ≥ good threshold)',
+                                border: OutlineInputBorder(),
+                                suffix: Text('points'),
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Score Granularity (only show if exact score prediction is selected)
+                          if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction) ...[
+                            TextFormField(
+                              controller: _scoreGranularityController,
+                              decoration: const InputDecoration(
+                                labelText: 'Score Granularity',
+                                helperText: 'Point difference between score options',
+                                border: OutlineInputBorder(),
+                                suffix: Text('points'),
+                              ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Time per Problem with enable checkbox
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _timeProblemController,
+                                  enabled: _currentDatasetConfig!.timerEnabled,
+                                  decoration: InputDecoration(
+                                    labelText: 'Time per Problem (uncheck to disable)',
+                                    helperText: 'Time allowed to solve one problem',
+                                    border: const OutlineInputBorder(),
+                                    suffix: const Text('seconds'),
+                                    filled: !_currentDatasetConfig!.timerEnabled,
+                                    fillColor: !_currentDatasetConfig!.timerEnabled ? Colors.grey[100] : null,
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                height: 56, // Match the height of the TextFormField
+                                child: Checkbox(
+                                  value: _currentDatasetConfig!.timerEnabled,
+                                  onChanged: (bool? value) {
+                                    if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                                      final newConfig = _currentDatasetConfig!.copyWith(
+                                        timerEnabled: value,
+                                      );
+                                      _autoSaveDatasetConfiguration(newConfig);
+                                    }
+                                  },
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 16),
 
-                          // Show Move Numbers checkbox (only for "Before filling neutral points" mode)
-                          if (_isFinalDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
-                            CheckboxListTile(
-                              title: const Text('Show Move Numbers'),
-                              subtitle: const Text(
-                                'Display numbers on move sequence intersections (uncheck to leave intersections empty)',
+                          // Position Type (only for final datasets)
+                          if (_isFinalDataset()) ...[
+                            DropdownButtonFormField<PositionType>(
+                              value: _currentDatasetConfig!.positionType,
+                              decoration: const InputDecoration(
+                                labelText: 'Position Type',
+                                border: OutlineInputBorder(),
                               ),
-                              value: _currentDatasetConfig!.showMoveNumbers,
+                              items: PositionType.values.map((type) {
+                                return DropdownMenuItem<PositionType>(
+                                  value: type,
+                                  child: Text(type.displayName),
+                                );
+                              }).toList(),
+                              onChanged: (PositionType? value) {
+                                if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                                  final newConfig = _currentDatasetConfig!.copyWith(
+                                    positionType: value,
+                                    // Reset ownership mode if not compatible
+                                    ownershipDisplayMode: _getCompatibleOwnershipMode(value),
+                                  );
+                                  _autoSaveDatasetConfiguration(newConfig);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Explanation text for position type
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12.0),
+                              child: Text(
+                                _currentDatasetConfig!.positionType.explanationText,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Sequence Length (hide for "with filled neutral points" mode)
+                          if (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
+                            TextFormField(
+                              controller: _sequenceLengthController,
+                              decoration: const InputDecoration(
+                                labelText: 'Move Sequence Length',
+                                helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
+                                border: OutlineInputBorder(),
+                                suffix: Text('moves'),
+                              ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Show Move Numbers checkbox (only for "Before filling neutral points" mode)
+                            if (_isFinalDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
+                              CheckboxListTile(
+                                title: const Text('Show Move Numbers'),
+                                subtitle: const Text(
+                                  'Display numbers on move sequence intersections (uncheck to leave intersections empty)',
+                                ),
+                                value: _currentDatasetConfig!.showMoveNumbers,
+                                onChanged: (bool? value) {
+                                  if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                                    final newConfig = _currentDatasetConfig!.copyWith(
+                                      showMoveNumbers: value,
+                                    );
+                                    _autoSaveDatasetConfiguration(newConfig);
+                                  }
+                                },
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ],
+
+                          // Ownership Display Mode (hide for "Before filling neutral points" mode)
+                          if (!_isFinalDataset() || _currentDatasetConfig!.positionType != PositionType.beforeFillingNeutralPoints) ...[
+                            DropdownButtonFormField<OwnershipDisplayMode>(
+                            value: _currentDatasetConfig!.ownershipDisplayMode,
+                            decoration: const InputDecoration(
+                              labelText: 'Ownership Display Mode',
+                              helperText: 'How ownership information is shown in review view',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: _getAvailableOwnershipModes().map((mode) {
+                              return DropdownMenuItem<OwnershipDisplayMode>(
+                                value: mode,
+                                child: Text(mode.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (OwnershipDisplayMode? value) {
+                              if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                                final newConfig = _currentDatasetConfig!.copyWith(
+                                  ownershipDisplayMode: value,
+                                );
+                                _autoSaveDatasetConfiguration(newConfig);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          ],
+
+                          // Hide Game Info Bar (hide for final datasets - controlled by position type)
+                          if (!_isFinalDataset()) ...[
+                            CheckboxListTile(
+                              title: const Text('Hide Game Info Bar'),
+                              subtitle: const Text(
+                                'Hide the bar showing captured stones and komi',
+                              ),
+                              value: _currentDatasetConfig!.hideGameInfoBar,
                               onChanged: (bool? value) {
                                 if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
                                   final newConfig = _currentDatasetConfig!.copyWith(
-                                    showMoveNumbers: value,
+                                    hideGameInfoBar: value,
                                   );
                                   _autoSaveDatasetConfiguration(newConfig);
                                 }
                               },
                               contentPadding: EdgeInsets.zero,
                             ),
-                            const SizedBox(height: 16),
                           ],
                         ],
-
-                        // Ownership Display Mode (hide for "Before filling neutral points" mode)
-                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType != PositionType.beforeFillingNeutralPoints) ...[
-                          DropdownButtonFormField<OwnershipDisplayMode>(
-                          value: _currentDatasetConfig!.ownershipDisplayMode,
-                          decoration: const InputDecoration(
-                            labelText: 'Ownership Display Mode',
-                            helperText: 'How ownership information is shown in review view',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: _getAvailableOwnershipModes().map((mode) {
-                            return DropdownMenuItem<OwnershipDisplayMode>(
-                              value: mode,
-                              child: Text(mode.displayName),
-                            );
-                          }).toList(),
-                          onChanged: (OwnershipDisplayMode? value) {
-                            if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
-                              final newConfig = _currentDatasetConfig!.copyWith(
-                                ownershipDisplayMode: value,
-                              );
-                              _autoSaveDatasetConfiguration(newConfig);
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        ],
-
-                        // Hide Game Info Bar (hide for final datasets - controlled by position type)
-                        if (!_isFinalDataset()) ...[
-                          CheckboxListTile(
-                            title: const Text('Hide Game Info Bar'),
-                            subtitle: const Text(
-                              'Hide the bar showing captured stones and komi',
-                            ),
-                            value: _currentDatasetConfig!.hideGameInfoBar,
-                            onChanged: (bool? value) {
-                              if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
-                                final newConfig = _currentDatasetConfig!.copyWith(
-                                  hideGameInfoBar: value,
-                                );
-                                _autoSaveDatasetConfiguration(newConfig);
-                              }
-                            },
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ],
-
-                        // Auto Advance Mode
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<AutoAdvanceMode>(
-                          value: _currentDatasetConfig!.autoAdvanceMode,
-                          decoration: const InputDecoration(
-                            labelText: 'Auto Advance Mode',
-                            helperText: 'When to auto-advance to the next problem',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: AutoAdvanceMode.values.map((mode) {
-                            return DropdownMenuItem(
-                              value: mode,
-                              child: Text(_getAutoAdvanceModeDisplayName(mode)),
-                            );
-                          }).toList(),
-                          onChanged: (AutoAdvanceMode? newMode) {
-                            if (newMode != null && _currentDatasetConfig != null && _currentDataset != null) {
-                              final newConfig = _currentDatasetConfig!.copyWith(autoAdvanceMode: newMode);
-                              _autoSaveDatasetConfiguration(newConfig);
-                            }
-                          },
-                        ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
 
               // Global Settings Section
               Card(
@@ -886,6 +811,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       const SizedBox(height: 12),
                       const Text('• Global settings apply to the entire app'),
                       const Text('• Dataset settings apply only to the currently selected dataset'),
+                      const Text('• Create custom datasets to save different configuration combinations'),
                       const Text('• Changes are saved automatically as you type'),
                       const Text('• Use refresh buttons to reset sections to default values'),
                       const SizedBox(height: 12),

@@ -1,9 +1,10 @@
 import '../models/dataset_type.dart';
 import '../models/problem_attempt.dart';
 
-/// Daily statistics for a specific dataset type
+/// Daily statistics for a specific dataset (either custom or built-in)
 class DailyDatasetStatistics {
   final DatasetType datasetType;
+  final String? datasetId; // ID for custom datasets, null for legacy/built-in
   final DateTime date;
   final int totalAttempts;
   final int correctAttempts;
@@ -12,6 +13,7 @@ class DailyDatasetStatistics {
 
   const DailyDatasetStatistics({
     required this.datasetType,
+    this.datasetId,
     required this.date,
     required this.totalAttempts,
     required this.correctAttempts,
@@ -23,11 +25,13 @@ class DailyDatasetStatistics {
   factory DailyDatasetStatistics.fromAttempts(
     DatasetType datasetType,
     DateTime date,
-    List<ProblemAttempt> attempts,
-  ) {
+    List<ProblemAttempt> attempts, {
+    String? datasetId,
+  }) {
     final filteredAttempts = attempts
         .where((attempt) =>
             attempt.datasetType == datasetType &&
+            attempt.effectiveDatasetId == (datasetId ?? 'builtin_${datasetType.value}') &&
             _isSameDay(attempt.timestamp, date))
         .toList();
 
@@ -39,6 +43,7 @@ class DailyDatasetStatistics {
 
     return DailyDatasetStatistics(
       datasetType: datasetType,
+      datasetId: datasetId,
       date: date,
       totalAttempts: totalAttempts,
       correctAttempts: correctAttempts,
@@ -62,10 +67,14 @@ class DailyDatasetStatistics {
   /// Check if this day has any attempts
   bool get hasAttempts => totalAttempts > 0;
 
+  /// Get effective dataset ID (for custom datasets or generated for built-in)
+  String get effectiveDatasetId => datasetId ?? 'builtin_${datasetType.value}';
+
   /// Create from JSON map
   factory DailyDatasetStatistics.fromJson(Map<String, dynamic> json) {
     return DailyDatasetStatistics(
-      datasetType: DatasetType.fromString(json['datasetType']) ?? DatasetType.final9x9Area,
+      datasetType: DatasetType.fromString(json['datasetType']) ?? DatasetType.final9x9,
+      datasetId: json['datasetId'] as String?,
       date: DateTime.parse(json['date'] as String),
       totalAttempts: json['totalAttempts'] as int,
       correctAttempts: json['correctAttempts'] as int,
@@ -78,7 +87,7 @@ class DailyDatasetStatistics {
 
   /// Convert to JSON map
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> json = {
       'datasetType': datasetType.value,
       'date': date.toIso8601String(),
       'totalAttempts': totalAttempts,
@@ -86,6 +95,12 @@ class DailyDatasetStatistics {
       'totalTimeSeconds': totalTimeSeconds,
       'attempts': attempts.map((a) => a.toJson()).toList(),
     };
+
+    if (datasetId != null) {
+      json['datasetId'] = datasetId;
+    }
+
+    return json;
   }
 
   static bool _isSameDay(DateTime date1, DateTime date2) {
@@ -96,82 +111,153 @@ class DailyDatasetStatistics {
 
   @override
   String toString() {
-    return 'DailyDatasetStatistics(datasetType: $datasetType, date: $date, '
+    return 'DailyDatasetStatistics(datasetType: $datasetType, datasetId: $datasetId, date: $date, '
            'totalAttempts: $totalAttempts, correctAttempts: $correctAttempts, '
            'accuracyPercentage: ${accuracyPercentage.toStringAsFixed(1)}%, '
            'averageTimeSeconds: ${averageTimeSeconds.toStringAsFixed(1)}s)';
   }
 }
 
-/// Daily statistics for all dataset types
+/// Daily statistics for all datasets (both built-in and custom)
 class DailyStatistics {
   final DateTime date;
+  /// Legacy field for backward compatibility - maps DatasetType to stats
   final Map<DatasetType, DailyDatasetStatistics> datasetStats;
+  /// New field - maps dataset ID to stats (includes both built-in and custom)
+  final Map<String, DailyDatasetStatistics> datasetStatsById;
 
   const DailyStatistics({
     required this.date,
     required this.datasetStats,
+    required this.datasetStatsById,
   });
 
   /// Create from a list of problem attempts for a specific date
   factory DailyStatistics.fromAttempts(DateTime date, List<ProblemAttempt> attempts) {
     final Map<DatasetType, DailyDatasetStatistics> datasetStats = {};
+    final Map<String, DailyDatasetStatistics> datasetStatsById = {};
 
-    // Group attempts by dataset type
-    for (final datasetType in DatasetType.values) {
-      final stats = DailyDatasetStatistics.fromAttempts(datasetType, date, attempts);
-      if (stats.hasAttempts) {
-        datasetStats[datasetType] = stats;
+    // Group attempts by effective dataset ID
+    final Map<String, List<ProblemAttempt>> attemptsByDatasetId = {};
+    for (final attempt in attempts) {
+      final effectiveId = attempt.effectiveDatasetId;
+      attemptsByDatasetId.putIfAbsent(effectiveId, () => []).add(attempt);
+    }
+
+    // Create statistics for each dataset ID
+    for (final entry in attemptsByDatasetId.entries) {
+      final datasetId = entry.key;
+      final datasetAttempts = entry.value;
+
+      if (datasetAttempts.isNotEmpty) {
+        final datasetType = datasetAttempts.first.datasetType;
+        final isBuiltIn = datasetId.startsWith('builtin_');
+
+        final stats = DailyDatasetStatistics.fromAttempts(
+          datasetType,
+          date,
+          attempts,
+          datasetId: isBuiltIn ? null : datasetId,
+        );
+
+        if (stats.hasAttempts) {
+          datasetStatsById[datasetId] = stats;
+
+          // For backward compatibility: populate legacy datasetStats for built-in datasets
+          if (isBuiltIn) {
+            datasetStats[datasetType] = stats;
+          }
+        }
       }
     }
 
     return DailyStatistics(
       date: date,
       datasetStats: datasetStats,
+      datasetStatsById: datasetStatsById,
     );
   }
 
-  /// Get statistics for a specific dataset type
+  /// Get statistics for a specific dataset type (legacy method)
   DailyDatasetStatistics? getStatsForDataset(DatasetType datasetType) {
     return datasetStats[datasetType];
   }
 
-  /// Get all dataset types that have attempts today
+  /// Get statistics for a specific dataset by ID
+  DailyDatasetStatistics? getStatsForDatasetId(String datasetId) {
+    return datasetStatsById[datasetId];
+  }
+
+  /// Get all dataset types that have attempts today (legacy method)
   List<DatasetType> get activeDatasetTypes => datasetStats.keys.toList();
 
+  /// Get all dataset IDs that have attempts today
+  List<String> get activeDatasetIds => datasetStatsById.keys.toList();
+
+  /// Get all statistics (by ID)
+  Map<String, DailyDatasetStatistics> get allStats => Map.unmodifiable(datasetStatsById);
+
   /// Check if this day has any attempts
-  bool get hasAttempts => datasetStats.isNotEmpty;
+  bool get hasAttempts => datasetStatsById.isNotEmpty;
 
   /// Create from JSON map
   factory DailyStatistics.fromJson(Map<String, dynamic> json) {
     final Map<DatasetType, DailyDatasetStatistics> datasetStats = {};
+    final Map<String, DailyDatasetStatistics> datasetStatsById = {};
 
-    final statsMap = json['datasetStats'] as Map<String, dynamic>;
-    for (final entry in statsMap.entries) {
+    // Load legacy datasetStats for backward compatibility
+    final legacyStatsMap = json['datasetStats'] as Map<String, dynamic>? ?? {};
+    for (final entry in legacyStatsMap.entries) {
       final datasetType = DatasetType.fromString(entry.key);
       if (datasetType != null) {
-        datasetStats[datasetType] = DailyDatasetStatistics.fromJson(
+        final stats = DailyDatasetStatistics.fromJson(
           entry.value as Map<String, dynamic>
         );
+        datasetStats[datasetType] = stats;
+        // Also add to new format with built-in ID
+        datasetStatsById['builtin_${datasetType.value}'] = stats;
+      }
+    }
+
+    // Load new datasetStatsById (this will override any duplicate built-in entries)
+    final newStatsMap = json['datasetStatsById'] as Map<String, dynamic>? ?? {};
+    for (final entry in newStatsMap.entries) {
+      final stats = DailyDatasetStatistics.fromJson(
+        entry.value as Map<String, dynamic>
+      );
+      datasetStatsById[entry.key] = stats;
+
+      // Update legacy format for built-in datasets
+      if (entry.key.startsWith('builtin_')) {
+        datasetStats[stats.datasetType] = stats;
       }
     }
 
     return DailyStatistics(
       date: DateTime.parse(json['date'] as String),
       datasetStats: datasetStats,
+      datasetStatsById: datasetStatsById,
     );
   }
 
   /// Convert to JSON map
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> statsMap = {};
+    // Legacy format for backward compatibility
+    final Map<String, dynamic> legacyStatsMap = {};
     for (final entry in datasetStats.entries) {
-      statsMap[entry.key.value] = entry.value.toJson();
+      legacyStatsMap[entry.key.value] = entry.value.toJson();
+    }
+
+    // New format with dataset IDs
+    final Map<String, dynamic> newStatsMap = {};
+    for (final entry in datasetStatsById.entries) {
+      newStatsMap[entry.key] = entry.value.toJson();
     }
 
     return {
       'date': date.toIso8601String(),
-      'datasetStats': statsMap,
+      'datasetStats': legacyStatsMap, // Keep for backward compatibility
+      'datasetStatsById': newStatsMap, // New format
     };
   }
 }

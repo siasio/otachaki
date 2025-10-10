@@ -37,7 +37,7 @@ void main() {
         expect(metadata.description, equals('No description'));
         expect(metadata.version, equals('1.0.0'));
         expect(metadata.totalPositions, equals(0));
-        expect(metadata.datasetType, equals(DatasetType.final9x9Area));
+        expect(metadata.datasetType, equals(DatasetType.final9x9));
         expect(metadata.createdAt, isNotNull);
       });
 
@@ -62,7 +62,7 @@ void main() {
         final parsed = DatasetParser.parseMetadataToMap(json);
         final metadata = DatasetMetadata.fromJson(parsed);
 
-        expect(metadata.datasetType, equals(DatasetType.final9x9Area));
+        expect(metadata.datasetType, equals(DatasetType.final9x9));
       });
     });
 
@@ -286,7 +286,7 @@ void main() {
         final dataset = TrainingDataset.fromJson(parsed);
 
         expect(dataset.metadata.name, equals('String Test Dataset'));
-        expect(dataset.metadata.datasetType, equals(DatasetType.midgame19x19Estimation));
+        expect(dataset.metadata.datasetType, equals(DatasetType.midgame19x19));
         expect(dataset.positions, hasLength(1));
         expect(dataset.positions[0].id, equals('test_pos'));
         expect(dataset.positions[0].result, equals('Draw'));

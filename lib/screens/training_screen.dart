@@ -6,7 +6,10 @@ import '../models/dataset_type.dart';
 import '../models/dataset_configuration.dart';
 import '../models/position_type.dart';
 import '../services/position_manager.dart';
-import '../services/configuration_manager.dart';
+import '../services/position_loader.dart';
+import '../services/enhanced_configuration_manager.dart';
+import '../services/custom_dataset_manager.dart';
+import '../models/custom_dataset.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/statistics_manager.dart';
 import '../services/logger_service.dart';
@@ -72,7 +75,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
   PositionedScoreOptions? _currentScoreOptions;
   RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
   final FocusNode _focusNode = FocusNode();
-  ConfigurationManager? _configManager;
+  EnhancedConfigurationManager? _configManager;
+  CustomDatasetManager? _datasetManager;
+  CustomDataset? _currentDataset;
   DatasetConfiguration? _currentConfig;
   GlobalConfigurationManager? _globalConfigManager;
   GlobalConfiguration? _globalConfig;
@@ -93,7 +98,19 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _initializeConfiguration() async {
     try {
-      _configManager = await ConfigurationManager.getInstance();
+      _configManager = await EnhancedConfigurationManager.getInstance();
+      _datasetManager = await CustomDatasetManager.getInstance();
+
+      // Load the currently selected dataset
+      _currentDataset = _datasetManager!.getSelectedDataset();
+
+      // If no dataset selected, use default
+      if (_currentDataset == null) {
+        _currentDataset = _datasetManager!.getBuiltInDataset(DatasetType.final9x9);
+        if (_currentDataset != null) {
+          await _datasetManager!.setSelectedDataset(_currentDataset!.id);
+        }
+      }
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
       _statisticsManager = await StatisticsManager.getInstance();
@@ -144,7 +161,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       // Handle space key for pause during feedback overlay
       if (_showFeedbackOverlay && event.logicalKey == LogicalKeyboardKey.space) {
-        final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+        final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
         final stateManager = ButtonStateManager(
           autoAdvanceMode: autoAdvanceMode,
           isAnswerCorrect: _isCorrectAnswer,
@@ -242,6 +259,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
     if (_globalConfigManager != null) {
       _globalConfig = _globalConfigManager!.getConfiguration();
     }
+
+    // Reload the current selected dataset in case it changed
+    if (_datasetManager != null) {
+      final newSelectedDataset = _datasetManager!.getSelectedDataset();
+      if (newSelectedDataset?.id != _currentDataset?.id) {
+        setState(() {
+          _currentDataset = newSelectedDataset;
+        });
+      }
+    }
+
     // Notify parent app of configuration changes
     widget.onConfigurationChanged?.call();
     // Load fresh position when returning (dataset may have changed)
@@ -250,8 +278,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _loadInitialPosition() async {
     try {
-      final position = await _positionManager.loadRandomPosition();
+      // Ensure the correct dataset file is loaded for the current custom dataset
+      if (_currentDataset != null) {
+        final datasetFile = _currentDataset!.datasetFilePath.replaceFirst('assets/', '');
+        PositionLoader.setDatasetFile(datasetFile);
+        await PositionLoader.preloadDataset();
+      }
+
       await _updateConfiguration();
+      final position = await _positionManager.loadRandomPosition();
 
       // Generate score options for exact score prediction (if needed)
       PositionedScoreOptions? scoreOptions;
@@ -321,13 +356,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Future<void> _updateConfiguration() async {
-    if (_configManager == null || _positionManager.currentDataset == null) {
-      _currentConfig = DatasetConfiguration.getDefaultFor(DatasetType.final9x9Area);
+    if (_configManager == null || _currentDataset == null) {
+      _currentConfig = DatasetConfiguration.getDefaultFor(DatasetType.final9x9);
       return;
     }
 
-    final datasetType = _positionManager.currentDataset!.metadata.datasetType;
-    _currentConfig = _configManager!.getConfiguration(datasetType);
+    _currentConfig = _configManager!.getConfigurationForDataset(_currentDataset!);
   }
 
   void _onResultSelected(GameResult result) {
@@ -443,7 +477,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _handlePostAnswerFlow(bool isCorrect) {
-    final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
     final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
     final stateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
@@ -524,7 +558,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Widget _buildButtons() {
-    final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
     final stateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
       isAnswerCorrect: _isCorrectAnswer,
@@ -611,8 +645,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
     });
 
     try {
-      final position = await _positionManager.loadRandomPosition();
+      // Ensure the correct dataset file is loaded for the current custom dataset
+      if (_currentDataset != null) {
+        final datasetFile = _currentDataset!.datasetFilePath.replaceFirst('assets/', '');
+        PositionLoader.setDatasetFile(datasetFile);
+        await PositionLoader.preloadDataset();
+      }
+
       await _updateConfiguration();
+      final position = await _positionManager.loadRandomPosition();
 
       // Generate score options for exact score prediction (if needed)
       PositionedScoreOptions? scoreOptions;
@@ -737,7 +778,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final shouldAnimate = themeProvider.getElementStyle(UIElement.correctIndicator).hasAnimation ?? false;
 
     // Check if pause button should be shown
-    final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
+    final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
     final stateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
       isAnswerCorrect: _isCorrectAnswer,
@@ -1052,9 +1093,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
     bool shouldShowGameInfo = true;
     if (_currentConfig != null) {
       final datasetType = _positionManager.currentDataset?.metadata.datasetType;
-      final isFinalDataset = datasetType == DatasetType.final9x9Area ||
-                           datasetType == DatasetType.final19x19Area ||
-                           datasetType == DatasetType.final9x9AreaVars;
+      final isFinalDataset = datasetType == DatasetType.final9x9 ||
+                           datasetType == DatasetType.final13x13 ||
+                           datasetType == DatasetType.final19x19;
 
       if (isFinalDataset) {
         // For final datasets, show game info based on position type

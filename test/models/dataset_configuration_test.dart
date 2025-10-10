@@ -4,8 +4,8 @@ import 'package:countingapp/models/dataset_type.dart';
 
 void main() {
   group('DatasetConfiguration', () {
-    test('should have correct defaults for final9x9Area', () {
-      final config = DatasetConfiguration.getDefaultFor(DatasetType.final9x9Area);
+    test('should have correct defaults for final9x9', () {
+      final config = DatasetConfiguration.getDefaultFor(DatasetType.final9x9);
 
       expect(config.thresholdGood, 0.0);
       expect(config.thresholdClose, 0.0);
@@ -13,8 +13,8 @@ void main() {
       expect(config.hideGameInfoBar, isTrue);
     });
 
-    test('should have correct defaults for midgame19x19Estimation', () {
-      final config = DatasetConfiguration.getDefaultFor(DatasetType.midgame19x19Estimation);
+    test('should have correct defaults for midgame19x19', () {
+      final config = DatasetConfiguration.getDefaultFor(DatasetType.midgame19x19);
 
       expect(config.thresholdGood, 1.5);
       expect(config.thresholdClose, 5.0);
@@ -22,14 +22,6 @@ void main() {
       expect(config.hideGameInfoBar, isFalse);
     });
 
-    test('should have correct defaults for final9x9AreaVars', () {
-      final config = DatasetConfiguration.getDefaultFor(DatasetType.final9x9AreaVars);
-
-      expect(config.thresholdGood, 0.0);
-      expect(config.thresholdClose, 0.0);
-      expect(config.timePerProblemSeconds, 10);
-      expect(config.hideGameInfoBar, isTrue);
-    });
 
     test('copyWith should preserve unchanged values', () {
       const original = DatasetConfiguration(

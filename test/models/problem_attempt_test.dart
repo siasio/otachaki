@@ -7,14 +7,14 @@ void main() {
     test('should create a problem attempt with correct properties', () {
       final now = DateTime.now();
       final attempt = ProblemAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
         timestamp: now,
         wasTimeout: false,
       );
 
-      expect(attempt.datasetType, equals(DatasetType.final9x9Area));
+      expect(attempt.datasetType, equals(DatasetType.final9x9));
       expect(attempt.isCorrect, equals(true));
       expect(attempt.timeSpentMs, equals(5000));
       expect(attempt.timestamp, equals(now));
@@ -25,7 +25,7 @@ void main() {
     test('should create a problem attempt with default wasTimeout value', () {
       final now = DateTime.now();
       final attempt = ProblemAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 5000,
         timestamp: now,
@@ -36,7 +36,7 @@ void main() {
 
     test('should correctly convert time from milliseconds to seconds', () {
       final attempt = ProblemAttempt(
-        datasetType: DatasetType.final9x9Area,
+        datasetType: DatasetType.final9x9,
         isCorrect: true,
         timeSpentMs: 7500,
         timestamp: DateTime.now(),
@@ -48,7 +48,7 @@ void main() {
     test('should convert to and from JSON correctly', () {
       final now = DateTime.now();
       final originalAttempt = ProblemAttempt(
-        datasetType: DatasetType.midgame19x19Estimation,
+        datasetType: DatasetType.midgame19x19,
         isCorrect: false,
         timeSpentMs: 12000,
         timestamp: now,
@@ -87,7 +87,7 @@ void main() {
       };
 
       final attempt = ProblemAttempt.fromJson(json);
-      expect(attempt.datasetType, equals(DatasetType.final9x9Area)); // Default fallback
+      expect(attempt.datasetType, equals(DatasetType.final9x9)); // Default fallback
     });
   });
 }

@@ -4,13 +4,16 @@ import '../models/training_position.dart';
 import '../models/position_type.dart';
 import 'position_loader.dart';
 import 'dataset_preference_manager.dart';
-import 'configuration_manager.dart';
+import 'enhanced_configuration_manager.dart';
+import 'custom_dataset_manager.dart';
+import '../models/custom_dataset.dart';
 import 'logger_service.dart';
 
 class PositionManager {
   GoPosition? _currentPosition;
   TrainingPosition? _currentTrainingPosition;
   TrainingDataset? _currentDataset;
+  CustomDataset? _currentCustomDataset;
   bool _isLoading = false;
 
   /// Get the current position
@@ -28,13 +31,12 @@ class PositionManager {
   /// Get the current position type from configuration
   Future<PositionType> getCurrentPositionType() async {
     try {
-      if (_currentDataset == null) {
+      if (_currentCustomDataset == null) {
         return PositionType.withFilledNeutralPoints;
       }
 
-      final configManager = await ConfigurationManager.getInstance();
-      final datasetType = _currentDataset!.metadata.datasetType;
-      final config = configManager.getConfiguration(datasetType);
+      final configManager = await EnhancedConfigurationManager.getInstance();
+      final config = configManager.getConfigurationForDataset(_currentCustomDataset!);
       return config.positionType;
     } catch (e) {
       return PositionType.withFilledNeutralPoints;
@@ -48,10 +50,16 @@ class PositionManager {
     try {
       _currentDataset = await PositionLoader.loadDataset();
 
-      // Get configuration to check sequence length
-      final configManager = await ConfigurationManager.getInstance();
-      final datasetType = _currentDataset!.metadata.datasetType;
-      final config = configManager.getConfiguration(datasetType);
+      // Get the current custom dataset and its configuration
+      final datasetManager = await CustomDatasetManager.getInstance();
+      _currentCustomDataset = datasetManager.getSelectedDataset();
+
+      if (_currentCustomDataset == null) {
+        throw StateError('No custom dataset selected');
+      }
+
+      final configManager = await EnhancedConfigurationManager.getInstance();
+      final config = configManager.getConfigurationForDataset(_currentCustomDataset!);
       final positionType = config.positionType;
       final sequenceLength = config.sequenceLength;
 
@@ -65,7 +73,7 @@ class PositionManager {
         context: 'PositionManager');
       LoggerService.debug('Position details: ID=${_currentTrainingPosition!.id}, '
         'Type=${positionType.value}, Result=${_currentTrainingPosition!.getResult(positionType)}, '
-        'Dataset=${_currentDataset!.metadata.datasetType}, SequenceLength=$sequenceLength', context: 'PositionManager');
+        'Dataset=${_currentCustomDataset!.name} (${_currentCustomDataset!.baseDatasetType}), SequenceLength=$sequenceLength', context: 'PositionManager');
 
       return _currentPosition!;
     } catch (e, stackTrace) {
