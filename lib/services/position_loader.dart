@@ -126,6 +126,27 @@ class PositionLoader {
     return dataset.positions[randomIndex];
   }
 
+  /// Get a random position from the dataset that has at least the required number of moves
+  /// for the given sequence length (sequenceLength + 1 for the triangle marker)
+  static Future<TrainingPosition> getRandomPositionWithMinMoves(int sequenceLength) async {
+    final dataset = await loadDataset();
+
+    // Filter positions that have enough moves
+    final validPositions = dataset.positions.where((position) =>
+        position.hasEnoughMovesForSequence(sequenceLength)).toList();
+
+    if (validPositions.isEmpty) {
+      LoggerService.warning('No positions found with at least ${sequenceLength + 1} moves, '
+        'falling back to any random position', context: 'PositionLoader');
+      // Fallback to any random position if no valid positions found
+      final randomIndex = _random.nextInt(dataset.positions.length);
+      return dataset.positions[randomIndex];
+    }
+
+    final randomIndex = _random.nextInt(validPositions.length);
+    return validPositions[randomIndex];
+  }
+
 
   /// Get dataset statistics
   static Future<Map<String, dynamic>> getStatistics() async {

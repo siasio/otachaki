@@ -47,13 +47,16 @@ class PositionManager {
 
     try {
       _currentDataset = await PositionLoader.loadDataset();
-      _currentTrainingPosition = await PositionLoader.getRandomPosition();
 
-      // Get position type from configuration
+      // Get configuration to check sequence length
       final configManager = await ConfigurationManager.getInstance();
       final datasetType = _currentDataset!.metadata.datasetType;
       final config = configManager.getConfiguration(datasetType);
       final positionType = config.positionType;
+      final sequenceLength = config.sequenceLength;
+
+      // Get a random position with enough moves for the sequence length
+      _currentTrainingPosition = await PositionLoader.getRandomPositionWithMinMoves(sequenceLength);
 
       // Create GoPosition with appropriate position type
       _currentPosition = GoPosition.fromTrainingPositionWithType(_currentTrainingPosition!, positionType);
@@ -62,7 +65,7 @@ class PositionManager {
         context: 'PositionManager');
       LoggerService.debug('Position details: ID=${_currentTrainingPosition!.id}, '
         'Type=${positionType.value}, Result=${_currentTrainingPosition!.getResult(positionType)}, '
-        'Dataset=${_currentDataset!.metadata.datasetType}', context: 'PositionManager');
+        'Dataset=${_currentDataset!.metadata.datasetType}, SequenceLength=$sequenceLength', context: 'PositionManager');
 
       return _currentPosition!;
     } catch (e, stackTrace) {
