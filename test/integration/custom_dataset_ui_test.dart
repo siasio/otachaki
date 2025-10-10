@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:countingapp/widgets/enhanced_dataset_selector.dart';
+import 'package:countingapp/widgets/streamlined_dataset_selector.dart';
 import 'package:countingapp/models/app_skin.dart';
 
 void main() {
@@ -11,11 +11,11 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    testWidgets('Enhanced dataset selector should show built-in datasets', (WidgetTester tester) async {
+    testWidgets('Streamlined dataset selector should show built-in datasets', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: EnhancedDatasetSelector(
+            body: StreamlinedDatasetSelector(
               appSkin: AppSkin.classic,
             ),
           ),
@@ -26,7 +26,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should show loading initially, then dataset sections
-      expect(find.byType(EnhancedDatasetSelector), findsOneWidget);
+      expect(find.byType(StreamlinedDatasetSelector), findsOneWidget);
 
       // Should show built-in dataset sections
       expect(find.text('9x9 Final Positions'), findsOneWidget);
@@ -34,11 +34,11 @@ void main() {
       expect(find.text('19x19 Midgame Estimation'), findsOneWidget);
     });
 
-    testWidgets('Enhanced dataset selector should show create buttons', (WidgetTester tester) async {
+    testWidgets('Streamlined dataset selector should show create buttons', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: EnhancedDatasetSelector(
+            body: StreamlinedDatasetSelector(
               appSkin: AppSkin.classic,
             ),
           ),
@@ -57,7 +57,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: EnhancedDatasetSelector(
+            body: StreamlinedDatasetSelector(
               appSkin: AppSkin.classic,
             ),
           ),
@@ -84,7 +84,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: EnhancedDatasetSelector(
+            body: StreamlinedDatasetSelector(
               appSkin: AppSkin.classic,
             ),
           ),

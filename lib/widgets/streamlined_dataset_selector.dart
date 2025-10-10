@@ -392,16 +392,6 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
               children: _allDatasets.map((dataset) => _buildDatasetChip(dataset)).toList(),
             ),
 
-            const SizedBox(height: 8),
-
-            // Help text
-            Text(
-              'Tap any dataset to select it. Built-in datasets provide default training positions. Custom datasets (marked with "C") can be edited or deleted.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
-              ),
-            ),
           ],
         ),
       ),
