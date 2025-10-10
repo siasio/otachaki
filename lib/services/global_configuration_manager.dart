@@ -63,4 +63,9 @@ class GlobalConfigurationManager {
     _configuration = GlobalConfiguration.defaultConfig;
     await _saveConfiguration();
   }
+
+  Future<void> dismissWelcomeScreen() async {
+    _configuration = _configuration.copyWith(showWelcomeScreen: false);
+    await _saveConfiguration();
+  }
 }

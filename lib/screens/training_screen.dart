@@ -31,6 +31,7 @@ import '../models/ownership_display_mode.dart';
 import '../models/prediction_type.dart';
 import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
+import '../widgets/welcome_overlay.dart';
 import './info_screen.dart';
 import './config_screen.dart';
 
@@ -67,6 +68,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   bool _hasAnswered = false;
   bool _waitingForNext = false;
   bool _pausePressed = false;
+  bool _showWelcomeOverlay = false;
   PositionedScoreOptions? _currentScoreOptions;
   RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
   final FocusNode _focusNode = FocusNode();
@@ -95,6 +97,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
       _statisticsManager = await StatisticsManager.getInstance();
+
+      // Check if we should show the welcome screen
+      if (_globalConfig!.showWelcomeScreen) {
+        setState(() {
+          _showWelcomeOverlay = true;
+        });
+      }
+
       _loadInitialPosition();
     } catch (e, stackTrace) {
       // Gracefully handle configuration manager errors
@@ -120,6 +130,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   void _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
+      // Don't handle key events while welcome overlay is shown
+      if (_showWelcomeOverlay) {
+        return;
+      }
+
       if (_waitingForNext) {
         if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
           _onNextPressed();
@@ -269,9 +284,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
         _loading = false;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
+        // Only start timer if welcome overlay is not shown
+        _timerRunning = !_showWelcomeOverlay;
       });
-      // Start timing the problem
-      _problemStartTime = DateTime.now();
+      // Start timing the problem only if welcome overlay is not shown
+      if (!_showWelcomeOverlay) {
+        _problemStartTime = DateTime.now();
+      }
       // Request focus for keyboard input
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -482,6 +501,28 @@ class _TrainingScreenState extends State<TrainingScreen> {
     });
   }
 
+  void _onWelcomeDismiss() {
+    setState(() {
+      _showWelcomeOverlay = false;
+      _timerRunning = true; // Start timer when welcome is dismissed
+    });
+    // Start timing the problem now
+    _problemStartTime = DateTime.now();
+  }
+
+  void _onWelcomeDontShowAgain() async {
+    if (_globalConfigManager != null) {
+      await _globalConfigManager!.dismissWelcomeScreen();
+      _globalConfig = _globalConfigManager!.getConfiguration();
+    }
+    setState(() {
+      _showWelcomeOverlay = false;
+      _timerRunning = true; // Start timer when welcome is dismissed
+    });
+    // Start timing the problem now
+    _problemStartTime = DateTime.now();
+  }
+
   Widget _buildButtons() {
     final autoAdvanceMode = _globalConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
     final stateManager = ButtonStateManager(
@@ -509,7 +550,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
       );
     } else {
-      final isEnabled = ((_timerRunning || !(_currentConfig?.timerEnabled ?? true)) && !_hasAnswered);
+      final isEnabled = ((_timerRunning || !(_currentConfig?.timerEnabled ?? true)) && !_hasAnswered && !_showWelcomeOverlay);
 
       if (predictionType == PredictionType.exactScorePrediction && _positionManager.currentTrainingPosition != null) {
         // Use pre-generated score options (generated once when position was loaded)
@@ -601,13 +642,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       setState(() {
         _currentPosition = position;
-        _timerRunning = true;
+        _timerRunning = !_showWelcomeOverlay; // Only start timer if welcome overlay is not shown
         _loading = false;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
       });
-      // Start timing the new problem
-      _problemStartTime = DateTime.now();
+      // Start timing the new problem only if welcome overlay is not shown
+      if (!_showWelcomeOverlay) {
+        _problemStartTime = DateTime.now();
+      }
       // Request focus for keyboard input
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -1027,62 +1070,73 @@ class _TrainingScreenState extends State<TrainingScreen> {
     if (layoutType == LayoutType.horizontal) {
       // Horizontal layout with vertical app bar on the left
       return Scaffold(
-        body: Row(
+        body: Stack(
           children: [
-            AdaptiveAppBar(
-              layoutType: layoutType,
-              onInfoPressed: _navigateToInfo,
-              onSettingsPressed: _navigateToConfig,
-            ),
-            Expanded(
-              child: KeyboardListener(
-                focusNode: _focusNode,
-                onKeyEvent: _handleKeyEvent,
-                autofocus: true,
-                child: SafeArea(
-                  child: AdaptiveLayout(
-                    layoutType: layoutType,
-                    timerBar: (_timerRunning && isTimerEnabled)
-                        ? TimerBar(
-                            duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
-                            onComplete: _onTimerComplete,
-                            timerType: timerType,
-                            appSkin: currentSkin,
-                            layoutType: layoutType,
-                            barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
-                            segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
-                          )
-                        : Container(
-                            height: layoutType == LayoutType.horizontal ? 200 : 8.0,
-                            width: layoutType == LayoutType.horizontal ? 16 : null,
-                            margin: const EdgeInsets.all(16)
-                          ),
-                    gameInfoBar: shouldShowGameInfo
-                        ? GameStatusBar(
-                            position: _positionManager.currentTrainingPosition,
-                            appSkin: currentSkin,
-                            layoutType: layoutType,
-                          )
-                        : null,
-                    board: GameBoardContainer(
-                      position: _currentPosition,
-                      trainingPosition: _positionManager.currentTrainingPosition,
-                      appSkin: currentSkin,
-                      layoutType: layoutType,
-                      showFeedbackOverlay: _showFeedbackOverlay,
-                      sequenceLength: _currentSequenceLength,
-                      sequenceDisplayMode: _currentSequenceDisplayMode,
-                      viewMode: _currentViewMode,
-                      ownershipDisplayMode: _currentOwnershipDisplayMode,
-                      positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
-                      showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
-                      feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+            Row(
+              children: [
+                AdaptiveAppBar(
+                  layoutType: layoutType,
+                  onInfoPressed: _navigateToInfo,
+                  onSettingsPressed: _navigateToConfig,
+                ),
+                Expanded(
+                  child: KeyboardListener(
+                    focusNode: _focusNode,
+                    onKeyEvent: _handleKeyEvent,
+                    autofocus: true,
+                    child: SafeArea(
+                      child: AdaptiveLayout(
+                        layoutType: layoutType,
+                        timerBar: (_timerRunning && isTimerEnabled && !_showWelcomeOverlay)
+                            ? TimerBar(
+                                duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
+                                onComplete: _onTimerComplete,
+                                timerType: timerType,
+                                appSkin: currentSkin,
+                                layoutType: layoutType,
+                                barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
+                                segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
+                              )
+                            : Container(
+                                height: layoutType == LayoutType.horizontal ? 200 : 8.0,
+                                width: layoutType == LayoutType.horizontal ? 16 : null,
+                                margin: const EdgeInsets.all(16)
+                              ),
+                        gameInfoBar: shouldShowGameInfo
+                            ? GameStatusBar(
+                                position: _positionManager.currentTrainingPosition,
+                                appSkin: currentSkin,
+                                layoutType: layoutType,
+                              )
+                            : null,
+                        board: GameBoardContainer(
+                          position: _currentPosition,
+                          trainingPosition: _positionManager.currentTrainingPosition,
+                          appSkin: currentSkin,
+                          layoutType: layoutType,
+                          showFeedbackOverlay: _showFeedbackOverlay,
+                          sequenceLength: _currentSequenceLength,
+                          sequenceDisplayMode: _currentSequenceDisplayMode,
+                          viewMode: _currentViewMode,
+                          ownershipDisplayMode: _currentOwnershipDisplayMode,
+                          positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
+                          showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
+                          feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+                        ),
+                        buttons: _buildButtons(),
+                      ),
                     ),
-                    buttons: _buildButtons(),
                   ),
                 ),
-              ),
+              ],
             ),
+            if (_showWelcomeOverlay)
+              WelcomeOverlay(
+                onDismiss: _onWelcomeDismiss,
+                onDontShowAgain: _onWelcomeDontShowAgain,
+                appSkin: currentSkin,
+                layoutType: layoutType,
+              ),
           ],
         ),
       );
@@ -1097,52 +1151,63 @@ class _TrainingScreenState extends State<TrainingScreen> {
             onSettingsPressed: _navigateToConfig,
           ),
         ),
-        body: KeyboardListener(
-          focusNode: _focusNode,
-          onKeyEvent: _handleKeyEvent,
-          autofocus: true,
-          child: SafeArea(
-            child: AdaptiveLayout(
-              layoutType: layoutType,
-              timerBar: (_timerRunning && isTimerEnabled)
-                  ? TimerBar(
-                      duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
-                      onComplete: _onTimerComplete,
-                      timerType: timerType,
-                      appSkin: currentSkin,
-                      layoutType: layoutType,
-                      barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
-                      segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
-                    )
-                  : Container(
-                      height: layoutType == LayoutType.horizontal ? 200 : 8.0,
-                      width: layoutType == LayoutType.horizontal ? 16 : null,
-                      margin: const EdgeInsets.all(16)
-                    ),
-              gameInfoBar: shouldShowGameInfo
-                  ? GameStatusBar(
-                      position: _positionManager.currentTrainingPosition,
-                      appSkin: currentSkin,
-                      layoutType: layoutType,
-                    )
-                  : null,
-              board: GameBoardContainer(
-                position: _currentPosition,
-                trainingPosition: _positionManager.currentTrainingPosition,
+        body: Stack(
+          children: [
+            KeyboardListener(
+              focusNode: _focusNode,
+              onKeyEvent: _handleKeyEvent,
+              autofocus: true,
+              child: SafeArea(
+                child: AdaptiveLayout(
+                  layoutType: layoutType,
+                  timerBar: (_timerRunning && isTimerEnabled && !_showWelcomeOverlay)
+                      ? TimerBar(
+                          duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
+                          onComplete: _onTimerComplete,
+                          timerType: timerType,
+                          appSkin: currentSkin,
+                          layoutType: layoutType,
+                          barThickness: layoutType == LayoutType.horizontal ? 16.0 : 8.0,
+                          segmentGap: layoutType == LayoutType.horizontal ? 4.0 : 2.0,
+                        )
+                      : Container(
+                          height: layoutType == LayoutType.horizontal ? 200 : 8.0,
+                          width: layoutType == LayoutType.horizontal ? 16 : null,
+                          margin: const EdgeInsets.all(16)
+                        ),
+                  gameInfoBar: shouldShowGameInfo
+                      ? GameStatusBar(
+                          position: _positionManager.currentTrainingPosition,
+                          appSkin: currentSkin,
+                          layoutType: layoutType,
+                        )
+                      : null,
+                  board: GameBoardContainer(
+                    position: _currentPosition,
+                    trainingPosition: _positionManager.currentTrainingPosition,
+                    appSkin: currentSkin,
+                    layoutType: layoutType,
+                    showFeedbackOverlay: _showFeedbackOverlay,
+                    sequenceLength: _currentSequenceLength,
+                    sequenceDisplayMode: _currentSequenceDisplayMode,
+                    viewMode: _currentViewMode,
+                    ownershipDisplayMode: _currentOwnershipDisplayMode,
+                    positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
+                    showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
+                    feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+                  ),
+                  buttons: _buildButtons(),
+                ),
+              ),
+            ),
+            if (_showWelcomeOverlay)
+              WelcomeOverlay(
+                onDismiss: _onWelcomeDismiss,
+                onDontShowAgain: _onWelcomeDontShowAgain,
                 appSkin: currentSkin,
                 layoutType: layoutType,
-                showFeedbackOverlay: _showFeedbackOverlay,
-                sequenceLength: _currentSequenceLength,
-                sequenceDisplayMode: _currentSequenceDisplayMode,
-                viewMode: _currentViewMode,
-                ownershipDisplayMode: _currentOwnershipDisplayMode,
-                positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
-                showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
-                feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
               ),
-              buttons: _buildButtons(),
-            ),
-          ),
+          ],
         ),
       );
     }

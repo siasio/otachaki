@@ -15,6 +15,7 @@ class GlobalConfiguration {
   final SequenceDisplayMode sequenceDisplayMode;
   final OwnershipDisplayMode ownershipDisplayMode;
   final bool showMoveNumbers;
+  final bool showWelcomeScreen;
 
   /// Convenience getter for compatibility with refactored code
   double get markDisplayTime => markDisplayTimeSeconds;
@@ -29,6 +30,7 @@ class GlobalConfiguration {
     this.sequenceDisplayMode = SequenceDisplayMode.numbersOnly,
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.showMoveNumbers = true,
+    this.showWelcomeScreen = true,
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(
@@ -49,6 +51,7 @@ class GlobalConfiguration {
     SequenceDisplayMode? sequenceDisplayMode,
     OwnershipDisplayMode? ownershipDisplayMode,
     bool? showMoveNumbers,
+    bool? showWelcomeScreen,
   }) {
     return GlobalConfiguration(
       markDisplayTimeSeconds: markDisplayTimeSeconds ?? this.markDisplayTimeSeconds,
@@ -60,6 +63,7 @@ class GlobalConfiguration {
       sequenceDisplayMode: sequenceDisplayMode ?? this.sequenceDisplayMode,
       ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
       showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
+      showWelcomeScreen: showWelcomeScreen ?? this.showWelcomeScreen,
     );
   }
 
@@ -74,6 +78,7 @@ class GlobalConfiguration {
       'sequenceDisplayMode': sequenceDisplayMode.name,
       'ownershipDisplayMode': ownershipDisplayMode.name,
       'showMoveNumbers': showMoveNumbers,
+      'showWelcomeScreen': showWelcomeScreen,
     };
   }
 
@@ -88,6 +93,7 @@ class GlobalConfiguration {
       sequenceDisplayMode: _parseSequenceDisplayMode(json['sequenceDisplayMode'] as String?),
       ownershipDisplayMode: _parseOwnershipDisplayMode(json['ownershipDisplayMode'] as String?),
       showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
+      showWelcomeScreen: json['showWelcomeScreen'] as bool? ?? true,
     );
   }
 
