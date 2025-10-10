@@ -2,17 +2,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import '../models/dataset_type.dart';
-import '../models/dataset_registry.dart';
 import '../models/daily_statistics.dart';
+import '../models/custom_dataset.dart';
 import '../services/statistics_manager.dart';
 
 class DetailedStatisticsScreen extends StatefulWidget {
-  final DatasetType datasetType;
+  final CustomDataset dataset;
 
   const DetailedStatisticsScreen({
     super.key,
-    required this.datasetType,
+    required this.dataset,
   });
 
   @override
@@ -48,7 +47,11 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
 
     try {
       _statisticsManager = await StatisticsManager.getInstance();
-      _historicalStats = _statisticsManager!.getHistoricalStats(widget.datasetType, _selectedPeriod.days);
+      _historicalStats = _statisticsManager!.getHistoricalStatsById(
+        widget.dataset.id,
+        widget.dataset.baseDatasetType,
+        _selectedPeriod.days
+      );
       setState(() {
         _loading = false;
       });
@@ -63,7 +66,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getDatasetDisplayName(widget.datasetType)),
+        title: Text(widget.dataset.name),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           PopupMenuButton<TimePeriod>(
@@ -100,6 +103,8 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                       const SizedBox(height: 24),
                       _buildAverageTimeChart(),
                       const SizedBox(height: 24),
+                      _buildSpeedChart(),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -118,7 +123,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No data available for ${_getDatasetDisplayName(widget.datasetType)}',
+            'No data available for ${widget.dataset.name}',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -146,6 +151,12 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
 
     final overallAccuracy = totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0.0;
     final overallAvgTime = totalAttempts > 0 ? totalTime / totalAttempts : 0.0;
+
+    // Calculate overall average speed from days with speed data
+    final statsWithSpeed = _historicalStats.where((stat) => stat.hasSpeedData).toList();
+    final overallAvgSpeed = statsWithSpeed.isNotEmpty
+        ? statsWithSpeed.map((s) => s.averagePointsPerSecond).fold(0.0, (sum, speed) => sum + speed) / statsWithSpeed.length
+        : 0.0;
 
     return Card(
       child: Padding(
@@ -188,6 +199,15 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                     'Avg Time',
                     '${overallAvgTime.toStringAsFixed(1)}s',
                     Icons.timer_outlined,
+                  ),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(
+                    'Avg Speed',
+                    statsWithSpeed.isNotEmpty
+                        ? '${overallAvgSpeed.toStringAsFixed(1)} pts/s'
+                        : 'N/A',
+                    Icons.speed_outlined,
                   ),
                 ),
               ],
@@ -291,6 +311,68 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
               height: 200,
               child: LineChart(_createAverageTimeLineChart()),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeedChart() {
+    // Check if any day has speed data
+    final hasSpeedData = _historicalStats.any((stat) => stat.hasSpeedData);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Average Speed (Points/Second)',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (!hasSpeedData)
+              Container(
+                height: 200,
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.speed_outlined,
+                      size: 48,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No speed data available',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Speed tracking requires positions with territory data',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            else
+              SizedBox(
+                height: 200,
+                child: LineChart(_createSpeedLineChart()),
+              ),
           ],
         ),
       ),
@@ -599,6 +681,113 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
     );
   }
 
+  LineChartData _createSpeedLineChart() {
+    final spots = <FlSpot>[];
+    for (int i = 0; i < _historicalStats.length; i++) {
+      final stat = _historicalStats[i];
+      if (stat.hasSpeedData) {
+        spots.add(FlSpot(i.toDouble(), stat.averagePointsPerSecond));
+      }
+    }
+
+    // Calculate smart interval for speed chart
+    final maxValue = _historicalStats.isEmpty ? 10.0 : _historicalStats
+        .where((s) => s.hasSpeedData)
+        .map((s) => s.averagePointsPerSecond)
+        .fold(0.0, (a, b) => a > b ? a : b);
+    final yInterval = _calculateSmartInterval(maxValue, 5);
+
+    return LineChartData(
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: true,
+        horizontalInterval: yInterval,
+        verticalInterval: 1,
+        getDrawingHorizontalLine: (value) {
+          return FlLine(
+            color: Colors.grey[300]!,
+            strokeWidth: 1,
+          );
+        },
+        getDrawingVerticalLine: (value) {
+          return FlLine(
+            color: Colors.grey[300]!,
+            strokeWidth: 1,
+          );
+        },
+      ),
+      titlesData: FlTitlesData(
+        show: true,
+        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 30,
+            interval: _calculateXAxisInterval(),
+            getTitlesWidget: (value, meta) {
+              final index = value.toInt();
+              if (index >= 0 && index < _historicalStats.length) {
+                final date = _historicalStats[index].date;
+                return SideTitleWidget(
+                  axisSide: meta.axisSide,
+                  child: Text(
+                    _formatDateForPeriod(date),
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                );
+              }
+              return Container();
+            },
+          ),
+        ),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            interval: yInterval,
+            getTitlesWidget: (value, meta) {
+              return Text(
+                '${value.toStringAsFixed(1)}',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              );
+            },
+            reservedSize: 50,
+          ),
+        ),
+      ),
+      borderData: FlBorderData(
+        show: true,
+        border: Border.all(color: Colors.grey[300]!, width: 1),
+      ),
+      minX: 0,
+      maxX: (_historicalStats.length - 1).toDouble(),
+      minY: 0,
+      maxY: (maxValue * 1.1).ceilToDouble(), // Add 10% padding at top
+      lineBarsData: [
+        LineChartBarData(
+          spots: spots,
+          isCurved: true,
+          color: Colors.purple,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          dotData: const FlDotData(show: true),
+          belowBarData: BarAreaData(
+            show: true,
+            color: Colors.purple.withOpacity(0.1),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Calculate appropriate interval for x-axis based on selected time period
   double _calculateXAxisInterval() {
     switch (_selectedPeriod) {
@@ -656,7 +845,4 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
     return math.max(1.0, result);
   }
 
-  String _getDatasetDisplayName(DatasetType datasetType) {
-    return DatasetRegistry.getBaseDisplayName(datasetType);
-  }
 }

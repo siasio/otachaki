@@ -103,18 +103,73 @@ class ExactScoreButtons extends StatelessWidget {
           constraints: isVertical ? const BoxConstraints(minHeight: 80) : null, // Match ResultButtons constraints
           decoration: themeProvider.getContainerDecoration(element),
           child: Center(
-            child: Text(
-              option.scoreText,
-              style: TextStyle(
-                color: style.color,
-                fontSize: style.fontSize,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            child: isVertical
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_getKeyboardIcon(option.buttonPosition) != null) ...[
+                        Icon(
+                          _getKeyboardIcon(option.buttonPosition),
+                          size: themeProvider.getElementStyle(element).fontSize?.clamp(16, 24) ?? 20,
+                          color: style.hasAnimation == true
+                              ? style.color?.withOpacity(0.7)
+                              : style.color,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Text(
+                        option.scoreText,
+                        style: TextStyle(
+                          color: style.color,
+                          fontSize: style.fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_getKeyboardIcon(option.buttonPosition) != null) ...[
+                        Icon(
+                          _getKeyboardIcon(option.buttonPosition),
+                          size: themeProvider.getElementStyle(element).fontSize?.clamp(14, 20) ?? 16,
+                          color: style.hasAnimation == true
+                              ? style.color?.withOpacity(0.7)
+                              : style.color,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        option.scoreText,
+                        style: TextStyle(
+                          color: style.color,
+                          fontSize: style.fontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),
     );
+  }
+
+  IconData? _getKeyboardIcon(int buttonPosition) {
+    switch (buttonPosition) {
+      case 0: // Left button
+        return Icons.arrow_back;
+      case 1: // Middle button
+        return Icons.arrow_downward;
+      case 2: // Right button
+        return Icons.arrow_forward;
+      default:
+        return null;
+    }
   }
 }

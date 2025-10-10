@@ -163,11 +163,11 @@ class ContextAwareResultButtons extends StatelessWidget {
   IconData? _getKeyboardIcon(ButtonType buttonType) {
     switch (buttonType) {
       case ButtonType.whiteWins:
-        return Icons.keyboard_arrow_left;
+        return Icons.arrow_back;
       case ButtonType.draw:
-        return Icons.keyboard_arrow_down;
+        return Icons.arrow_downward;
       case ButtonType.blackWins:
-        return Icons.keyboard_arrow_right;
+        return Icons.arrow_forward;
     }
   }
 }

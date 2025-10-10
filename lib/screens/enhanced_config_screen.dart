@@ -789,45 +789,45 @@ class _EnhancedConfigScreenState extends State<EnhancedConfigScreen> {
               const SizedBox(height: 24),
 
               // Help Section
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.help, size: 20),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Configuration Help',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text('• Global settings apply to the entire app'),
-                      const Text('• Dataset settings apply only to the currently selected dataset'),
-                      const Text('• Create custom datasets to save different configuration combinations'),
-                      const Text('• Changes are saved automatically as you type'),
-                      const Text('• Use refresh buttons to reset sections to default values'),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Note: Dataset settings automatically update when you switch datasets.',
-                        style: TextStyle(
-                          color: (currentSkin == AppSkin.eink)
-                              ? Colors.black
-                              : Colors.orange[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Card(
+              //   child: Padding(
+              //     padding: const EdgeInsets.all(16.0),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Row(
+              //           children: [
+              //             const Icon(Icons.help, size: 20),
+              //             const SizedBox(width: 8),
+              //             const Text(
+              //               'Configuration Help',
+              //               style: TextStyle(
+              //                 fontSize: 16,
+              //                 fontWeight: FontWeight.bold,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //         const SizedBox(height: 12),
+              //         const Text('• Global settings apply to the entire app'),
+              //         const Text('• Dataset settings apply only to the currently selected dataset'),
+              //         const Text('• Create custom datasets to save different configuration combinations'),
+              //         const Text('• Changes are saved automatically as you type'),
+              //         const Text('• Use refresh buttons to reset sections to default values'),
+              //         const SizedBox(height: 12),
+              //         Text(
+              //           'Note: Dataset settings automatically update when you switch datasets.',
+              //           style: TextStyle(
+              //             color: (currentSkin == AppSkin.eink)
+              //                 ? Colors.black
+              //                 : Colors.orange[700],
+              //             fontWeight: FontWeight.w500,
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

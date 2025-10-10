@@ -220,7 +220,7 @@ class ScoreDisplayButtons extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.keyboard_arrow_down,
+                        Icons.arrow_downward,
                         size: 20,
                         color: appSkin == AppSkin.eink
                             ? textColor
@@ -243,7 +243,7 @@ class ScoreDisplayButtons extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.keyboard_arrow_down,
+                        Icons.arrow_downward,
                         size: 18,
                         color: appSkin == AppSkin.eink
                             ? textColor

@@ -172,21 +172,13 @@ class _DatasetCreationDialogState extends State<DatasetCreationDialog> {
                     items: DatasetType.values.map((type) {
                       return DropdownMenuItem<DatasetType>(
                         value: type,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _getDatasetTypeDisplayName(type),
-                              style: const TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            Text(
-                              _getDatasetTypeDescription(type),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
+                        child: Tooltip(
+                          message: _getDatasetTypeDescription(type),
+                          child: Text(
+                            _getDatasetTypeDisplayName(type),
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       );
                     }).toList(),
@@ -197,6 +189,32 @@ class _DatasetCreationDialogState extends State<DatasetCreationDialog> {
                         });
                       }
                     },
+                  ),
+                  const SizedBox(height: 8),
+                  // Show description for selected base type
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.grey.shade600, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _getDatasetTypeDescription(_selectedBaseType),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ] else ...[
@@ -262,63 +280,6 @@ class _DatasetCreationDialogState extends State<DatasetCreationDialog> {
                     }
                   },
                   onFieldSubmitted: (_) => _createOrUpdateDataset(),
-                ),
-                const SizedBox(height: 16),
-
-                // Info about what happens next
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.lightbulb_outline, color: Colors.blue.shade700, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            _isEditing ? 'What happens when you save:' : 'What happens after creation:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      if (_isEditing) ...[
-                        Text(
-                          '• The dataset name will be updated',
-                          style: TextStyle(color: Colors.blue.shade700),
-                        ),
-                        Text(
-                          '• All existing settings and statistics will be preserved',
-                          style: TextStyle(color: Colors.blue.shade700),
-                        ),
-                      ] else ...[
-                        Text(
-                          '• A new custom dataset will be created',
-                          style: TextStyle(color: Colors.blue.shade700),
-                        ),
-                        Text(
-                          '• It will inherit default settings from ${_getDatasetTypeDisplayName(_selectedBaseType)}',
-                          style: TextStyle(color: Colors.blue.shade700),
-                        ),
-                        Text(
-                          '• You can customize the settings in the Configuration section',
-                          style: TextStyle(color: Colors.blue.shade700),
-                        ),
-                        Text(
-                          '• The new dataset will be automatically selected',
-                          style: TextStyle(color: Colors.blue.shade700),
-                        ),
-                      ],
-                    ],
-                  ),
                 ),
               ],
             ),

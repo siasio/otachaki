@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/statistics_manager.dart';
-import '../models/dataset_type.dart';
-import '../models/dataset_registry.dart';
+import '../services/custom_dataset_manager.dart';
 import '../models/daily_statistics.dart';
+import '../models/custom_dataset.dart';
 import './detailed_statistics_screen.dart';
 
 class InfoScreen extends StatefulWidget {
@@ -14,6 +14,7 @@ class InfoScreen extends StatefulWidget {
 
 class _InfoScreenState extends State<InfoScreen> {
   StatisticsManager? _statisticsManager;
+  CustomDatasetManager? _datasetManager;
   DailyStatistics? _todayStats;
   bool _loading = false;
 
@@ -30,6 +31,7 @@ class _InfoScreenState extends State<InfoScreen> {
 
     try {
       _statisticsManager = await StatisticsManager.getInstance();
+      _datasetManager = await CustomDatasetManager.getInstance();
       _todayStats = _statisticsManager!.getTodayStatistics();
       setState(() {
         _loading = false;
@@ -65,7 +67,7 @@ class _InfoScreenState extends State<InfoScreen> {
                         const Icon(Icons.library_books, size: 20),
                         const SizedBox(width: 8),
                         const Text(
-                          'Dataset Types Explained',
+                          'Training Modes Explained',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -75,10 +77,10 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 16),
                     _buildDatasetExplanation(
-                      'Final 9x9 Positions',
-                      'Komi = 7 points. '
+                      'Final Positions (9x9, 13x13, 19x19)',
+                      'Komi = 7 points, equal numbers of prisoners. '
                       'Positions are picked so that both area and territory scoring give the same result. '
-                      'After some practice, you can be able to count the score within 5s!',
+                      'Your big goal is to count the score on 19x19 within one byo-yomi period!',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
@@ -134,7 +136,7 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '• View Go positions from actual games and predict the winner\n'
-                      '• Choose from different datasets (9x9, 19x19 final positions, 19x19 midgame, etc.)\n'
+                      '• Choose from different datasets (9x9, 13x13, 19x19 final positions, 19x19 midgame, partial board)\n'
                       '• Get immediate feedback on your predictions and track your accuracy with built-in scoring',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
@@ -279,14 +281,15 @@ class _InfoScreenState extends State<InfoScreen> {
   }
 
   List<Widget> _buildTodayStatsContent() {
-    if (_todayStats == null) return [];
+    if (_todayStats == null || _datasetManager == null) return [];
 
     final List<Widget> widgets = [];
 
-    for (final datasetType in _todayStats!.activeDatasetTypes) {
-      final stats = _todayStats!.getStatsForDataset(datasetType);
-      if (stats != null) {
-        widgets.add(_buildDatasetStatCard(datasetType, stats));
+    for (final datasetId in _todayStats!.activeDatasetIds) {
+      final stats = _todayStats!.getStatsForDatasetId(datasetId);
+      final dataset = _datasetManager!.getDatasetById(datasetId);
+      if (stats != null && dataset != null) {
+        widgets.add(_buildDatasetStatCard(dataset, stats));
         widgets.add(const SizedBox(height: 12));
       }
     }
@@ -299,7 +302,7 @@ class _InfoScreenState extends State<InfoScreen> {
     return widgets;
   }
 
-  Widget _buildDatasetStatCard(DatasetType datasetType, DailyDatasetStatistics stats) {
+  Widget _buildDatasetStatCard(CustomDataset dataset, DailyDatasetStatistics stats) {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
@@ -315,7 +318,7 @@ class _InfoScreenState extends State<InfoScreen> {
             children: [
               Expanded(
                 child: Text(
-                  _getDatasetDisplayName(datasetType),
+                  dataset.name,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -324,7 +327,7 @@ class _InfoScreenState extends State<InfoScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.analytics_outlined, size: 20),
-                onPressed: () => _navigateToDetailedStats(datasetType),
+                onPressed: () => _navigateToDetailedStats(dataset),
                 tooltip: 'View detailed statistics',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minHeight: 24, minWidth: 24),
@@ -353,6 +356,15 @@ class _InfoScreenState extends State<InfoScreen> {
                   'Avg Time',
                   '${stats.averageTimeSeconds.toStringAsFixed(1)}s',
                   Icons.timer_outlined,
+                ),
+              ),
+              Expanded(
+                child: _buildMiniStat(
+                  'Avg Speed',
+                  stats.hasSpeedData
+                      ? '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s'
+                      : 'N/A',
+                  Icons.speed_outlined,
                 ),
               ),
             ],
@@ -385,15 +397,11 @@ class _InfoScreenState extends State<InfoScreen> {
     );
   }
 
-  String _getDatasetDisplayName(DatasetType datasetType) {
-    return DatasetRegistry.getBaseDisplayName(datasetType);
-  }
-
-  Future<void> _navigateToDetailedStats(DatasetType datasetType) async {
+  Future<void> _navigateToDetailedStats(CustomDataset dataset) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetailedStatisticsScreen(datasetType: datasetType),
+        builder: (context) => DetailedStatisticsScreen(dataset: dataset),
       ),
     );
   }

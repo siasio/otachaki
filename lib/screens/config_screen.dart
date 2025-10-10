@@ -35,6 +35,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   // Global config controllers
   late TextEditingController _markDisplayController;
+  late TextEditingController _customTitleController;
 
   // Dataset config controllers
   late TextEditingController _thresholdGoodController;
@@ -55,6 +56,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _markDisplayController = TextEditingController();
     _markDisplayController.addListener(_onGlobalConfigurationChanged);
 
+    _customTitleController = TextEditingController();
+    _customTitleController.addListener(_onGlobalConfigurationChanged);
+
     // Dataset config controllers
     _thresholdGoodController = TextEditingController();
     _thresholdCloseController = TextEditingController();
@@ -72,6 +76,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   @override
   void dispose() {
     _markDisplayController.dispose();
+    _customTitleController.dispose();
     _thresholdGoodController.dispose();
     _thresholdCloseController.dispose();
     _timeProblemController.dispose();
@@ -86,6 +91,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
       _markDisplayController.text = _globalConfig!.markDisplayTimeSeconds.toString();
+      _customTitleController.text = _globalConfig!.customTitle;
       await _loadCurrentDataset();
 
       setState(() {
@@ -119,8 +125,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
         return;
       }
 
-      // If no dataset is selected, get the first built-in dataset as fallback
-      final defaultDataset = datasetManager.getBuiltInDataset(DatasetType.final9x9);
+      // If no dataset is selected, get the first default dataset as fallback
+      final defaultDataset = datasetManager.getDefaultDataset(DatasetType.final9x9);
       if (defaultDataset != null) {
         setState(() {
           _currentDataset = defaultDataset;
@@ -131,7 +137,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       }
     } catch (e) {
       // Create fallback dataset if all else fails
-      final fallbackDataset = CustomDataset.builtIn(
+      final fallbackDataset = CustomDataset.defaultFor(
         datasetType: DatasetType.final9x9,
         name: 'Final 9x9 Area',
       );
@@ -178,9 +184,19 @@ class _ConfigScreenState extends State<ConfigScreen> {
     if (_globalConfig == null) return;
 
     final value = double.tryParse(_markDisplayController.text);
+    final customTitle = _customTitleController.text;
+
+    // Always save custom title, but only save mark display time if valid
     if (value != null && (!_globalConfig!.markDisplayEnabled || value >= 0)) {
       final newConfig = _globalConfig!.copyWith(
         markDisplayTimeSeconds: value,
+        customTitle: customTitle,
+      );
+      _autoSaveGlobalConfiguration(newConfig);
+    } else if (customTitle != _globalConfig!.customTitle) {
+      // Only custom title changed, keep the current mark display time
+      final newConfig = _globalConfig!.copyWith(
+        customTitle: customTitle,
       );
       _autoSaveGlobalConfiguration(newConfig);
     }
@@ -253,6 +269,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       setState(() {
         _globalConfig = resetConfig;
         _markDisplayController.text = resetConfig.markDisplayTimeSeconds.toString();
+        _customTitleController.text = resetConfig.customTitle;
       });
 
       if (mounted) {
@@ -457,7 +474,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           value: _currentDatasetConfig!.predictionType,
                           decoration: const InputDecoration(
                             labelText: 'Button Type',
-                            helperText: 'Type of buttons to display for answers',
                             border: OutlineInputBorder(),
                           ),
                           items: DatasetRegistry.getAllowedPredictionTypes(_currentDataset!.baseDatasetType).map((type) {
@@ -484,7 +500,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             controller: _thresholdGoodController,
                             decoration: const InputDecoration(
                               labelText: 'Threshold for Good Position',
-                              helperText: 'Score difference to consider position as good for one color',
                               border: OutlineInputBorder(),
                               suffix: Text('points'),
                             ),
@@ -500,7 +515,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             controller: _thresholdCloseController,
                             decoration: const InputDecoration(
                               labelText: 'Threshold for Close Position',
-                              helperText: 'Score difference to consider position as close (must be ≥ good threshold)',
                               border: OutlineInputBorder(),
                               suffix: Text('points'),
                             ),
@@ -518,7 +532,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             controller: _scoreGranularityController,
                             decoration: const InputDecoration(
                               labelText: 'Score Granularity',
-                              helperText: 'Point difference between score options',
                               border: OutlineInputBorder(),
                               suffix: Text('points'),
                             ),
@@ -539,7 +552,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                                 enabled: _currentDatasetConfig!.timerEnabled,
                                 decoration: InputDecoration(
                                   labelText: 'Time per Problem (uncheck to disable)',
-                                  helperText: 'Time allowed to solve one problem',
                                   border: const OutlineInputBorder(),
                                   suffix: const Text('seconds'),
                                   filled: !_currentDatasetConfig!.timerEnabled,
@@ -631,9 +643,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           if (_isFinalDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
                             CheckboxListTile(
                               title: const Text('Show Move Numbers'),
-                              subtitle: const Text(
-                                'Display numbers on move sequence intersections (uncheck to leave intersections empty)',
-                              ),
+                              subtitle: null,
                               value: _currentDatasetConfig!.showMoveNumbers,
                               onChanged: (bool? value) {
                                 if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
@@ -655,7 +665,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           value: _currentDatasetConfig!.ownershipDisplayMode,
                           decoration: const InputDecoration(
                             labelText: 'Ownership Display Mode',
-                            helperText: 'How ownership information is shown in review view',
                             border: OutlineInputBorder(),
                           ),
                           items: _getAvailableOwnershipModes().map((mode) {
@@ -702,7 +711,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           value: _currentDatasetConfig!.autoAdvanceMode,
                           decoration: const InputDecoration(
                             labelText: 'Auto Advance Mode',
-                            helperText: 'When to auto-advance to the next problem',
                             border: OutlineInputBorder(),
                           ),
                           items: AutoAdvanceMode.values.map((mode) {
@@ -762,7 +770,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                               enabled: _globalConfig!.markDisplayEnabled,
                               decoration: InputDecoration(
                                 labelText: 'Mark Display Time (uncheck to disable)',
-                                helperText: 'Time to show result before next problem',
                                 border: const OutlineInputBorder(),
                                 suffix: const Text('seconds'),
                                 filled: !_globalConfig!.markDisplayEnabled,
@@ -857,6 +864,52 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           }
                         },
                       ),
+
+                      const SizedBox(height: 16),
+                      // Custom Title
+                      TextFormField(
+                        controller: _customTitleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Custom Title',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Help text for title placeholders
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue[200]!),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Available placeholders:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[800],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '%d - Current dataset name\n'
+                              '%n - Problems solved today\n'
+                              '%a - Today\'s accuracy percentage\n'
+                              '%t - Today\'s average time per problem\n'
+                              '%s - Today\'s average points/second speed',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue[700],
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -864,44 +917,44 @@ class _ConfigScreenState extends State<ConfigScreen> {
               const SizedBox(height: 24),
 
               // Help Section
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.help, size: 20),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Configuration Help',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text('• Global settings apply to the entire app'),
-                      const Text('• Dataset settings apply only to the currently selected dataset'),
-                      const Text('• Changes are saved automatically as you type'),
-                      const Text('• Use refresh buttons to reset sections to default values'),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Note: Dataset settings automatically update when you switch datasets.',
-                        style: TextStyle(
-                          color: (currentSkin == AppSkin.eink)
-                              ? Colors.black
-                              : Colors.orange[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Card(
+              //   child: Padding(
+              //     padding: const EdgeInsets.all(16.0),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         Row(
+              //           children: [
+              //             const Icon(Icons.help, size: 20),
+              //             const SizedBox(width: 8),
+              //             const Text(
+              //               'Configuration Help',
+              //               style: TextStyle(
+              //                 fontSize: 16,
+              //                 fontWeight: FontWeight.bold,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //         const SizedBox(height: 12),
+              //         const Text('• Global settings apply to the entire app'),
+              //         const Text('• Dataset settings apply only to the currently selected dataset'),
+              //         const Text('• Changes are saved automatically as you type'),
+              //         const Text('• Use refresh buttons to reset sections to default values'),
+              //         const SizedBox(height: 12),
+              //         Text(
+              //           'Note: Dataset settings automatically update when you switch datasets.',
+              //           style: TextStyle(
+              //             color: (currentSkin == AppSkin.eink)
+              //                 ? Colors.black
+              //                 : Colors.orange[700],
+              //             fontWeight: FontWeight.w500,
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

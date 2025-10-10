@@ -20,19 +20,16 @@ void main() {
       await manager.clearAllCustomDatasets();
     });
 
-    test('should initialize with built-in datasets', () {
-      final builtInDatasets = manager.getBuiltInDatasets();
+    test('should initialize with default datasets', () {
       final allDatasets = manager.getAllDatasets();
 
-      expect(builtInDatasets.length, 5); // All DatasetType values
-      expect(allDatasets.length, 5); // Only built-ins initially
+      expect(allDatasets.length, 5); // All DatasetType values as defaults
 
-      final final9x9 = builtInDatasets.firstWhere(
+      final final9x9 = allDatasets.firstWhere(
         (d) => d.baseDatasetType == DatasetType.final9x9
       );
       expect(final9x9.name, 'GoQuest Arena (9x9)');
-      expect(final9x9.isBuiltIn, isTrue);
-      expect(final9x9.id, 'builtin_final-9x9');
+      expect(final9x9.id, 'default_final-9x9');
     });
 
     test('should create custom dataset successfully', () async {
@@ -43,12 +40,13 @@ void main() {
 
       expect(dataset.name, 'My Custom 9x9');
       expect(dataset.baseDatasetType, DatasetType.final9x9);
-      expect(dataset.isBuiltIn, isFalse);
       expect(dataset.id.length, 36); // UUID v4 length
 
-      final customDatasets = manager.getCustomDatasets();
-      expect(customDatasets.length, 1);
-      expect(customDatasets.first.id, dataset.id);
+      final allDatasets = manager.getAllDatasets();
+      expect(allDatasets.length, 6); // 5 defaults + 1 custom
+
+      final customDataset = allDatasets.firstWhere((d) => d.id == dataset.id);
+      expect(customDataset.name, 'My Custom 9x9');
     });
 
     test('should throw error for empty dataset name', () async {
@@ -220,7 +218,7 @@ void main() {
     });
 
     test('should get built-in dataset for specific type', () {
-      final dataset = manager.getBuiltInDataset(DatasetType.final19x19);
+      final dataset = manager.getDefaultDataset(DatasetType.final19x19);
 
       expect(dataset, isNotNull);
       expect(dataset!.baseDatasetType, DatasetType.final19x19);

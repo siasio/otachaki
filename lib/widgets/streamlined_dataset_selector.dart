@@ -65,13 +65,9 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
       // Load the currently selected dataset
       _selectedDataset = _datasetManager!.getSelectedDataset();
 
-      // If no dataset is selected, default to the first built-in dataset
+      // If no dataset is selected, default to the first dataset
       if (_selectedDataset == null && _allDatasets.isNotEmpty) {
-        final firstBuiltIn = _allDatasets.firstWhere(
-          (dataset) => dataset.isBuiltIn,
-          orElse: () => _allDatasets.first,
-        );
-        await _selectDataset(firstBuiltIn);
+        await _selectDataset(_allDatasets.first);
       }
 
       setState(() {
@@ -158,7 +154,7 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
   }
 
   Future<void> _editCustomDataset(CustomDataset dataset) async {
-    if (_datasetManager == null || dataset.isBuiltIn) return;
+    if (_datasetManager == null) return;
 
     final result = await showDialog<CustomDataset>(
       context: context,
@@ -184,7 +180,7 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
   }
 
   Future<void> _deleteCustomDataset(CustomDataset dataset) async {
-    if (_datasetManager == null || dataset.isBuiltIn) return;
+    if (_datasetManager == null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -208,23 +204,26 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
     );
 
     if (confirmed == true) {
-      final success = await _datasetManager!.deleteCustomDataset(dataset.id);
-      if (success) {
-        await _loadDatasets();
+      try {
+        final success = await _datasetManager!.deleteCustomDataset(dataset.id);
+        if (success) {
+          await _loadDatasets();
 
-        // If the deleted dataset was selected, select a default one
-        if (_selectedDataset?.id == dataset.id) {
-          final defaultDataset = _datasetManager!.getBuiltInDataset(dataset.baseDatasetType);
-          if (defaultDataset != null) {
-            await _selectDataset(defaultDataset);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Dataset "${dataset.name}" deleted successfully'),
+                backgroundColor: Colors.orange,
+              ),
+            );
           }
         }
-
+      } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Dataset "${dataset.name}" deleted successfully'),
-              backgroundColor: Colors.orange,
+              content: Text('Cannot delete dataset: ${e.toString().replaceFirst('ArgumentError: ', '')}'),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -265,24 +264,6 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
-                if (!dataset.isBuiltIn) ...[
-                  const SizedBox(width: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'C',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
             backgroundColor: isSelected
@@ -296,8 +277,7 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
 
-          // Context menu for custom datasets
-          if (!dataset.isBuiltIn)
+          // Context menu for all datasets
             GestureDetector(
               onTap: () => _showDatasetMenu(dataset),
               child: Container(
@@ -326,7 +306,7 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
             children: [
               const Icon(Icons.edit, size: 16),
               const SizedBox(width: 8),
-              const Text('Edit'),
+              const Text('Rename'),
             ],
           ),
         ),
@@ -404,31 +384,6 @@ class _StreamlinedDatasetSelectorState extends State<StreamlinedDatasetSelector>
               ],
             ),
 
-            if (_selectedDataset != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.blue.shade700, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Selected: ${_selectedDataset!.name}',
-                      style: TextStyle(
-                        color: Colors.blue.shade700,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
 
             const SizedBox(height: 12),
 

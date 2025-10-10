@@ -66,25 +66,25 @@ void main() {
       );
 
       // Get the built-in dataset of the same type
-      final builtInDataset = datasetManager.getBuiltInDataset(DatasetType.final9x9)!;
+      final defaultDataset = datasetManager.getDefaultDataset(DatasetType.final9x9)!;
 
       // Set different auto-advance modes
       final customConfig = configManager.getConfigurationForDataset(customDataset);
-      final builtInConfig = configManager.getConfigurationForDataset(builtInDataset);
+      final defaultConfig = configManager.getConfigurationForDataset(defaultDataset);
 
       final modifiedCustomConfig = customConfig.copyWith(
         autoAdvanceMode: AutoAdvanceMode.onCorrectOnly,
       );
-      final modifiedBuiltInConfig = builtInConfig.copyWith(
+      final modifiedBuiltInConfig = defaultConfig.copyWith(
         autoAdvanceMode: AutoAdvanceMode.always,
       );
 
       await configManager.setConfigurationForDataset(customDataset, modifiedCustomConfig);
-      await configManager.setConfigurationForDataset(builtInDataset, modifiedBuiltInConfig);
+      await configManager.setConfigurationForDataset(defaultDataset, modifiedBuiltInConfig);
 
       // Verify they have different auto-advance modes
       final finalCustomConfig = configManager.getConfigurationForDataset(customDataset);
-      final finalBuiltInConfig = configManager.getConfigurationForDataset(builtInDataset);
+      final finalBuiltInConfig = configManager.getConfigurationForDataset(defaultDataset);
 
       expect(finalCustomConfig.autoAdvanceMode, equals(AutoAdvanceMode.onCorrectOnly),
           reason: 'Custom dataset should have onCorrectOnly mode');

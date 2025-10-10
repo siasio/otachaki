@@ -25,13 +25,13 @@ void main() {
       );
 
       // Get the built-in 9x9 dataset for comparison
-      final builtInDataset = datasetManager.getBuiltInDataset(DatasetType.final9x9)!;
+      final defaultDataset = datasetManager.getDefaultDataset(DatasetType.final9x9)!;
 
       // Check initial configurations (should be the same defaults)
       final customConfig = configManager.getConfigurationForDataset(customDataset);
-      final builtInConfig = configManager.getConfigurationForDataset(builtInDataset);
+      final defaultConfig = configManager.getConfigurationForDataset(defaultDataset);
 
-      expect(customConfig.timePerProblemSeconds, equals(builtInConfig.timePerProblemSeconds),
+      expect(customConfig.timePerProblemSeconds, equals(defaultConfig.timePerProblemSeconds),
           reason: 'Initial configurations should be the same');
 
       // Modify custom dataset configuration
@@ -45,7 +45,7 @@ void main() {
 
       // Verify configurations are now independent
       final updatedCustomConfig = configManager.getConfigurationForDataset(customDataset);
-      final unchangedBuiltInConfig = configManager.getConfigurationForDataset(builtInDataset);
+      final unchangedBuiltInConfig = configManager.getConfigurationForDataset(defaultDataset);
 
       expect(updatedCustomConfig.timePerProblemSeconds, equals(25),
           reason: 'Custom dataset should have updated time');
@@ -104,7 +104,7 @@ void main() {
       );
 
       // Get built-in dataset
-      final builtInDataset = datasetManager.getBuiltInDataset(DatasetType.final9x9)!;
+      final defaultDataset = datasetManager.getDefaultDataset(DatasetType.final9x9)!;
 
       // Set custom dataset configuration
       final customConfig = configManager.getConfigurationForDataset(customDataset);
@@ -112,13 +112,13 @@ void main() {
       await configManager.setConfigurationForDataset(customDataset, modifiedCustomConfig);
 
       // Now modify built-in dataset configuration
-      final builtInConfig = configManager.getConfigurationForDataset(builtInDataset);
-      final modifiedBuiltInConfig = builtInConfig.copyWith(timePerProblemSeconds: 15);
-      await configManager.setConfigurationForDataset(builtInDataset, modifiedBuiltInConfig);
+      final defaultConfig = configManager.getConfigurationForDataset(defaultDataset);
+      final modifiedBuiltInConfig = defaultConfig.copyWith(timePerProblemSeconds: 15);
+      await configManager.setConfigurationForDataset(defaultDataset, modifiedBuiltInConfig);
 
       // Verify custom dataset is unaffected
       final finalCustomConfig = configManager.getConfigurationForDataset(customDataset);
-      final finalBuiltInConfig = configManager.getConfigurationForDataset(builtInDataset);
+      final finalBuiltInConfig = configManager.getConfigurationForDataset(defaultDataset);
 
       expect(finalCustomConfig.timePerProblemSeconds, equals(40),
           reason: 'Custom dataset should retain its settings');

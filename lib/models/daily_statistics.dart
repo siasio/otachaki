@@ -26,13 +26,13 @@ class DailyDatasetStatistics {
     DatasetType datasetType,
     DateTime date,
     List<ProblemAttempt> attempts, {
-    String? datasetId,
+    required String datasetId,
   }) {
     final filteredAttempts = attempts
         .where((attempt) =>
             attempt.datasetType == datasetType &&
-            attempt.effectiveDatasetId == (datasetId ?? 'builtin_${datasetType.value}') &&
-            _isSameDay(attempt.timestamp, date))
+            attempt.datasetId == datasetId &&
+            _isSameAppDay(attempt.timestamp, date))
         .toList();
 
     final totalAttempts = filteredAttempts.length;
@@ -64,11 +64,25 @@ class DailyDatasetStatistics {
     return totalTimeSeconds / totalAttempts;
   }
 
+  /// Calculate average points per second (speed) for positions with territory data
+  double get averagePointsPerSecond {
+    final speedAttempts = attempts.where((a) => a.pointsPerSecond != null).toList();
+    if (speedAttempts.isEmpty) return 0.0;
+
+    final totalSpeed = speedAttempts
+        .map((a) => a.pointsPerSecond!)
+        .fold(0.0, (sum, speed) => sum + speed);
+    return totalSpeed / speedAttempts.length;
+  }
+
+  /// Check if this dataset has speed tracking data
+  bool get hasSpeedData => attempts.any((a) => a.pointsPerSecond != null);
+
   /// Check if this day has any attempts
   bool get hasAttempts => totalAttempts > 0;
 
-  /// Get effective dataset ID (for custom datasets or generated for built-in)
-  String get effectiveDatasetId => datasetId ?? 'builtin_${datasetType.value}';
+  /// Get effective dataset ID
+  String get effectiveDatasetId => datasetId ?? 'default_${datasetType.value}';
 
   /// Create from JSON map
   factory DailyDatasetStatistics.fromJson(Map<String, dynamic> json) {
@@ -109,6 +123,23 @@ class DailyDatasetStatistics {
            date1.day == date2.day;
   }
 
+  /// Check if two timestamps belong to the same app day (considering 2AM cutoff)
+  static bool _isSameAppDay(DateTime timestamp, DateTime appDay) {
+    // Convert timestamp to app day
+    final timestampAppDay = _getAppDay(timestamp);
+    return _isSameDay(timestampAppDay, appDay);
+  }
+
+  /// Get the app day for a given timestamp (considering 2AM cutoff)
+  static DateTime _getAppDay(DateTime timestamp) {
+    // If it's before 2 AM, consider it the previous day
+    if (timestamp.hour < 2) {
+      return DateTime(timestamp.year, timestamp.month, timestamp.day - 1);
+    } else {
+      return DateTime(timestamp.year, timestamp.month, timestamp.day);
+    }
+  }
+
   @override
   String toString() {
     return 'DailyDatasetStatistics(datasetType: $datasetType, datasetId: $datasetId, date: $date, '
@@ -137,11 +168,11 @@ class DailyStatistics {
     final Map<DatasetType, DailyDatasetStatistics> datasetStats = {};
     final Map<String, DailyDatasetStatistics> datasetStatsById = {};
 
-    // Group attempts by effective dataset ID
+    // Group attempts by dataset ID
     final Map<String, List<ProblemAttempt>> attemptsByDatasetId = {};
     for (final attempt in attempts) {
-      final effectiveId = attempt.effectiveDatasetId;
-      attemptsByDatasetId.putIfAbsent(effectiveId, () => []).add(attempt);
+      final datasetId = attempt.datasetId;
+      attemptsByDatasetId.putIfAbsent(datasetId, () => []).add(attempt);
     }
 
     // Create statistics for each dataset ID
@@ -151,20 +182,20 @@ class DailyStatistics {
 
       if (datasetAttempts.isNotEmpty) {
         final datasetType = datasetAttempts.first.datasetType;
-        final isBuiltIn = datasetId.startsWith('builtin_');
 
         final stats = DailyDatasetStatistics.fromAttempts(
           datasetType,
           date,
           attempts,
-          datasetId: isBuiltIn ? null : datasetId,
+          datasetId: datasetId,
         );
 
         if (stats.hasAttempts) {
           datasetStatsById[datasetId] = stats;
 
-          // For backward compatibility: populate legacy datasetStats for built-in datasets
-          if (isBuiltIn) {
+          // Legacy compatibility: Also populate datasetStats by type for old code
+          // Use the first dataset of each type for backwards compatibility
+          if (!datasetStats.containsKey(datasetType)) {
             datasetStats[datasetType] = stats;
           }
         }
@@ -214,12 +245,12 @@ class DailyStatistics {
           entry.value as Map<String, dynamic>
         );
         datasetStats[datasetType] = stats;
-        // Also add to new format with built-in ID
-        datasetStatsById['builtin_${datasetType.value}'] = stats;
+        // Also add to new format with default ID
+        datasetStatsById['default_${datasetType.value}'] = stats;
       }
     }
 
-    // Load new datasetStatsById (this will override any duplicate built-in entries)
+    // Load new datasetStatsById (this will override any duplicate entries)
     final newStatsMap = json['datasetStatsById'] as Map<String, dynamic>? ?? {};
     for (final entry in newStatsMap.entries) {
       final stats = DailyDatasetStatistics.fromJson(
@@ -227,8 +258,8 @@ class DailyStatistics {
       );
       datasetStatsById[entry.key] = stats;
 
-      // Update legacy format for built-in datasets
-      if (entry.key.startsWith('builtin_')) {
+      // Update legacy format for default datasets
+      if (entry.key.startsWith('default_') || entry.key.startsWith('builtin_')) {
         datasetStats[stats.datasetType] = stats;
       }
     }

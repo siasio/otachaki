@@ -14,6 +14,7 @@ class GlobalConfiguration {
   final OwnershipDisplayMode ownershipDisplayMode;
   final bool showMoveNumbers;
   final bool showWelcomeScreen;
+  final String customTitle;
 
   /// Convenience getter for compatibility with refactored code
   double get markDisplayTime => markDisplayTimeSeconds;
@@ -28,6 +29,7 @@ class GlobalConfiguration {
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.showMoveNumbers = true,
     this.showWelcomeScreen = true,
+    this.customTitle = 'Go Position Training',
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(
@@ -47,6 +49,7 @@ class GlobalConfiguration {
     OwnershipDisplayMode? ownershipDisplayMode,
     bool? showMoveNumbers,
     bool? showWelcomeScreen,
+    String? customTitle,
   }) {
     return GlobalConfiguration(
       markDisplayTimeSeconds: markDisplayTimeSeconds ?? this.markDisplayTimeSeconds,
@@ -58,6 +61,7 @@ class GlobalConfiguration {
       ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
       showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
       showWelcomeScreen: showWelcomeScreen ?? this.showWelcomeScreen,
+      customTitle: customTitle ?? this.customTitle,
     );
   }
 
@@ -72,6 +76,7 @@ class GlobalConfiguration {
       'ownershipDisplayMode': ownershipDisplayMode.name,
       'showMoveNumbers': showMoveNumbers,
       'showWelcomeScreen': showWelcomeScreen,
+      'customTitle': customTitle,
     };
   }
 
@@ -86,6 +91,7 @@ class GlobalConfiguration {
       ownershipDisplayMode: _parseOwnershipDisplayMode(json['ownershipDisplayMode'] as String?),
       showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
       showWelcomeScreen: json['showWelcomeScreen'] as bool? ?? true,
+      customTitle: json['customTitle'] as String? ?? defaultConfig.customTitle,
     );
   }
 

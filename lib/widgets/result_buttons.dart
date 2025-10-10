@@ -168,11 +168,11 @@ class ResultButtons extends StatelessWidget {
   IconData? _getKeyboardIcon(GameResult result) {
     switch (result) {
       case GameResult.whiteWins:
-        return Icons.keyboard_arrow_left;
+        return Icons.arrow_back;
       case GameResult.draw:
-        return Icons.keyboard_arrow_down;
+        return Icons.arrow_downward;
       case GameResult.blackWins:
-        return Icons.keyboard_arrow_right;
+        return Icons.arrow_forward;
     }
   }
 }

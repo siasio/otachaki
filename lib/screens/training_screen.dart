@@ -13,6 +13,7 @@ import '../models/custom_dataset.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/statistics_manager.dart';
 import '../services/logger_service.dart';
+import '../services/title_substitution_service.dart';
 import '../models/global_configuration.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
@@ -83,6 +84,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   GlobalConfiguration? _globalConfig;
   StatisticsManager? _statisticsManager;
   DateTime? _problemStartTime;
+  String _dynamicTitle = 'Go Position Training';
 
   @override
   void initState() {
@@ -106,7 +108,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       // If no dataset selected, use default
       if (_currentDataset == null) {
-        _currentDataset = _datasetManager!.getBuiltInDataset(DatasetType.final9x9);
+        _currentDataset = _datasetManager!.getDefaultDataset(DatasetType.final9x9);
         if (_currentDataset != null) {
           await _datasetManager!.setSelectedDataset(_currentDataset!.id);
         }
@@ -114,6 +116,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
       _statisticsManager = await StatisticsManager.getInstance();
+
+      await _updateDynamicTitle(); // Update title when config is loaded
 
       // Check if we should show the welcome screen
       if (_globalConfig!.showWelcomeScreen) {
@@ -143,6 +147,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void dispose() {
     _focusNode.dispose();
     super.dispose();
+  }
+
+  /// Update dynamic title based on global configuration and current dataset
+  Future<void> _updateDynamicTitle() async {
+    if (_globalConfig != null) {
+      final title = await TitleSubstitutionService.substituteTitle(
+        _globalConfig!.customTitle,
+        _currentDataset,
+      );
+      if (mounted) {
+        setState(() {
+          _dynamicTitle = title;
+        });
+      }
+    }
   }
 
   void _handleKeyEvent(KeyEvent event) {
@@ -258,6 +277,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     // Reload global configuration in case it changed
     if (_globalConfigManager != null) {
       _globalConfig = _globalConfigManager!.getConfiguration();
+      await _updateDynamicTitle(); // Update title when config changes
     }
 
     // Reload the current selected dataset in case it changed
@@ -267,6 +287,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         setState(() {
           _currentDataset = newSelectedDataset;
         });
+        await _updateDynamicTitle(); // Update title when dataset changes
       }
     }
 
@@ -734,7 +755,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
   Future<void> _recordAttempt(bool isCorrect, bool wasTimeout) async {
     if (_statisticsManager == null ||
         _problemStartTime == null ||
-        _positionManager.currentDataset == null) {
+        _positionManager.currentDataset == null ||
+        _currentDataset == null) {
       return;
     }
 
@@ -744,13 +766,29 @@ class _TrainingScreenState extends State<TrainingScreen> {
     // Cap the time at 15 seconds (15000ms) for timeouts as specified
     final cappedTimeMs = wasTimeout ? 15000 : timeSpentMs;
 
+    // Calculate points per second if territory data is available
+    double? pointsPerSecond;
+    final currentPosition = _positionManager.currentTrainingPosition;
+    if (currentPosition != null && currentPosition.hasTerritoryData) {
+      final totalPoints = (currentPosition.blackTerritory! + currentPosition.whiteTerritory!).toDouble();
+      final timeSeconds = cappedTimeMs / 1000.0;
+      if (timeSeconds > 0) {
+        pointsPerSecond = totalPoints / timeSeconds;
+      }
+    }
+
     try {
       await _statisticsManager!.recordAttempt(
         datasetType: _positionManager.currentDataset!.metadata.datasetType,
+        datasetId: _currentDataset!.id, // Pass the actual selected dataset ID
         isCorrect: isCorrect,
         timeSpentMs: cappedTimeMs,
         wasTimeout: wasTimeout,
+        pointsPerSecond: pointsPerSecond,
       );
+
+      // Update title with latest statistics
+      await _updateDynamicTitle();
     } catch (e, stackTrace) {
       LoggerService.error('Failed to record attempt statistics',
         error: e, stackTrace: stackTrace, context: 'TrainingScreen');
@@ -1068,6 +1106,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             preferredSize: Size.fromHeight(AdaptiveAppBar.getHorizontalHeight()),
             child: AdaptiveAppBar(
               layoutType: layoutType,
+              title: _dynamicTitle,
               onInfoPressed: _navigateToInfo,
               onSettingsPressed: _navigateToConfig,
             ),
@@ -1188,6 +1227,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
           preferredSize: Size.fromHeight(AdaptiveAppBar.getHorizontalHeight()),
           child: AdaptiveAppBar(
             layoutType: layoutType,
+            title: _dynamicTitle,
             onInfoPressed: _navigateToInfo,
             onSettingsPressed: _navigateToConfig,
           ),

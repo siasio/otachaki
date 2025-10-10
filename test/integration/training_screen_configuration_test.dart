@@ -42,17 +42,17 @@ void main() {
       final selectedDataset = datasetManager.getSelectedDataset();
       expect(selectedDataset?.id, equals(customDataset.id));
 
-      // Verify the custom configuration is different from built-in
-      final builtInDataset = datasetManager.getBuiltInDataset(DatasetType.final9x9)!;
-      final builtInConfig = configManager.getConfigurationForDataset(builtInDataset);
+      // Verify the custom configuration is different from default
+      final defaultDataset = datasetManager.getDefaultDataset(DatasetType.final9x9)!;
+      final defaultConfig = configManager.getConfigurationForDataset(defaultDataset);
 
-      expect(modifiedConfig.timePerProblemSeconds, isNot(equals(builtInConfig.timePerProblemSeconds)),
-          reason: 'Custom dataset should have different time setting than built-in');
-      expect(modifiedConfig.thresholdGood, isNot(equals(builtInConfig.thresholdGood)),
-          reason: 'Custom dataset should have different threshold than built-in');
+      expect(modifiedConfig.timePerProblemSeconds, isNot(equals(defaultConfig.timePerProblemSeconds)),
+          reason: 'Custom dataset should have different time setting than default');
+      expect(modifiedConfig.thresholdGood, isNot(equals(defaultConfig.thresholdGood)),
+          reason: 'Custom dataset should have different threshold than default');
 
       // Verify the correct dataset file is being loaded
-      expect(customDataset.datasetFilePath, equals(builtInDataset.datasetFilePath),
+      expect(customDataset.datasetFilePath, equals(defaultDataset.datasetFilePath),
           reason: 'Custom dataset should use same file as its base type');
 
       print('✅ Training screen configuration integration test passed!');

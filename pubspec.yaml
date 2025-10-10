@@ -28,4 +28,5 @@ flutter:
   assets:
     - assets/fox_mid150_19x19.json
     - assets/final_19x19_katago.json
+    - assets/final_13x13_katago.json
     - assets/final_9x9_katago.json

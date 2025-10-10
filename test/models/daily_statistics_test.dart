@@ -10,18 +10,21 @@ void main() {
       final attempts = [
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'test-dataset-9x9',
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
         ),
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'test-dataset-9x9',
           isCorrect: false,
           timeSpentMs: 8000,
           timestamp: DateTime(2024, 1, 15, 11, 45),
         ),
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'test-dataset-9x9',
           isCorrect: true,
           timeSpentMs: 3000,
           timestamp: DateTime(2024, 1, 15, 14, 20),
@@ -29,6 +32,7 @@ void main() {
         // Different dataset type - should be ignored
         ProblemAttempt(
           datasetType: DatasetType.final19x19,
+          datasetId: 'test-dataset-19x19',
           isCorrect: true,
           timeSpentMs: 6000,
           timestamp: DateTime(2024, 1, 15, 12, 0),
@@ -36,6 +40,7 @@ void main() {
         // Different date - should be ignored
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'test-dataset-9x9',
           isCorrect: true,
           timeSpentMs: 4000,
           timestamp: DateTime(2024, 1, 16, 9, 0),
@@ -46,6 +51,7 @@ void main() {
         DatasetType.final9x9,
         date,
         attempts,
+        datasetId: 'test-dataset-9x9',
       );
 
       expect(stats.datasetType, equals(DatasetType.final9x9));
@@ -107,6 +113,7 @@ void main() {
         attempts: [
           ProblemAttempt(
             datasetType: DatasetType.midgame19x19,
+            datasetId: 'test-dataset-midgame',
             isCorrect: true,
             timeSpentMs: 5000,
             timestamp: DateTime(2024, 1, 15, 10, 30),
@@ -132,18 +139,21 @@ void main() {
       final attempts = [
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'default_final-9x9',
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
         ),
         ProblemAttempt(
           datasetType: DatasetType.final19x19,
+          datasetId: 'default_final-19x19',
           isCorrect: false,
           timeSpentMs: 8000,
           timestamp: DateTime(2024, 1, 15, 11, 45),
         ),
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'default_final-9x9',
           isCorrect: true,
           timeSpentMs: 3000,
           timestamp: DateTime(2024, 1, 15, 14, 20),
@@ -174,6 +184,7 @@ void main() {
       final attempts = [
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'test-dataset-9x9',
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),
@@ -199,6 +210,7 @@ void main() {
       final attempts = [
         ProblemAttempt(
           datasetType: DatasetType.final9x9,
+          datasetId: 'test-json-dataset',
           isCorrect: true,
           timeSpentMs: 5000,
           timestamp: DateTime(2024, 1, 15, 10, 30),

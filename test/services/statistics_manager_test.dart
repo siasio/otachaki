@@ -31,12 +31,14 @@ void main() {
       // Record some attempts
       await manager.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: true,
         timeSpentMs: 5000,
       );
 
       await manager.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: false,
         timeSpentMs: 8000,
         wasTimeout: true,
@@ -44,6 +46,7 @@ void main() {
 
       await manager.recordAttempt(
         datasetType: DatasetType.final19x19,
+        datasetId: 'test-dataset-19x19',
         isCorrect: true,
         timeSpentMs: 12000,
       );
@@ -76,6 +79,7 @@ void main() {
       // Record attempts for today
       await manager.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: true,
         timeSpentMs: 5000,
       );
@@ -102,6 +106,7 @@ void main() {
       // Record a timeout attempt (capping should be done by the calling code)
       await manager.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: false,
         timeSpentMs: 15000, // 15 seconds timeout (pre-capped)
         wasTimeout: true,
@@ -124,12 +129,14 @@ void main() {
       // Record attempts for different dataset types
       await manager.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: true,
         timeSpentMs: 5000,
       );
 
       await manager.recordAttempt(
         datasetType: DatasetType.midgame19x19,
+        datasetId: 'test-dataset-midgame',
         isCorrect: false,
         timeSpentMs: 8000,
       );
@@ -146,6 +153,7 @@ void main() {
       // Record some attempts
       await manager.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: true,
         timeSpentMs: 5000,
       );
@@ -170,6 +178,7 @@ void main() {
 
       await manager1.recordAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset-9x9',
         isCorrect: true,
         timeSpentMs: 5000,
       );

@@ -8,6 +8,7 @@ class AdaptiveAppBar extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
   final double elevation;
+  final String? title;
 
   const AdaptiveAppBar({
     super.key,
@@ -17,6 +18,7 @@ class AdaptiveAppBar extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
     this.elevation = 4.0,
+    this.title,
   });
 
   @override
@@ -34,6 +36,7 @@ class AdaptiveAppBar extends StatelessWidget {
       foregroundColor: foregroundColor,
       elevation: elevation,
       automaticallyImplyLeading: false,
+      title: title != null ? Text(title!) : null,
       leading: IconButton(
         icon: const Icon(Icons.info_outline),
         onPressed: onInfoPressed,

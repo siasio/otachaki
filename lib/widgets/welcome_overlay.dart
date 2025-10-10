@@ -202,28 +202,28 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
     final items = [
       _WelcomeItem(
         icon: Icons.psychology_outlined,
-        title: 'Scoring System',
-        description: 'Komi is set to 7.0 points. Both area and territory scoring work equally well for position evaluation.',
-      ),
-      _WelcomeItem(
-        icon: Icons.dataset_outlined,
-        title: 'Multiple Datasets',
-        description: 'Choose from different datasets in the config screen. Each offers unique training challenges.',
-      ),
-      _WelcomeItem(
-        icon: Icons.balance_outlined,
-        title: 'Prisoner Count',
-        description: 'When prisoners aren\'t shown on the board, assume both colors have captured an equal number.',
+        title: 'Get Started!',
+        description: 'Komi = 7.0, equal prisoners. Both area and territory scoring works!',
       ),
       _WelcomeItem(
         icon: Icons.tune_outlined,
         title: 'Customization',
-        description: 'Visit the config screen (⚙️) to adjust timer settings, prediction modes, and visual preferences.',
+        description: 'Visit the config screen (⚙️) to adjust timer settings, displayed stats, prediction modes, and visual preferences.',
+      ),
+      _WelcomeItem(
+        icon: Icons.dataset_outlined,
+        title: 'Explore Different Datasets',
+        description: 'Quick excercises with **GoQuest Arena** (9x9); real-life challenges with **Overtime Rush** (19x19); and more!',
       ),
       _WelcomeItem(
         icon: Icons.analytics_outlined,
         title: 'Track Progress',
         description: 'View your performance statistics and accuracy trends on the info screen (ℹ️).',
+      ),
+      _WelcomeItem(
+        icon: Icons.keyboard_outlined,
+        title: 'Keyboard Shortcuts',
+        description: 'Use ← to select White Wins, ↓ to select Draw/Close, → to select Black Wins, and ␣ to pause auto-advance.',
       ),
     ];
 
@@ -269,18 +269,53 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  item.description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textStyle.color?.withOpacity(0.8),
-                    height: 1.3,
-                  ),
-                ),
+                _buildDescription(item.description, textStyle),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDescription(String description, dynamic textStyle) {
+    // Parse the description to handle **bold** formatting
+    final List<TextSpan> spans = [];
+    final RegExp boldPattern = RegExp(r'\*\*(.*?)\*\*');
+    int lastMatchEnd = 0;
+
+    for (final match in boldPattern.allMatches(description)) {
+      // Add normal text before the match
+      if (match.start > lastMatchEnd) {
+        spans.add(TextSpan(
+          text: description.substring(lastMatchEnd, match.start),
+        ));
+      }
+
+      // Add bold text
+      spans.add(TextSpan(
+        text: match.group(1)!,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ));
+
+      lastMatchEnd = match.end;
+    }
+
+    // Add remaining normal text
+    if (lastMatchEnd < description.length) {
+      spans.add(TextSpan(
+        text: description.substring(lastMatchEnd),
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: 14,
+          color: textStyle.color?.withOpacity(0.8),
+          height: 1.3,
+        ),
+        children: spans,
       ),
     );
   }

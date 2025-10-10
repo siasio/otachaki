@@ -220,11 +220,11 @@ class RoughLeadPredictionButtons extends StatelessWidget {
   IconData? _getKeyboardIcon(RoughLeadButtonType buttonType) {
     switch (buttonType) {
       case RoughLeadButtonType.white:
-        return Icons.keyboard_arrow_left;
+        return Icons.arrow_back;
       case RoughLeadButtonType.close:
-        return Icons.keyboard_arrow_down;
+        return Icons.arrow_downward;
       case RoughLeadButtonType.black:
-        return Icons.keyboard_arrow_right;
+        return Icons.arrow_forward;
     }
   }
 }

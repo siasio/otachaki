@@ -48,10 +48,11 @@ class StatisticsManager {
   /// Record a problem attempt
   Future<void> recordAttempt({
     required DatasetType datasetType,
-    String? datasetId, // Custom dataset ID, null for built-in datasets
+    required String datasetId, // Dataset ID is always required in unified architecture
     required bool isCorrect,
     required int timeSpentMs,
     bool wasTimeout = false,
+    double? pointsPerSecond,
   }) async {
     final attempt = ProblemAttempt(
       datasetType: datasetType,
@@ -60,6 +61,7 @@ class StatisticsManager {
       timeSpentMs: timeSpentMs,
       timestamp: DateTime.now(),
       wasTimeout: wasTimeout,
+      pointsPerSecond: pointsPerSecond,
     );
 
     _attempts.add(attempt);
@@ -143,7 +145,7 @@ class StatisticsManager {
         // Add empty stats for this day
         stats.add(DailyDatasetStatistics(
           datasetType: datasetType,
-          datasetId: datasetId.startsWith('builtin_') ? null : datasetId,
+          datasetId: datasetId,
           date: date,
           totalAttempts: 0,
           correctAttempts: 0,

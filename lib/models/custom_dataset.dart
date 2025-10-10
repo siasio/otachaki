@@ -19,16 +19,12 @@ class CustomDataset {
   /// When this dataset was created
   final DateTime createdAt;
 
-  /// Whether this is a built-in dataset (should be false for user-created)
-  final bool isBuiltIn;
-
   const CustomDataset({
     required this.id,
     required this.name,
     required this.baseDatasetType,
     required this.configuration,
     required this.createdAt,
-    this.isBuiltIn = false,
   });
 
   /// Create a new custom dataset based on a base dataset type
@@ -45,22 +41,21 @@ class CustomDataset {
       baseDatasetType: baseDatasetType,
       configuration: DatasetConfiguration.getDefaultFor(baseDatasetType),
       createdAt: createdAt ?? DateTime.now(),
-      isBuiltIn: false,
     );
   }
 
-  /// Create a built-in dataset representation for predefined dataset types
-  factory CustomDataset.builtIn({
+  /// Create a default dataset for a given type with registry name
+  factory CustomDataset.defaultFor({
     required DatasetType datasetType,
     required String name,
+    String? customId,
   }) {
     return CustomDataset(
-      id: 'builtin_${datasetType.value}',
+      id: customId ?? 'default_${datasetType.value}',
       name: name,
       baseDatasetType: datasetType,
       configuration: DatasetConfiguration.getDefaultFor(datasetType),
-      createdAt: DateTime(2024, 1, 1), // Fixed date for built-ins
-      isBuiltIn: true,
+      createdAt: DateTime(2024, 1, 1), // Fixed date for defaults
     );
   }
 
@@ -71,7 +66,6 @@ class CustomDataset {
     DatasetType? baseDatasetType,
     DatasetConfiguration? configuration,
     DateTime? createdAt,
-    bool? isBuiltIn,
   }) {
     return CustomDataset(
       id: id ?? this.id,
@@ -79,7 +73,6 @@ class CustomDataset {
       baseDatasetType: baseDatasetType ?? this.baseDatasetType,
       configuration: configuration ?? this.configuration,
       createdAt: createdAt ?? this.createdAt,
-      isBuiltIn: isBuiltIn ?? this.isBuiltIn,
     );
   }
 
@@ -91,7 +84,6 @@ class CustomDataset {
       'baseDatasetType': baseDatasetType.value,
       'configuration': configuration.toJson(),
       'createdAt': createdAt.millisecondsSinceEpoch,
-      'isBuiltIn': isBuiltIn,
     };
   }
 
@@ -103,20 +95,15 @@ class CustomDataset {
       baseDatasetType: DatasetType.fromString(json['baseDatasetType'] as String)!,
       configuration: DatasetConfiguration.fromJson(json['configuration'] as Map<String, dynamic>),
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] as int),
-      isBuiltIn: json['isBuiltIn'] as bool? ?? false,
     );
   }
 
-  /// Get display name with base type info
-  String get displayName => isBuiltIn ? name : '$name (${_getBaseTypeDisplayName()})';
+  /// Get display name (just the dataset name)
+  String get displayName => name;
 
   /// Get the JSON file path for the base dataset type
   String get datasetFilePath {
     return DatasetRegistry.getAssetsPath(baseDatasetType);
-  }
-
-  String _getBaseTypeDisplayName() {
-    return DatasetRegistry.getBaseDisplayName(baseDatasetType);
   }
 
   @override

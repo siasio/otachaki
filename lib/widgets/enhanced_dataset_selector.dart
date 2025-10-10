@@ -66,7 +66,7 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
       // Load the currently selected dataset
       _selectedDataset = _datasetManager!.getSelectedDataset();
 
-      // If no dataset is selected, default to the first built-in dataset
+      // If no dataset is selected, default to the first dataset
       if (_selectedDataset == null && _groupedDatasets.isNotEmpty) {
         final firstType = _groupedDatasets.keys.first;
         final firstDataset = _groupedDatasets[firstType]?.first;
@@ -158,7 +158,7 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
   }
 
   Future<void> _editCustomDataset(CustomDataset dataset) async {
-    if (_datasetManager == null || dataset.isBuiltIn) return;
+    if (_datasetManager == null) return;
 
     final result = await showDialog<CustomDataset>(
       context: context,
@@ -183,7 +183,7 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
   }
 
   Future<void> _deleteCustomDataset(CustomDataset dataset) async {
-    if (_datasetManager == null || dataset.isBuiltIn) return;
+    if (_datasetManager == null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -207,23 +207,26 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
     );
 
     if (confirmed == true) {
-      final success = await _datasetManager!.deleteCustomDataset(dataset.id);
-      if (success) {
-        await _loadDatasets();
+      try {
+        final success = await _datasetManager!.deleteCustomDataset(dataset.id);
+        if (success) {
+          await _loadDatasets();
 
-        // If the deleted dataset was selected, select a default one
-        if (_selectedDataset?.id == dataset.id) {
-          final defaultDataset = _datasetManager!.getBuiltInDataset(dataset.baseDatasetType);
-          if (defaultDataset != null) {
-            await _selectDataset(defaultDataset);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Dataset "${dataset.name}" deleted successfully'),
+                backgroundColor: Colors.orange,
+              ),
+            );
           }
         }
-
+      } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Dataset "${dataset.name}" deleted successfully'),
-              backgroundColor: Colors.orange,
+              content: Text('Cannot delete dataset: ${e.toString().replaceFirst('ArgumentError: ', '')}'),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -263,22 +266,6 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (!dataset.isBuiltIn)
-                    Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'Custom',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
                 ],
               ),
               style: ElevatedButton.styleFrom(
@@ -298,7 +285,7 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
               ),
             ),
           ),
-          if (showActions && !dataset.isBuiltIn) ...[
+          if (showActions) ...[
             const SizedBox(width: 8),
             PopupMenuButton<String>(
               onSelected: (action) {
@@ -439,30 +426,6 @@ class _EnhancedDatasetSelectorState extends State<EnhancedDatasetSelector> {
         ),
         const SizedBox(height: 8),
 
-        // Current selection info
-        if (_selectedDataset != null)
-          Card(
-            color: Colors.blue.shade50,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.blue.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Current: ${_selectedDataset!.name}',
-                      style: TextStyle(
-                        color: Colors.blue.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        const SizedBox(height: 16),
 
         // Dataset type sections
         ..._groupedDatasets.entries.map((entry) =>
