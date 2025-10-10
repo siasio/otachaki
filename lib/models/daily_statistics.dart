@@ -76,7 +76,7 @@ class DailyDatasetStatistics {
   }
 
   /// Check if this dataset has speed tracking data
-  bool get hasSpeedData => attempts.any((a) => a.pointsPerSecond != null);
+  // bool get hasSpeedData => attempts.any((a) => a.pointsPerSecond != null);
 
   /// Check if this day has any attempts
   bool get hasAttempts => totalAttempts > 0;

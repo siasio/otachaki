@@ -340,7 +340,7 @@ class _InfoScreenState extends State<InfoScreen> {
               Expanded(
                 child: _buildMiniStat(
                   'Accuracy',
-                  '${stats.accuracyPercentage.toStringAsFixed(1)}%',
+                  '${stats.accuracyPercentage.toStringAsFixed(0)}%',
                   Icons.check_circle_outline,
                 ),
               ),
@@ -361,9 +361,10 @@ class _InfoScreenState extends State<InfoScreen> {
               Expanded(
                 child: _buildMiniStat(
                   'Avg Speed',
-                  stats.hasSpeedData
-                      ? '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s'
-                      : 'N/A',
+                  // stats.hasSpeedData
+                  //     ? '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s'
+                  //     : 'N/A',
+                  '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s',
                   Icons.speed_outlined,
                 ),
               ),

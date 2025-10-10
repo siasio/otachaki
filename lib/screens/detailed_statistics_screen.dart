@@ -152,10 +152,9 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
     final overallAccuracy = totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0.0;
     final overallAvgTime = totalAttempts > 0 ? totalTime / totalAttempts : 0.0;
 
-    // Calculate overall average speed from days with speed data
-    final statsWithSpeed = _historicalStats.where((stat) => stat.hasSpeedData).toList();
-    final overallAvgSpeed = statsWithSpeed.isNotEmpty
-        ? statsWithSpeed.map((s) => s.averagePointsPerSecond).fold(0.0, (sum, speed) => sum + speed) / statsWithSpeed.length
+    // Calculate overall average speed
+    final overallAvgSpeed = _historicalStats.isNotEmpty
+        ? _historicalStats.map((s) => s.averagePointsPerSecond).fold(0.0, (sum, speed) => sum + speed) / _historicalStats.length
         : 0.0;
 
     return Card(
@@ -204,9 +203,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                 Expanded(
                   child: _buildSummaryItem(
                     'Avg Speed',
-                    statsWithSpeed.isNotEmpty
-                        ? '${overallAvgSpeed.toStringAsFixed(1)} pts/s'
-                        : 'N/A',
+                    '${overallAvgSpeed.toStringAsFixed(1)} pts/s',
                     Icons.speed_outlined,
                   ),
                 ),
@@ -318,9 +315,6 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
   }
 
   Widget _buildSpeedChart() {
-    // Check if any day has speed data
-    final hasSpeedData = _historicalStats.any((stat) => stat.hasSpeedData);
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -335,44 +329,10 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (!hasSpeedData)
-              Container(
-                height: 200,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.speed_outlined,
-                      size: 48,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No speed data available',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Speed tracking requires positions with territory data',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              )
-            else
-              SizedBox(
-                height: 200,
-                child: LineChart(_createSpeedLineChart()),
-              ),
+            SizedBox(
+              height: 200,
+              child: LineChart(_createSpeedLineChart()),
+            ),
           ],
         ),
       ),
@@ -685,14 +645,11 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
     final spots = <FlSpot>[];
     for (int i = 0; i < _historicalStats.length; i++) {
       final stat = _historicalStats[i];
-      if (stat.hasSpeedData) {
-        spots.add(FlSpot(i.toDouble(), stat.averagePointsPerSecond));
-      }
+      spots.add(FlSpot(i.toDouble(), stat.averagePointsPerSecond));
     }
 
     // Calculate smart interval for speed chart
     final maxValue = _historicalStats.isEmpty ? 10.0 : _historicalStats
-        .where((s) => s.hasSpeedData)
         .map((s) => s.averagePointsPerSecond)
         .fold(0.0, (a, b) => a > b ? a : b);
     final yInterval = _calculateSmartInterval(maxValue, 5);

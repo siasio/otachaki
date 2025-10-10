@@ -42,11 +42,11 @@ class TitleSubstitutionService {
       result = result.replaceAll('%t', '${datasetStats.averageTimeSeconds.toStringAsFixed(1)}s');
 
       // %s - today's average points/second speed
-      if (datasetStats.hasSpeedData) {
-        result = result.replaceAll('%s', '${datasetStats.averagePointsPerSecond.toStringAsFixed(1)} pts/s');
-      } else {
-        result = result.replaceAll('%s', 'N/A');
-      }
+      // if (datasetStats.hasSpeedData) {
+      result = result.replaceAll('%s', '${datasetStats.averagePointsPerSecond.toStringAsFixed(1)} pts/s');
+      // } else {
+      //   result = result.replaceAll('%s', 'N/A');
+      // }
     } else {
       // No statistics for today - use default values
       result = result.replaceAll('%n', '0');
