@@ -293,9 +293,13 @@ class CustomDatasetManager {
     }
   }
 
-  /// Get all datasets
+  /// Get all datasets (excluding hidden dataset types)
   List<CustomDataset> getAllDatasets() {
-    return List.unmodifiable(_datasets);
+    final visibleDatasets = _datasets.where((dataset) {
+      // Filter out datasets based on hidden dataset types
+      return DatasetRegistry.getAllDatasetTypes().contains(dataset.baseDatasetType);
+    }).toList();
+    return List.unmodifiable(visibleDatasets);
   }
 
   /// Get datasets of a specific type (for backwards compatibility)
@@ -303,12 +307,16 @@ class CustomDatasetManager {
     return _datasets.where((d) => d.baseDatasetType == type).toList();
   }
 
-  /// Get datasets grouped by base type
+  /// Get datasets grouped by base type (excluding hidden dataset types)
   Map<DatasetType, List<CustomDataset>> getDatasetsByBaseType() {
     final Map<DatasetType, List<CustomDataset>> grouped = {};
+    final visibleDatasetTypes = DatasetRegistry.getAllDatasetTypes();
 
     for (final dataset in _datasets) {
-      grouped.putIfAbsent(dataset.baseDatasetType, () => []).add(dataset);
+      // Only include datasets based on visible dataset types
+      if (visibleDatasetTypes.contains(dataset.baseDatasetType)) {
+        grouped.putIfAbsent(dataset.baseDatasetType, () => []).add(dataset);
+      }
     }
 
     // Sort each group by creation date (defaults first, then by creation time)

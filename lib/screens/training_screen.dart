@@ -10,6 +10,7 @@ import '../services/position_loader.dart';
 import '../services/enhanced_configuration_manager.dart';
 import '../services/custom_dataset_manager.dart';
 import '../models/custom_dataset.dart';
+import '../models/dataset_registry.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/statistics_manager.dart';
 import '../services/logger_service.dart';
@@ -26,7 +27,8 @@ import '../widgets/timer_bar.dart';
 import '../widgets/game_board_container.dart';
 import '../widgets/adaptive_result_buttons.dart';
 import '../models/auto_advance_mode.dart';
-import '../widgets/game_status_bar.dart';
+// REMOVED: GameStatusBar import - GameInfo functionality has been removed
+// import '../widgets/game_status_bar.dart';
 import '../widgets/pause_button.dart';
 import '../models/game_result_option.dart';
 import '../models/sequence_display_mode.dart';
@@ -1065,6 +1067,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
     return _currentConfig?.ownershipDisplayMode ?? OwnershipDisplayMode.none;
   }
 
+  /// Check if move numbers should be shown (always true for midgame datasets)
+  bool get _shouldShowMoveNumbers {
+    final datasetType = _positionManager.currentDataset?.metadata.datasetType;
+    if (datasetType != null && DatasetRegistry.isMiddleGameDataset(datasetType)) {
+      return true;  // Always show move numbers for midgame datasets
+    }
+    return _currentConfig?.showMoveNumbers ?? true;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -1079,6 +1090,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             children: [
               AdaptiveAppBar(
                 layoutType: layoutType,
+                title: _dynamicTitle,
                 onInfoPressed: _navigateToInfo,
                 onSettingsPressed: _navigateToConfig,
               ),
@@ -1128,23 +1140,23 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
 
     final timerType = _globalConfig?.timerType ?? TimerType.smooth;
-    // Determine whether to show game info bar
-    bool shouldShowGameInfo = true;
-    if (_currentConfig != null) {
-      final datasetType = _positionManager.currentDataset?.metadata.datasetType;
-      final isFinalDataset = datasetType == DatasetType.final9x9 ||
-                           datasetType == DatasetType.final13x13 ||
-                           datasetType == DatasetType.final19x19;
-
-      if (isFinalDataset) {
-        // For final datasets, show game info based on position type
-        final positionType = _currentConfig!.positionType;
-        shouldShowGameInfo = positionType == PositionType.beforeFillingNeutralPoints;
-      } else {
-        // For non-final datasets, use the hideGameInfoBar setting
-        shouldShowGameInfo = !_currentConfig!.hideGameInfoBar;
-      }
-    }
+    // REMOVED: GameInfo display logic - GameInfo functionality has been removed
+    // bool shouldShowGameInfo = true;
+    // if (_currentConfig != null) {
+    //   final datasetType = _positionManager.currentDataset?.metadata.datasetType;
+    //   final isFinalDataset = datasetType == DatasetType.final9x9 ||
+    //                        datasetType == DatasetType.final13x13 ||
+    //                        datasetType == DatasetType.final19x19;
+    //
+    //   if (isFinalDataset) {
+    //     // For final datasets, show game info based on position type
+    //     final positionType = _currentConfig!.positionType;
+    //     shouldShowGameInfo = positionType == PositionType.beforeFillingNeutralPoints;
+    //   } else {
+    //     // For non-final datasets, use the hideGameInfoBar setting
+    //     shouldShowGameInfo = !_currentConfig!.hideGameInfoBar;
+    //   }
+    // }
     final isTimerEnabled = _currentConfig?.timerEnabled ?? true;
 
     if (layoutType == LayoutType.horizontal) {
@@ -1156,6 +1168,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               children: [
                 AdaptiveAppBar(
                   layoutType: layoutType,
+                  title: _dynamicTitle,
                   onInfoPressed: _navigateToInfo,
                   onSettingsPressed: _navigateToConfig,
                 ),
@@ -1182,13 +1195,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                                 width: layoutType == LayoutType.horizontal ? 16 : null,
                                 margin: const EdgeInsets.all(16)
                               ),
-                        gameInfoBar: shouldShowGameInfo
-                            ? GameStatusBar(
-                                position: _positionManager.currentTrainingPosition,
-                                appSkin: currentSkin,
-                                layoutType: layoutType,
-                              )
-                            : null,
+                        // REMOVED: GameInfoBar - GameInfo functionality has been removed
+                        gameInfoBar: null,
                         board: GameBoardContainer(
                           position: _currentPosition,
                           trainingPosition: _positionManager.currentTrainingPosition,
@@ -1200,7 +1208,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           viewMode: _currentViewMode,
                           ownershipDisplayMode: _currentOwnershipDisplayMode,
                           positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
-                          showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
+                          showMoveNumbers: _shouldShowMoveNumbers,
                           feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                         ),
                         buttons: _buildButtons(),
@@ -1256,13 +1264,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           width: layoutType == LayoutType.horizontal ? 16 : null,
                           margin: const EdgeInsets.all(16)
                         ),
-                  gameInfoBar: shouldShowGameInfo
-                      ? GameStatusBar(
-                          position: _positionManager.currentTrainingPosition,
-                          appSkin: currentSkin,
-                          layoutType: layoutType,
-                        )
-                      : null,
+                  // REMOVED: GameInfoBar - GameInfo functionality has been removed
+                  gameInfoBar: null,
                   board: GameBoardContainer(
                     position: _currentPosition,
                     trainingPosition: _positionManager.currentTrainingPosition,

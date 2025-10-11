@@ -86,7 +86,7 @@ class DatasetRegistry {
       type: DatasetType.midgame19x19,
       baseDisplayName: '19x19 middle game',
       builtInDatasetName: 'Midgame Judgment (19x19)',
-      jsonFilePath: 'fox_mid_19x19.json',
+      jsonFilePath: 'mid_fox_19x19.json',
       allowedPredictionTypes: [
         PredictionType.roughLeadPrediction,
         PredictionType.exactScorePrediction,
@@ -94,17 +94,8 @@ class DatasetRegistry {
       isMiddleGameDataset: true,
     ),
 
-    DatasetType.partialPositions: DatasetTypeInfo(
-      type: DatasetType.partialPositions,
-      baseDisplayName: 'partial positions',
-      builtInDatasetName: 'Local Drill',
-      jsonFilePath: 'final_19x19_katago.json',
-      allowedPredictionTypes: [
-        // Note: Partial position prediction types will be defined when partial position support is implemented
-        PredictionType.winnerPrediction,
-      ],
-      isPartialPositionDataset: true,
-    ),
+    // NOTE: DatasetType.partialPositions is kept in enum but removed from registry
+    // to hide it from UI while preserving code structure for future development
   };
 
   /// Get metadata for a specific dataset type
@@ -116,9 +107,9 @@ class DatasetRegistry {
     return info;
   }
 
-  /// Get all available dataset types
+  /// Get all available dataset types (excluding hidden types)
   static List<DatasetType> getAllDatasetTypes() {
-    return DatasetType.values;
+    return _registry.keys.toList();
   }
 
   /// Get all dataset type metadata

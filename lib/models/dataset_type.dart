@@ -13,7 +13,7 @@ enum DatasetType {
   /// Middle game positions on 19x19 boards for score estimation during play
   midgame19x19('midgame-19x19'),
 
-  /// Partial board positions for focused local territory analysis
+  /// Partial board positions (hidden from UI)
   partialPositions('partial-positions');
 
   const DatasetType(this.value);

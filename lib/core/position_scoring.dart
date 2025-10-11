@@ -42,17 +42,19 @@ class PositionScoring {
   /// Calculate Black's territory score for "before filling" mode
   static int calculateBlackTerritoryScore(TrainingPosition position) {
     final blackTerritory = position.blackTerritory ?? 0;
-    final ultimateWhiteCaptured = position.ultimateWhiteCaptured ?? 0;
-    final whiteCaptured = position.whiteCaptured;
-
-    return blackTerritory + (ultimateWhiteCaptured - whiteCaptured);
+    // REMOVED: Prisoner logic - prisoners are always equal, so captured stone difference is 0
+    // final ultimateWhiteCaptured = position.ultimateWhiteCaptured ?? 0;
+    // final whiteCaptured = position.whiteCaptured;
+    // return blackTerritory + (ultimateWhiteCaptured - whiteCaptured);
+    return blackTerritory;
   }
 
   /// Calculate White's territory score for "before filling" mode
   static int calculateWhiteTerritoryScore(TrainingPosition position) {
     final whiteTerritory = position.whiteTerritory ?? 0;
-    final ultimateBlackCaptured = position.ultimateBlackCaptured ?? 0;
-    final blackCaptured = position.blackCaptured;
+    // REMOVED: Prisoner logic - prisoners are always equal, so captured stone difference is 0
+    // final ultimateBlackCaptured = position.ultimateBlackCaptured ?? 0;
+    // final blackCaptured = position.blackCaptured;
 
     // Apply additional white move adjustment if needed
     int adjustment = 0;
@@ -60,7 +62,8 @@ class PositionScoring {
       adjustment = 1;
     }
 
-    return whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment;
+    // return whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment;
+    return whiteTerritory + adjustment;
   }
 
   /// Generate Black's scoring text for feedback display
@@ -72,15 +75,15 @@ class PositionScoring {
         return 'Black: ${formatScore(territory.toDouble())}';
 
       case PositionType.beforeFillingNeutralPoints:
-        // "Black: {(blackTerritory + (ultimateWhiteCaptured - whiteCaptured))} + {whiteCaptured} = {blackTerritory + ultimateWhiteCaptured}"
+        // REMOVED: Prisoner logic - prisoners are always equal, so no need to show captured stones
+        // "Black: {blackTerritory}"
         final blackTerritory = position.blackTerritory ?? 0;
-        final whiteCaptured = position.whiteCaptured;
-        final ultimateWhiteCaptured = position.ultimateWhiteCaptured ?? whiteCaptured;
-
-        final territoryPart = blackTerritory + (ultimateWhiteCaptured - whiteCaptured);
-        final total = blackTerritory + ultimateWhiteCaptured;
-
-        return 'Black: ${formatScore(territoryPart.toDouble())} + ${formatScore(whiteCaptured.toDouble())} = ${formatScore(total.toDouble())}';
+        // final whiteCaptured = position.whiteCaptured;
+        // final ultimateWhiteCaptured = position.ultimateWhiteCaptured ?? whiteCaptured;
+        // final territoryPart = blackTerritory + (ultimateWhiteCaptured - whiteCaptured);
+        // final total = blackTerritory + ultimateWhiteCaptured;
+        // return 'Black: ${formatScore(territoryPart.toDouble())} + ${formatScore(whiteCaptured.toDouble())} = ${formatScore(total.toDouble())}';
+        return 'Black: ${formatScore(blackTerritory.toDouble())}';
     }
   }
 
@@ -96,10 +99,10 @@ class PositionScoring {
         return 'White: ${formatScore(territory.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
 
       case PositionType.beforeFillingNeutralPoints:
-        // "White: {(whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment)} + {blackCaptured} + {komi} = {whiteTerritory + ultimateBlackCaptured + adjustment + komi}"
+        // REMOVED: Prisoner logic - prisoners are always equal, so no need to show captured stones
         final whiteTerritory = position.whiteTerritory ?? 0;
-        final blackCaptured = position.blackCaptured;
-        final ultimateBlackCaptured = position.ultimateBlackCaptured ?? blackCaptured;
+        // final blackCaptured = position.blackCaptured;
+        // final ultimateBlackCaptured = position.ultimateBlackCaptured ?? blackCaptured;
         final komi = position.komi;
 
         // Apply additional white move adjustment if needed
@@ -108,10 +111,17 @@ class PositionScoring {
           adjustment = 1;
         }
 
-        final territoryPart = whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment;
-        final total = whiteTerritory + ultimateBlackCaptured + adjustment + komi;
+        // final territoryPart = whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment;
+        // final total = whiteTerritory + ultimateBlackCaptured + adjustment + komi;
+        // return 'White: ${formatScore(territoryPart.toDouble())} + ${formatScore(blackCaptured.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
 
-        return 'White: ${formatScore(territoryPart.toDouble())} + ${formatScore(blackCaptured.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
+        if (adjustment > 0) {
+          final total = whiteTerritory + adjustment + komi;
+          return 'White: ${formatScore(whiteTerritory.toDouble())} + ${formatScore(adjustment.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
+        } else {
+          final total = whiteTerritory + komi;
+          return 'White: ${formatScore(whiteTerritory.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
+        }
     }
   }
 }

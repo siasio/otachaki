@@ -18,8 +18,9 @@ class DatasetParser {
   /// Parse game info from JSON - returns Map to avoid type conflicts
   static Map<String, dynamic> parseGameInfoToMap(Map<String, dynamic> json) {
     return {
-      'black_captured': json['black_captured'] as int? ?? 0,
-      'white_captured': json['white_captured'] as int? ?? 0,
+      // REMOVED: Captured stones - prisoners are always equal
+      // 'black_captured': json['black_captured'] as int? ?? 0,
+      // 'white_captured': json['white_captured'] as int? ?? 0,
       'komi': (json['komi'] as num?)?.toDouble() ?? 0.0,
       'last_move_row': json['last_move_row'] as int?,
       'last_move_col': json['last_move_col'] as int?,
@@ -69,12 +70,14 @@ class DatasetParser {
       'ownership': json['ownership'] as String?,
       'black_territory': json['blackTerritory'] as int?,
       'white_territory': json['whiteTerritory'] as int?,
-      'black_captured': json['black_captured'] as int? ?? 0,
-      'white_captured': json['white_captured'] as int? ?? 0,
+      // REMOVED: Captured stones - prisoners are always equal
+      // 'black_captured': json['black_captured'] as int? ?? 0,
+      // 'white_captured': json['white_captured'] as int? ?? 0,
       'komi': (json['komi'] as num?)?.toDouble() ?? 0.0,
       'ultimate_stones': json['ultimate-stones'] as String?,
-      'ultimate_black_captured': json['ultimate-black-captured'] as int?,
-      'ultimate_white_captured': json['ultimate-white-captured'] as int?,
+      // REMOVED: Ultimate captured stones - prisoners are always equal
+      // 'ultimate_black_captured': json['ultimate-black-captured'] as int?,
+      // 'ultimate_white_captured': json['ultimate-white-captured'] as int?,
       'additional_white_move': json['additional-white-move'] as bool?,
     };
   }

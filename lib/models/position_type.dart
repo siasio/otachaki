@@ -36,7 +36,7 @@ enum PositionType {
   String get explanationText {
     switch (this) {
       case PositionType.withFilledNeutralPoints:
-        return 'You can use area or territory scoring - the result will be the same. White and Black have the same number of prisoners.';
+        return 'You can use area or territory scoring - the result will be the same.';
       case PositionType.beforeFillingNeutralPoints:
         return 'Count points with territory scoring.';
     }

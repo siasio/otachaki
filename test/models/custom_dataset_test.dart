@@ -148,7 +148,7 @@ void main() {
 
       expect(dataset9x9.datasetFilePath, 'assets/final_9x9_katago.json');
       expect(dataset19x19.datasetFilePath, 'assets/final_19x19_katago.json');
-      expect(datasetMidgame.datasetFilePath, 'assets/fox_mid150_19x19.json');
+      expect(datasetMidgame.datasetFilePath, 'assets/mid_fox_19x19.json');
     });
 
     test('equality should be based on ID', () {

@@ -85,22 +85,15 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
-                      'Positions before filling neutral points',
-                      'Komi and numbers of prisoners are displayed. '
-                      'Use territory scoring. ',
+                      'Positions Before Filling Neutral Points',
+                      'Use territory scoring. '
+                      'Display the last few moves as a numbered sequence to train your visualization.',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'Midgame 19x19 Estimation',
-                      'Positions at move 150. '
-                      'Komi and number of prisoners are displayed. '
+                      'Positions at different game stages: early (move 100/101), middle (move 150/151) and late (200/201). '
                       'Train your quick middle game judgment!',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDatasetExplanation(
-                      'In preparation:',
-                      'Dataset of board patches (train your area scoring skills!). '
-                      'I think that if I publish this app, it won\'t have this feature... But I want to try it for myself.',
                     ),
                   ],
                 ),

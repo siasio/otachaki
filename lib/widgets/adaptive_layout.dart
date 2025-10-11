@@ -4,6 +4,7 @@ import '../models/layout_type.dart';
 class AdaptiveLayout extends StatelessWidget {
   final LayoutType layoutType;
   final Widget timerBar;
+  // REMOVED: gameInfoBar - GameInfo functionality has been removed but kept for compatibility
   final Widget? gameInfoBar;
   final Widget board;
   final Widget buttons;
@@ -31,7 +32,8 @@ class AdaptiveLayout extends StatelessWidget {
       children: [
         // Traditional vertical layout: gear icon is in AppBar, timer bar here
         timerBar,
-        if (gameInfoBar != null) gameInfoBar!,
+        // REMOVED: GameInfoBar display - GameInfo functionality has been removed
+        // if (gameInfoBar != null) gameInfoBar!,
         Expanded(child: board),
         buttons,
       ],
@@ -51,17 +53,17 @@ class AdaptiveLayout extends StatelessWidget {
           ),
         ),
 
-        // Column 2: Game info bar (if present, flex: 2)
-        if (gameInfoBar != null)
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: gameInfoBar!,
-            ),
-          ),
+        // REMOVED: Column 2: Game info bar - GameInfo functionality has been removed
+        // if (gameInfoBar != null)
+        //   Expanded(
+        //     flex: 2,
+        //     child: Padding(
+        //       padding: const EdgeInsets.all(8.0),
+        //       child: gameInfoBar!,
+        //     ),
+        //   ),
 
-        // Column 3: Main board area (largest, flex: 6)
+        // Column 2: Main board area (largest, flex: 12)
         Expanded(
           flex: 12,
           child: Container(
@@ -71,7 +73,7 @@ class AdaptiveLayout extends StatelessWidget {
           ),
         ),
 
-        // Column 4: Vertical buttons (flex: 2)
+        // Column 3: Vertical buttons (flex: 2)
         Expanded(
           flex: 2,
           child: Padding(

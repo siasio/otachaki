@@ -8,7 +8,8 @@ class DatasetConfiguration {
   final double thresholdGood;
   final double thresholdClose;
   final int timePerProblemSeconds;
-  final bool hideGameInfoBar;
+  // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+  // final bool hideGameInfoBar;
   final int sequenceLength;
   final OwnershipDisplayMode ownershipDisplayMode;
   final bool timerEnabled;
@@ -22,7 +23,8 @@ class DatasetConfiguration {
     required this.thresholdGood,
     required this.thresholdClose,
     required this.timePerProblemSeconds,
-    required this.hideGameInfoBar,
+    // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+    // required this.hideGameInfoBar,
     this.sequenceLength = 0,
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.timerEnabled = true,
@@ -40,7 +42,8 @@ class DatasetConfiguration {
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 15,
-          hideGameInfoBar: true,
+          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+          // hideGameInfoBar: true,
           predictionType: PredictionType.winnerPrediction,
         );
       case DatasetType.final13x13:
@@ -48,7 +51,8 @@ class DatasetConfiguration {
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 30,
-          hideGameInfoBar: true,
+          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+          // hideGameInfoBar: true,
           predictionType: PredictionType.winnerPrediction,
         );
       case DatasetType.final19x19:
@@ -56,7 +60,8 @@ class DatasetConfiguration {
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 60,
-          hideGameInfoBar: true,
+          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+          // hideGameInfoBar: true,
           predictionType: PredictionType.winnerPrediction,
         );
       case DatasetType.midgame19x19:
@@ -64,7 +69,8 @@ class DatasetConfiguration {
           thresholdGood: 1.5,
           thresholdClose: 5.0,
           timePerProblemSeconds: 15,
-          hideGameInfoBar: false,
+          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+          // hideGameInfoBar: false,
           predictionType: PredictionType.roughLeadPrediction,
         );
       case DatasetType.partialPositions:
@@ -72,7 +78,8 @@ class DatasetConfiguration {
           thresholdGood: 0.0,
           thresholdClose: 0.0,
           timePerProblemSeconds: 10,
-          hideGameInfoBar: false,
+          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+          // hideGameInfoBar: false,
           predictionType: PredictionType.winnerPrediction,
         );
     }
@@ -82,7 +89,8 @@ class DatasetConfiguration {
     double? thresholdGood,
     double? thresholdClose,
     int? timePerProblemSeconds,
-    bool? hideGameInfoBar,
+    // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+    // bool? hideGameInfoBar,
     int? sequenceLength,
     OwnershipDisplayMode? ownershipDisplayMode,
     bool? timerEnabled,
@@ -96,7 +104,8 @@ class DatasetConfiguration {
       thresholdGood: thresholdGood ?? this.thresholdGood,
       thresholdClose: thresholdClose ?? this.thresholdClose,
       timePerProblemSeconds: timePerProblemSeconds ?? this.timePerProblemSeconds,
-      hideGameInfoBar: hideGameInfoBar ?? this.hideGameInfoBar,
+      // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+      // hideGameInfoBar: hideGameInfoBar ?? this.hideGameInfoBar,
       sequenceLength: sequenceLength ?? this.sequenceLength,
       ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
       timerEnabled: timerEnabled ?? this.timerEnabled,
@@ -113,7 +122,8 @@ class DatasetConfiguration {
       'thresholdGood': thresholdGood,
       'thresholdClose': thresholdClose,
       'timePerProblemSeconds': timePerProblemSeconds,
-      'hideGameInfoBar': hideGameInfoBar,
+      // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+      // 'hideGameInfoBar': hideGameInfoBar,
       'sequenceLength': sequenceLength,
       'ownershipDisplayMode': ownershipDisplayMode.name,
       'timerEnabled': timerEnabled,
@@ -139,7 +149,8 @@ class DatasetConfiguration {
       thresholdGood: (json['thresholdGood'] as num?)?.toDouble() ?? 0.0,
       thresholdClose: (json['thresholdClose'] as num?)?.toDouble() ?? 0.0,
       timePerProblemSeconds: json['timePerProblemSeconds'] as int? ?? 30,
-      hideGameInfoBar: json['hideGameInfoBar'] as bool? ?? false,
+      // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
+      // hideGameInfoBar: json['hideGameInfoBar'] as bool? ?? false,
       sequenceLength: json['sequenceLength'] as int? ?? 0,
       ownershipDisplayMode: ownershipDisplayMode,
       timerEnabled: json['timerEnabled'] as bool? ?? true,

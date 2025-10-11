@@ -20,14 +20,15 @@ class TrainingPosition {
   final int? whiteTerritory;
   final String? ultimateStonesBase64;
 
-  // Captured stones and komi (required fields)
-  final int blackCaptured;
-  final int whiteCaptured;
+  // REMOVED: Captured stones - prisoners are always equal, no need to track them
+  // final int blackCaptured;
+  // final int whiteCaptured;
   final double komi;
 
   // Final position generator fields (optional)
-  final int? ultimateBlackCaptured;
-  final int? ultimateWhiteCaptured;
+  // REMOVED: Ultimate captured stones - prisoners are always equal
+  // final int? ultimateBlackCaptured;
+  // final int? ultimateWhiteCaptured;
   final bool? additionalWhiteMove;
 
   const TrainingPosition({
@@ -42,11 +43,13 @@ class TrainingPosition {
     this.blackTerritory,
     this.whiteTerritory,
     this.ultimateStonesBase64,
-    required this.blackCaptured,
-    required this.whiteCaptured,
+    // REMOVED: Captured stones - prisoners are always equal
+    // required this.blackCaptured,
+    // required this.whiteCaptured,
     required this.komi,
-    this.ultimateBlackCaptured,
-    this.ultimateWhiteCaptured,
+    // REMOVED: Ultimate captured stones - prisoners are always equal
+    // this.ultimateBlackCaptured,
+    // this.ultimateWhiteCaptured,
     this.additionalWhiteMove,
   });
 
@@ -66,11 +69,13 @@ class TrainingPosition {
       blackTerritory: parsed['black_territory'] as int?,
       whiteTerritory: parsed['white_territory'] as int?,
       ultimateStonesBase64: parsed['ultimate_stones'] as String?,
-      blackCaptured: parsed['black_captured'] as int,
-      whiteCaptured: parsed['white_captured'] as int,
+      // REMOVED: Captured stones - prisoners are always equal
+      // blackCaptured: parsed['black_captured'] as int,
+      // whiteCaptured: parsed['white_captured'] as int,
       komi: parsed['komi'] as double,
-      ultimateBlackCaptured: parsed['ultimate_black_captured'] as int?,
-      ultimateWhiteCaptured: parsed['ultimate_white_captured'] as int?,
+      // REMOVED: Ultimate captured stones - prisoners are always equal
+      // ultimateBlackCaptured: parsed['ultimate_black_captured'] as int?,
+      // ultimateWhiteCaptured: parsed['ultimate_white_captured'] as int?,
       additionalWhiteMove: parsed['additional_white_move'] as bool?,
     );
   }
@@ -145,8 +150,8 @@ class TrainingPosition {
     return GameResultParser.parseMargin(result);
   }
 
-  /// Check if this position has ultimate capture data (final position generators)
-  bool get hasUltimateCaptureData => ultimateBlackCaptured != null && ultimateWhiteCaptured != null;
+  /// REMOVED: Check if this position has ultimate capture data - prisoners are always equal
+  // bool get hasUltimateCaptureData => ultimateBlackCaptured != null && ultimateWhiteCaptured != null;
 
   /// Check if this position supports position type modes (has ultimate stones data)
   bool get supportsPositionTypes => ultimateStonesBase64 != null;
@@ -373,8 +378,9 @@ class DatasetMetadata {
 }
 
 class GameInfo {
-  final int blackCaptured;
-  final int whiteCaptured;
+  // REMOVED: Captured stones - prisoners are always equal, no need to track them
+  // final int blackCaptured;
+  // final int whiteCaptured;
   final double komi;
   final int? lastMoveRow;
   final int? lastMoveCol;
@@ -382,8 +388,9 @@ class GameInfo {
   final BoardDisplay? boardDisplay;
 
   const GameInfo({
-    this.blackCaptured = 0,
-    this.whiteCaptured = 0,
+    // REMOVED: Captured stones - prisoners are always equal
+    // this.blackCaptured = 0,
+    // this.whiteCaptured = 0,
     this.komi = 0.0,
     this.lastMoveRow,
     this.lastMoveCol,
@@ -394,8 +401,9 @@ class GameInfo {
   factory GameInfo.fromJson(Map<String, dynamic> json) {
     final parsed = core.DatasetParser.parseGameInfoToMap(json);
     return GameInfo(
-      blackCaptured: parsed['black_captured'] as int,
-      whiteCaptured: parsed['white_captured'] as int,
+      // REMOVED: Captured stones - prisoners are always equal
+      // blackCaptured: parsed['black_captured'] as int,
+      // whiteCaptured: parsed['white_captured'] as int,
       komi: parsed['komi'] as double,
       lastMoveRow: parsed['last_move_row'] as int?,
       lastMoveCol: parsed['last_move_col'] as int?,

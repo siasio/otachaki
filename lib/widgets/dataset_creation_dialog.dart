@@ -62,7 +62,8 @@ class _DatasetCreationDialogState extends State<DatasetCreationDialog> {
       case DatasetType.midgame19x19:
         return 'Score estimation during gameplay. Develop your reading skills mid-game.';
       case DatasetType.partialPositions:
-        return 'Focus on specific board regions. Train local territory evaluation.';
+        // This should not appear in UI, but handling it for safety
+        return 'Partial board positions (hidden from UI).';
     }
   }
 
@@ -169,7 +170,7 @@ class _DatasetCreationDialogState extends State<DatasetCreationDialog> {
                       border: OutlineInputBorder(),
                       helperText: 'Choose which dataset type to base your custom settings on',
                     ),
-                    items: DatasetType.values.map((type) {
+                    items: DatasetRegistry.getAllDatasetTypes().map((type) {
                       return DropdownMenuItem<DatasetType>(
                         value: type,
                         child: Tooltip(

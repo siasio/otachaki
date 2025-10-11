@@ -24,13 +24,13 @@ class AdaptiveAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (layoutType == LayoutType.horizontal) {
-      return _buildVerticalAppBar(context);
+      return _buildSidebarAppBar(context);
     } else {
-      return _buildHorizontalAppBar(context);
+      return _buildTopAppBar(context);
     }
   }
 
-  Widget _buildHorizontalAppBar(BuildContext context) {
+  Widget _buildTopAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
@@ -52,7 +52,7 @@ class AdaptiveAppBar extends StatelessWidget {
     );
   }
 
-  Widget _buildVerticalAppBar(BuildContext context) {
+  Widget _buildSidebarAppBar(BuildContext context) {
     final theme = Theme.of(context);
     final appBarTheme = theme.appBarTheme;
     final effectiveBackgroundColor = backgroundColor ??
@@ -83,6 +83,25 @@ class AdaptiveAppBar extends StatelessWidget {
               ),
             ),
 
+            // Title in the center (rotated 90 degrees)
+            if (title != null)
+              Expanded(
+                child: Center(
+                  child: RotatedBox(
+                    quarterTurns: 3, // Rotate 90 degrees counterclockwise
+                    child: Text(
+                      title!,
+                      style: TextStyle(
+                        color: effectiveForegroundColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
+
             // Info icon at the bottom
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
@@ -101,12 +120,12 @@ class AdaptiveAppBar extends StatelessWidget {
     );
   }
 
-  /// Returns the height needed for horizontal app bar
+  /// Returns the height needed for top app bar
   static double getHorizontalHeight() {
     return kToolbarHeight;
   }
 
-  /// Returns the width needed for vertical app bar
+  /// Returns the width needed for sidebar app bar
   static double getVerticalWidth() {
     return 72.0;
   }

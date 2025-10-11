@@ -155,6 +155,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
     final config = _configManager!.getConfigurationForDataset(dataset);
 
+    // Ensure the prediction type is compatible with the dataset type
+    final allowedTypes = DatasetRegistry.getAllowedPredictionTypes(dataset.baseDatasetType);
+    final compatibleConfig = allowedTypes.contains(config.predictionType)
+        ? config
+        : config.copyWith(predictionType: allowedTypes.first);
+
     // Temporarily remove listeners to avoid triggering auto-save during loading
     _thresholdGoodController.removeListener(_onDatasetConfigurationChanged);
     _thresholdCloseController.removeListener(_onDatasetConfigurationChanged);
@@ -163,12 +169,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _scoreGranularityController.removeListener(_onDatasetConfigurationChanged);
 
     setState(() {
-      _currentDatasetConfig = config;
-      _thresholdGoodController.text = config.thresholdGood.toString();
-      _thresholdCloseController.text = config.thresholdClose.toString();
-      _timeProblemController.text = config.timePerProblemSeconds.toString();
-      _sequenceLengthController.text = config.sequenceLength.toString();
-      _scoreGranularityController.text = config.scoreGranularity.toString();
+      _currentDatasetConfig = compatibleConfig;
+      _thresholdGoodController.text = compatibleConfig.thresholdGood.toString();
+      _thresholdCloseController.text = compatibleConfig.thresholdClose.toString();
+      _timeProblemController.text = compatibleConfig.timePerProblemSeconds.toString();
+      _sequenceLengthController.text = compatibleConfig.sequenceLength.toString();
+      _scoreGranularityController.text = compatibleConfig.scoreGranularity.toString();
     });
 
 
@@ -178,6 +184,11 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _timeProblemController.addListener(_onDatasetConfigurationChanged);
     _sequenceLengthController.addListener(_onDatasetConfigurationChanged);
     _scoreGranularityController.addListener(_onDatasetConfigurationChanged);
+
+    // Save the corrected configuration if prediction type was incompatible
+    if (compatibleConfig != config) {
+      _autoSaveDatasetConfiguration(compatibleConfig);
+    }
   }
 
   void _onGlobalConfigurationChanged() {
@@ -365,8 +376,19 @@ class _ConfigScreenState extends State<ConfigScreen> {
     return DatasetRegistry.isFinalPositionDataset(_currentDataset!.baseDatasetType);
   }
 
+  /// Check if current dataset type is a midgame dataset
+  bool _isMidgameDataset() {
+    if (_currentDataset == null) return false;
+    return DatasetRegistry.isMiddleGameDataset(_currentDataset!.baseDatasetType);
+  }
+
   /// Get available ownership display modes based on position type
   List<OwnershipDisplayMode> _getAvailableOwnershipModes() {
+    // For midgame datasets, show all ownership modes
+    if (_isMidgameDataset()) {
+      return OwnershipDisplayMode.values;
+    }
+
     if (!_isFinalDataset()) {
       return OwnershipDisplayMode.values;
     }
@@ -469,6 +491,68 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       const SizedBox(height: 16),
 
                       if (_currentDatasetConfig != null) ...[
+                        
+
+                        // Time per Problem with enable checkbox
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _timeProblemController,
+                                enabled: _currentDatasetConfig!.timerEnabled,
+                                decoration: InputDecoration(
+                                  labelText: 'Time per Problem (uncheck to disable)',
+                                  border: const OutlineInputBorder(),
+                                  suffix: const Text('seconds'),
+                                  filled: !_currentDatasetConfig!.timerEnabled,
+                                  fillColor: !_currentDatasetConfig!.timerEnabled ? Colors.grey[100] : null,
+                                ),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 56, // Match the height of the TextFormField
+                              child: Checkbox(
+                                value: _currentDatasetConfig!.timerEnabled,
+                                onChanged: (bool? value) {
+                                  if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                                    final newConfig = _currentDatasetConfig!.copyWith(
+                                      timerEnabled: value,
+                                    );
+                                    _autoSaveDatasetConfiguration(newConfig);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Auto Advance Mode
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<AutoAdvanceMode>(
+                          value: _currentDatasetConfig!.autoAdvanceMode,
+                          decoration: const InputDecoration(
+                            labelText: 'Auto Advance Mode',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: AutoAdvanceMode.values.map((mode) {
+                            return DropdownMenuItem(
+                              value: mode,
+                              child: Text(_getAutoAdvanceModeDisplayName(mode)),
+                            );
+                          }).toList(),
+                          onChanged: (AutoAdvanceMode? newMode) {
+                            if (newMode != null && _currentDatasetConfig != null && _currentDataset != null) {
+                              final newConfig = _currentDatasetConfig!.copyWith(autoAdvanceMode: newMode);
+                              _autoSaveDatasetConfiguration(newConfig);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
                         // Prediction Type
                         DropdownButtonFormField<PredictionType>(
                           value: _currentDatasetConfig!.predictionType,
@@ -543,47 +627,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Time per Problem with enable checkbox
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _timeProblemController,
-                                enabled: _currentDatasetConfig!.timerEnabled,
-                                decoration: InputDecoration(
-                                  labelText: 'Time per Problem (uncheck to disable)',
-                                  border: const OutlineInputBorder(),
-                                  suffix: const Text('seconds'),
-                                  filled: !_currentDatasetConfig!.timerEnabled,
-                                  fillColor: !_currentDatasetConfig!.timerEnabled ? Colors.grey[100] : null,
-                                ),
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              height: 56, // Match the height of the TextFormField
-                              child: Checkbox(
-                                value: _currentDatasetConfig!.timerEnabled,
-                                onChanged: (bool? value) {
-                                  if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
-                                    final newConfig = _currentDatasetConfig!.copyWith(
-                                      timerEnabled: value,
-                                    );
-                                    _autoSaveDatasetConfiguration(newConfig);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Position Type (only for final datasets)
-                        if (_isFinalDataset()) ...[
+                        // Position Type (only for final datasets, not for midgame)
+                        if (_isFinalDataset() && !_isMidgameDataset()) ...[
                           DropdownButtonFormField<PositionType>(
                             value: _currentDatasetConfig!.positionType,
                             decoration: const InputDecoration(
@@ -622,8 +667,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Sequence Length (hide for "with filled neutral points" mode)
-                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
+                        // Sequence Length (show for midgame datasets or final datasets with "before filling neutral points" mode)
+                        if (_isMidgameDataset() || (!_isFinalDataset() || _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints)) ...[
                           TextFormField(
                             controller: _sequenceLengthController,
                             decoration: const InputDecoration(
@@ -639,8 +684,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Show Move Numbers checkbox (only for "Before filling neutral points" mode)
-                          if (_isFinalDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
+                          // Show Move Numbers checkbox (only for final datasets with "Before filling neutral points" mode, not for midgame)
+                          if (_isFinalDataset() && !_isMidgameDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
                             CheckboxListTile(
                               title: const Text('Show Move Numbers'),
                               subtitle: null,
@@ -659,8 +704,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ],
                         ],
 
-                        // Ownership Display Mode (hide for "Before filling neutral points" mode)
-                        if (!_isFinalDataset() || _currentDatasetConfig!.positionType != PositionType.beforeFillingNeutralPoints) ...[
+                        // Ownership Display Mode (show for midgame datasets or final datasets except "Before filling neutral points" mode)
+                        if (_isMidgameDataset() || (!_isFinalDataset() || _currentDatasetConfig!.positionType != PositionType.beforeFillingNeutralPoints)) ...[
                           DropdownButtonFormField<OwnershipDisplayMode>(
                           value: _currentDatasetConfig!.ownershipDisplayMode,
                           decoration: const InputDecoration(
@@ -685,47 +730,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
                         const SizedBox(height: 16),
                         ],
 
-                        // Hide Game Info Bar (hide for final datasets - controlled by position type)
-                        if (!_isFinalDataset()) ...[
-                          CheckboxListTile(
-                            title: const Text('Hide Game Info Bar'),
-                            subtitle: const Text(
-                              'Hide the bar showing captured stones and komi',
-                            ),
-                            value: _currentDatasetConfig!.hideGameInfoBar,
-                            onChanged: (bool? value) {
-                              if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
-                                final newConfig = _currentDatasetConfig!.copyWith(
-                                  hideGameInfoBar: value,
-                                );
-                                _autoSaveDatasetConfiguration(newConfig);
-                              }
-                            },
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ],
-
-                        // Auto Advance Mode
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<AutoAdvanceMode>(
-                          value: _currentDatasetConfig!.autoAdvanceMode,
-                          decoration: const InputDecoration(
-                            labelText: 'Auto Advance Mode',
-                            border: OutlineInputBorder(),
-                          ),
-                          items: AutoAdvanceMode.values.map((mode) {
-                            return DropdownMenuItem(
-                              value: mode,
-                              child: Text(_getAutoAdvanceModeDisplayName(mode)),
-                            );
-                          }).toList(),
-                          onChanged: (AutoAdvanceMode? newMode) {
-                            if (newMode != null && _currentDatasetConfig != null && _currentDataset != null) {
-                              final newConfig = _currentDatasetConfig!.copyWith(autoAdvanceMode: newMode);
-                              _autoSaveDatasetConfiguration(newConfig);
-                            }
-                          },
-                        ),
+                        // REMOVED: Hide Game Info Bar checkbox - GameInfo functionality has been removed
+                        // if (_isMidgameDataset() || !_isFinalDataset()) ...[
+                        //   CheckboxListTile(
+                        //     title: const Text('Hide Game Info Bar'),
+                        //     subtitle: const Text(
+                        //       'Hide the bar showing captured stones and komi',
+                        //     ),
+                        //     value: _currentDatasetConfig!.hideGameInfoBar,
+                        //     onChanged: (bool? value) {
+                        //       if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                        //         final newConfig = _currentDatasetConfig!.copyWith(
+                        //           hideGameInfoBar: value,
+                        //         );
+                        //         _autoSaveDatasetConfiguration(newConfig);
+                        //       }
+                        //     },
+                        //     contentPadding: EdgeInsets.zero,
+                        //   ),
+                        // ],
                       ],
                     ],
                   ),

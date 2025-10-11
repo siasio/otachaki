@@ -1,3 +1,7 @@
+// REMOVED: GameStatusBar - GameInfo functionality has been removed
+// This file is kept for potential future development but all functionality is commented out
+
+/*
 import 'package:flutter/material.dart';
 import '../models/training_position.dart';
 import '../models/app_skin.dart';
@@ -126,3 +130,4 @@ class GameStatusBar extends StatelessWidget {
     );
   }
 }
+*/
