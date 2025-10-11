@@ -3,6 +3,7 @@ import '../services/statistics_manager.dart';
 import '../services/custom_dataset_manager.dart';
 import '../models/daily_statistics.dart';
 import '../models/custom_dataset.dart';
+import '../utils/rich_text_formatter.dart';
 import './detailed_statistics_screen.dart';
 
 class InfoScreen extends StatefulWidget {
@@ -245,6 +246,11 @@ class _InfoScreenState extends State<InfoScreen> {
                       'Written by ClaudeCode. '
                       'Inspiration taken from antonTobi: https://count.antontobi.com/',
                       style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    RichTextFormatter.format(
+                      '*Otachaki* (Polish: *otaczaki*) is a non-existent Polish word which means \'the surrounding game\', or \'the game of Go\'.',
+                      style: const TextStyle(color: Colors.grey),
                     ),
                   ],
                 ),

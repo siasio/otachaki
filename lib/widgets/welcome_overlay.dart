@@ -3,6 +3,7 @@ import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
+import '../utils/rich_text_formatter.dart';
 
 class WelcomeOverlay extends StatefulWidget {
   final VoidCallback onDismiss;
@@ -203,7 +204,7 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
       _WelcomeItem(
         icon: Icons.psychology_outlined,
         title: 'Get Started!',
-        description: 'Komi = 7.0, equal prisoners. Both area and territory scoring works!',
+        description: '**Komi = 7.0, equal prisoners**. Both area and territory scoring works!',
       ),
       _WelcomeItem(
         icon: Icons.tune_outlined,
@@ -269,7 +270,14 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
                   ),
                 ),
                 const SizedBox(height: 4),
-                _buildDescription(item.description, textStyle),
+                RichTextFormatter.format(
+                  item.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textStyle.color?.withOpacity(0.8),
+                    height: 1.3,
+                  ),
+                ),
               ],
             ),
           ),
@@ -278,47 +286,6 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
     );
   }
 
-  Widget _buildDescription(String description, dynamic textStyle) {
-    // Parse the description to handle **bold** formatting
-    final List<TextSpan> spans = [];
-    final RegExp boldPattern = RegExp(r'\*\*(.*?)\*\*');
-    int lastMatchEnd = 0;
-
-    for (final match in boldPattern.allMatches(description)) {
-      // Add normal text before the match
-      if (match.start > lastMatchEnd) {
-        spans.add(TextSpan(
-          text: description.substring(lastMatchEnd, match.start),
-        ));
-      }
-
-      // Add bold text
-      spans.add(TextSpan(
-        text: match.group(1)!,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ));
-
-      lastMatchEnd = match.end;
-    }
-
-    // Add remaining normal text
-    if (lastMatchEnd < description.length) {
-      spans.add(TextSpan(
-        text: description.substring(lastMatchEnd),
-      ));
-    }
-
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: 14,
-          color: textStyle.color?.withOpacity(0.8),
-          height: 1.3,
-        ),
-        children: spans,
-      ),
-    );
-  }
 
   Widget _buildButtons(dynamic buttonStyle, dynamic textStyle) {
     return Column(
