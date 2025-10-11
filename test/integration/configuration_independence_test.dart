@@ -4,17 +4,17 @@ import '../../lib/models/custom_dataset.dart';
 import '../../lib/models/dataset_type.dart';
 import '../../lib/models/dataset_configuration.dart';
 import '../../lib/services/custom_dataset_manager.dart';
-import '../../lib/services/enhanced_configuration_manager.dart';
+import '../../lib/services/configuration_manager.dart';
 
 void main() {
   group('Configuration Independence Tests', () {
     late CustomDatasetManager datasetManager;
-    late EnhancedConfigurationManager configManager;
+    late ConfigurationManager configManager;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       datasetManager = await CustomDatasetManager.getInstance();
-      configManager = await EnhancedConfigurationManager.getInstance();
+      configManager = await ConfigurationManager.getInstance();
     });
 
     testWidgets('Custom and built-in datasets have independent configurations', (tester) async {

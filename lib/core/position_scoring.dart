@@ -1,6 +1,5 @@
 import '../models/training_position.dart';
 import '../models/position_type.dart';
-import '../models/dataset_type.dart';
 
 /// Helper class for calculating scores and results based on position type
 class PositionScoring {
@@ -67,90 +66,4 @@ class PositionScoring {
     return whiteTerritory + adjustment;
   }
 
-  /// Generate Black's scoring text for feedback display
-  static String generateBlackScoringText(TrainingPosition position, PositionType positionType, {DatasetType? datasetType}) {
-    // Special handling for midgame datasets
-    if (datasetType == DatasetType.midgame19x19) {
-      final effectiveScore = calculateEffectiveScore(position, positionType);
-      if (effectiveScore == 0.0) {
-        return 'Even game';
-      } else if (effectiveScore > 0) {
-        // Black is ahead
-        return scoreToResult(effectiveScore);
-      } else {
-        // White is ahead, Black is behind
-        return 'Black\'s behind';
-      }
-    }
-
-    switch (positionType) {
-      case PositionType.withFilledNeutralPoints:
-        // "Black: {blackTerritory}"
-        final territory = position.blackTerritory ?? 0;
-        return 'Black: ${formatScore(territory.toDouble())}';
-
-      case PositionType.beforeFillingNeutralPoints:
-        // REMOVED: Prisoner logic - prisoners are always equal, so no need to show captured stones
-        // "Black: {blackTerritory}"
-        final blackTerritory = position.blackTerritory ?? 0;
-        // final whiteCaptured = position.whiteCaptured;
-        // final ultimateWhiteCaptured = position.ultimateWhiteCaptured ?? whiteCaptured;
-        // final territoryPart = blackTerritory + (ultimateWhiteCaptured - whiteCaptured);
-        // final total = blackTerritory + ultimateWhiteCaptured;
-        // return 'Black: ${formatScore(territoryPart.toDouble())} + ${formatScore(whiteCaptured.toDouble())} = ${formatScore(total.toDouble())}';
-        return 'Black: ${formatScore(blackTerritory.toDouble())}';
-    }
-  }
-
-  /// Generate White's scoring text for feedback display
-  static String generateWhiteScoringText(TrainingPosition position, PositionType positionType, {DatasetType? datasetType}) {
-    // Special handling for midgame datasets
-    if (datasetType == DatasetType.midgame19x19) {
-      final effectiveScore = calculateEffectiveScore(position, positionType);
-      if (effectiveScore == 0.0) {
-        return 'Even game';
-      } else if (effectiveScore < 0) {
-        // White is ahead
-        return scoreToResult(effectiveScore);
-      } else {
-        // Black is ahead, White is behind
-        return 'White\'s behind';
-      }
-    }
-
-    switch (positionType) {
-      case PositionType.withFilledNeutralPoints:
-        // "White: {whiteTerritory} + {komi} = {whiteTerritory + komi}"
-        final territory = position.whiteTerritory ?? 0;
-        final komi = position.komi;
-        final total = territory + komi;
-
-        return 'White: ${formatScore(territory.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
-
-      case PositionType.beforeFillingNeutralPoints:
-        // REMOVED: Prisoner logic - prisoners are always equal, so no need to show captured stones
-        final whiteTerritory = position.whiteTerritory ?? 0;
-        // final blackCaptured = position.blackCaptured;
-        // final ultimateBlackCaptured = position.ultimateBlackCaptured ?? blackCaptured;
-        final komi = position.komi;
-
-        // Apply additional white move adjustment if needed
-        int adjustment = 0;
-        if (position.additionalWhiteMove == true) {
-          adjustment = 1;
-        }
-
-        // final territoryPart = whiteTerritory + (ultimateBlackCaptured - blackCaptured) + adjustment;
-        // final total = whiteTerritory + ultimateBlackCaptured + adjustment + komi;
-        // return 'White: ${formatScore(territoryPart.toDouble())} + ${formatScore(blackCaptured.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
-
-        if (adjustment > 0) {
-          final total = whiteTerritory + adjustment + komi;
-          return 'White: ${formatScore(whiteTerritory.toDouble())} + ${formatScore(adjustment.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
-        } else {
-          final total = whiteTerritory + komi;
-          return 'White: ${formatScore(whiteTerritory.toDouble())} + ${formatScore(komi)} = ${formatScore(total)}';
-        }
-    }
-  }
 }

@@ -7,7 +7,7 @@ import '../models/dataset_configuration.dart';
 import '../models/position_type.dart';
 import '../services/position_manager.dart';
 import '../services/position_loader.dart';
-import '../services/enhanced_configuration_manager.dart';
+import '../services/configuration_manager.dart';
 import '../services/custom_dataset_manager.dart';
 import '../models/custom_dataset.dart';
 import '../models/dataset_registry.dart';
@@ -78,7 +78,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   PositionedScoreOptions? _currentScoreOptions;
   RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
   final FocusNode _focusNode = FocusNode();
-  EnhancedConfigurationManager? _configManager;
+  ConfigurationManager? _configManager;
   CustomDatasetManager? _datasetManager;
   CustomDataset? _currentDataset;
   DatasetConfiguration? _currentConfig;
@@ -102,7 +102,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _initializeConfiguration() async {
     try {
-      _configManager = await EnhancedConfigurationManager.getInstance();
+      _configManager = await ConfigurationManager.getInstance();
       _datasetManager = await CustomDatasetManager.getInstance();
 
       // Load the currently selected dataset

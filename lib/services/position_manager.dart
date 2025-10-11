@@ -4,7 +4,7 @@ import '../models/training_position.dart';
 import '../models/position_type.dart';
 import 'position_loader.dart';
 import 'dataset_preference_manager.dart';
-import 'enhanced_configuration_manager.dart';
+import 'configuration_manager.dart';
 import 'custom_dataset_manager.dart';
 import '../models/custom_dataset.dart';
 import '../models/dataset_registry.dart';
@@ -39,7 +39,7 @@ class PositionManager {
         return PositionType.withFilledNeutralPoints;
       }
 
-      final configManager = await EnhancedConfigurationManager.getInstance();
+      final configManager = await ConfigurationManager.getInstance();
       final config = configManager.getConfigurationForDataset(_currentCustomDataset!);
       return config.positionType;
     } catch (e) {
@@ -62,7 +62,7 @@ class PositionManager {
         throw StateError('No custom dataset selected');
       }
 
-      final configManager = await EnhancedConfigurationManager.getInstance();
+      final configManager = await ConfigurationManager.getInstance();
       final config = configManager.getConfigurationForDataset(_currentCustomDataset!);
       final positionType = config.positionType;
       final sequenceLength = config.sequenceLength;

@@ -5,17 +5,17 @@ import '../../lib/models/dataset_type.dart';
 import '../../lib/models/dataset_configuration.dart';
 import '../../lib/models/auto_advance_mode.dart';
 import '../../lib/services/custom_dataset_manager.dart';
-import '../../lib/services/enhanced_configuration_manager.dart';
+import '../../lib/services/configuration_manager.dart';
 
 void main() {
   group('Auto-Advance Dataset Independence Tests', () {
     late CustomDatasetManager datasetManager;
-    late EnhancedConfigurationManager configManager;
+    late ConfigurationManager configManager;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       datasetManager = await CustomDatasetManager.getInstance();
-      configManager = await EnhancedConfigurationManager.getInstance();
+      configManager = await ConfigurationManager.getInstance();
     });
 
     testWidgets('Different custom datasets can have different auto-advance modes', (tester) async {
@@ -111,7 +111,7 @@ void main() {
       await configManager.setConfigurationForDataset(customDataset, modifiedConfig);
 
       // Simulate app restart by creating new manager instances
-      final newConfigManager = await EnhancedConfigurationManager.getInstance();
+      final newConfigManager = await ConfigurationManager.getInstance();
       final newDatasetManager = await CustomDatasetManager.getInstance();
 
       // Get the dataset again

@@ -7,7 +7,7 @@ import '../models/position_type.dart';
 import '../models/dataset_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
-import '../core/game_result_parser.dart';
+import '../core/result_text_service.dart';
 
 class ScoreDisplayButtons extends StatelessWidget {
   final String resultString;
@@ -271,69 +271,18 @@ class ScoreDisplayButtons extends StatelessWidget {
 
   @visibleForTesting
   ScoreInfo parseScoreInfo(String result) {
-    // If we have complete position and type data, use the proper scoring text
-    if (trainingPosition != null && positionType != null) {
-      final blackText = trainingPosition!.getBlackScoringText(positionType!, datasetType: datasetType);
-      final whiteText = trainingPosition!.getWhiteScoringText(positionType!, datasetType: datasetType);
-      return ScoreInfo(whiteScore: whiteText, blackScore: blackText);
-    }
-
-    // Fallback: if we have territory data, use the legacy format
-    if (blackTerritory != null && whiteTerritory != null) {
-      final blackText = "Black's territory: $blackTerritory points";
-
-      String whiteText;
-      if (komi != null) {
-        // Check if komi is a whole number to avoid .0 display
-        final komiDisplay = komi! == komi!.roundToDouble() ? komi!.round().toString() : komi.toString();
-        final whiteTotal = whiteTerritory! + komi!;
-        final whiteTotalDisplay = whiteTotal == whiteTotal.roundToDouble() ? whiteTotal.round().toString() : whiteTotal.toString();
-        whiteText = "White's territory: $whiteTerritory + $komiDisplay = $whiteTotalDisplay points";
-      } else {
-        whiteText = "White's territory: $whiteTerritory points";
-      }
-
-      return ScoreInfo(whiteScore: whiteText, blackScore: blackText);
-    }
-
-    // Fallback to old format if no territory data is available
-    if (result.isEmpty) {
-      return ScoreInfo(whiteScore: 'W: ?', blackScore: 'B: ?');
-    }
-
-    final winner = GameResultParser.parseWinner(result);
-
-    if (winner == 'Draw') {
-      return ScoreInfo(whiteScore: 'Draw', blackScore: 'Draw');
-    }
-
-    if (result.startsWith('W+')) {
-      final points = result.substring(2);
-      return ScoreInfo(
-        whiteScore: 'W+$points',
-        blackScore: 'B loses',
-      );
-    } else if (result.startsWith('B+')) {
-      final points = result.substring(2);
-      return ScoreInfo(
-        whiteScore: 'W loses',
-        blackScore: 'B+$points',
-      );
-    }
-
-    return ScoreInfo(whiteScore: 'W: ?', blackScore: 'B: ?');
+    return ResultTextService.generateScoreInfo(
+      result,
+      trainingPosition: trainingPosition,
+      positionType: positionType,
+      datasetType: datasetType,
+      blackTerritory: blackTerritory,
+      whiteTerritory: whiteTerritory,
+      komi: komi,
+    );
   }
 }
 
-class ScoreInfo {
-  final String whiteScore;
-  final String blackScore;
-
-  ScoreInfo({
-    required this.whiteScore,
-    required this.blackScore,
-  });
-}
 
 class DashedBorderPainter extends CustomPainter {
   final Color color;

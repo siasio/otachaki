@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dataset_type.dart';
+import '../core/result_text_service.dart';
 
 enum ButtonType { whiteWins, draw, blackWins }
 
@@ -68,23 +69,19 @@ class GameResultOption {
   ) {
     final absScore = actualScore.abs();
 
-    String formatThreshold(double value) {
-      return value == value.roundToDouble() ? value.toInt().toString() : value.toStringAsFixed(1);
-    }
-
     return [
       GameResultOption(
-        displayText: 'White >${formatThreshold(thresholdGood)}',
+        displayText: 'White >${ResultTextService.formatThreshold(thresholdGood)}',
         buttonType: ButtonType.whiteWins,
         isCorrect: actualScore < 0 && absScore > thresholdGood,
       ),
       GameResultOption(
-        displayText: 'Close ±${formatThreshold(thresholdClose)}',
+        displayText: 'Close ±${ResultTextService.formatThreshold(thresholdClose)}',
         buttonType: ButtonType.draw,
         isCorrect: absScore <= thresholdClose,
       ),
       GameResultOption(
-        displayText: 'Black >${formatThreshold(thresholdGood)}',
+        displayText: 'Black >${ResultTextService.formatThreshold(thresholdGood)}',
         buttonType: ButtonType.blackWins,
         isCorrect: actualScore > 0 && absScore > thresholdGood,
       ),

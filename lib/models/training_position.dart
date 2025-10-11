@@ -2,6 +2,7 @@ import '../core/dataset_parser.dart' as core;
 import '../core/go_logic.dart';
 import '../core/game_result_parser.dart';
 import '../core/position_scoring.dart';
+import '../core/result_text_service.dart';
 import 'dataset_type.dart';
 import 'position_type.dart';
 import 'board_view_mode.dart';
@@ -187,12 +188,12 @@ class TrainingPosition {
 
   /// Get Black's scoring text for feedback display
   String getBlackScoringText(PositionType positionType, {DatasetType? datasetType}) {
-    return PositionScoring.generateBlackScoringText(this, positionType, datasetType: datasetType);
+    return ResultTextService.generateBlackText(this, positionType, datasetType: datasetType);
   }
 
   /// Get White's scoring text for feedback display
   String getWhiteScoringText(PositionType positionType, {DatasetType? datasetType}) {
-    return PositionScoring.generateWhiteScoringText(this, positionType, datasetType: datasetType);
+    return ResultTextService.generateWhiteText(this, positionType, datasetType: datasetType);
   }
 
   /// Check if game info should be shown based on position type

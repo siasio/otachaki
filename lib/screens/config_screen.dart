@@ -13,7 +13,7 @@ import '../models/prediction_type.dart';
 import '../models/position_type.dart';
 import '../models/dataset_registry.dart';
 import '../models/game_stage.dart';
-import '../services/enhanced_configuration_manager.dart';
+import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/custom_dataset_manager.dart';
 import '../widgets/streamlined_dataset_selector.dart';
@@ -27,7 +27,7 @@ class ConfigScreen extends StatefulWidget {
 }
 
 class _ConfigScreenState extends State<ConfigScreen> {
-  EnhancedConfigurationManager? _configManager;
+  ConfigurationManager? _configManager;
   GlobalConfigurationManager? _globalConfigManager;
   DatasetConfiguration? _currentDatasetConfig;
   GlobalConfiguration? _globalConfig;
@@ -88,7 +88,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   Future<void> _loadManagers() async {
     try {
-      _configManager = await EnhancedConfigurationManager.getInstance();
+      _configManager = await ConfigurationManager.getInstance();
       _globalConfigManager = await GlobalConfigurationManager.getInstance();
       _globalConfig = _globalConfigManager!.getConfiguration();
       _markDisplayController.text = _globalConfig!.markDisplayTimeSeconds.toString();
