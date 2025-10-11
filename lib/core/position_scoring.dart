@@ -1,5 +1,6 @@
 import '../models/training_position.dart';
 import '../models/position_type.dart';
+import '../models/dataset_type.dart';
 
 /// Helper class for calculating scores and results based on position type
 class PositionScoring {
@@ -67,7 +68,21 @@ class PositionScoring {
   }
 
   /// Generate Black's scoring text for feedback display
-  static String generateBlackScoringText(TrainingPosition position, PositionType positionType) {
+  static String generateBlackScoringText(TrainingPosition position, PositionType positionType, {DatasetType? datasetType}) {
+    // Special handling for midgame datasets
+    if (datasetType == DatasetType.midgame19x19) {
+      final effectiveScore = calculateEffectiveScore(position, positionType);
+      if (effectiveScore == 0.0) {
+        return 'Even game';
+      } else if (effectiveScore > 0) {
+        // Black is ahead
+        return scoreToResult(effectiveScore);
+      } else {
+        // White is ahead, Black is behind
+        return 'Black\'s behind';
+      }
+    }
+
     switch (positionType) {
       case PositionType.withFilledNeutralPoints:
         // "Black: {blackTerritory}"
@@ -88,7 +103,21 @@ class PositionScoring {
   }
 
   /// Generate White's scoring text for feedback display
-  static String generateWhiteScoringText(TrainingPosition position, PositionType positionType) {
+  static String generateWhiteScoringText(TrainingPosition position, PositionType positionType, {DatasetType? datasetType}) {
+    // Special handling for midgame datasets
+    if (datasetType == DatasetType.midgame19x19) {
+      final effectiveScore = calculateEffectiveScore(position, positionType);
+      if (effectiveScore == 0.0) {
+        return 'Even game';
+      } else if (effectiveScore < 0) {
+        // White is ahead
+        return scoreToResult(effectiveScore);
+      } else {
+        // Black is ahead, White is behind
+        return 'White\'s behind';
+      }
+    }
+
     switch (positionType) {
       case PositionType.withFilledNeutralPoints:
         // "White: {whiteTerritory} + {komi} = {whiteTerritory + komi}"

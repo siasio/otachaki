@@ -186,13 +186,13 @@ class TrainingPosition {
   }
 
   /// Get Black's scoring text for feedback display
-  String getBlackScoringText(PositionType positionType) {
-    return PositionScoring.generateBlackScoringText(this, positionType);
+  String getBlackScoringText(PositionType positionType, {DatasetType? datasetType}) {
+    return PositionScoring.generateBlackScoringText(this, positionType, datasetType: datasetType);
   }
 
   /// Get White's scoring text for feedback display
-  String getWhiteScoringText(PositionType positionType) {
-    return PositionScoring.generateWhiteScoringText(this, positionType);
+  String getWhiteScoringText(PositionType positionType, {DatasetType? datasetType}) {
+    return PositionScoring.generateWhiteScoringText(this, positionType, datasetType: datasetType);
   }
 
   /// Check if game info should be shown based on position type

@@ -271,36 +271,10 @@ class ScoreDisplayButtons extends StatelessWidget {
 
   @visibleForTesting
   ScoreInfo parseScoreInfo(String result) {
-    // Special handling for midgame datasets - show result/behind instead of territory
-    if (datasetType == DatasetType.midgame19x19) {
-      if (result.isEmpty) {
-        return ScoreInfo(whiteScore: 'Even game', blackScore: 'Even game');
-      }
-
-      final score = GameResultParser.parseScoreDifference(result);
-      if (score == 0.0) {
-        return ScoreInfo(whiteScore: 'Even game', blackScore: 'Even game');
-      }
-
-      if (score > 0) {
-        // Black is ahead
-        return ScoreInfo(
-          whiteScore: 'White\'s behind',
-          blackScore: result,
-        );
-      } else {
-        // White is ahead
-        return ScoreInfo(
-          whiteScore: result,
-          blackScore: 'Black\'s behind',
-        );
-      }
-    }
-
     // If we have complete position and type data, use the proper scoring text
     if (trainingPosition != null && positionType != null) {
-      final blackText = trainingPosition!.getBlackScoringText(positionType!);
-      final whiteText = trainingPosition!.getWhiteScoringText(positionType!);
+      final blackText = trainingPosition!.getBlackScoringText(positionType!, datasetType: datasetType);
+      final whiteText = trainingPosition!.getWhiteScoringText(positionType!, datasetType: datasetType);
       return ScoreInfo(whiteScore: whiteText, blackScore: blackText);
     }
 

@@ -607,6 +607,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         komi: currentTrainingPosition?.komi,
         trainingPosition: currentTrainingPosition,
         positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
+        datasetType: _positionManager.currentCustomDataset?.baseDatasetType,
       );
     } else {
       final isEnabled = ((_timerRunning || !(_currentConfig?.timerEnabled ?? true)) && !_hasAnswered && !_showWelcomeOverlay);

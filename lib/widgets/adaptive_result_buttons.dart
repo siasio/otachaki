@@ -123,6 +123,7 @@ class AdaptiveResultButtons extends StatelessWidget {
     double? komi,
     TrainingPosition? trainingPosition,
     PositionType? positionType,
+    DatasetType? datasetType,
   }) {
     return AdaptiveResultButtons(
       resultString: resultString,
@@ -136,6 +137,7 @@ class AdaptiveResultButtons extends StatelessWidget {
       komi: komi,
       trainingPosition: trainingPosition,
       positionType: positionType,
+      datasetType: datasetType,
     );
   }
 

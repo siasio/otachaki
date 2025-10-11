@@ -1,8 +1,6 @@
 import '../models/custom_dataset.dart';
-import '../models/daily_statistics.dart';
 import '../models/dataset_type.dart';
 import '../services/statistics_manager.dart';
-import '../services/custom_dataset_manager.dart';
 
 /// Service for substituting dynamic values in custom title strings
 class TitleSubstitutionService {

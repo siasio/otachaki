@@ -26,6 +26,9 @@ class PositionManager {
   /// Get the current dataset
   TrainingDataset? get currentDataset => _currentDataset;
 
+  /// Get the current custom dataset
+  CustomDataset? get currentCustomDataset => _currentCustomDataset;
+
   /// Check if currently loading a position
   bool get isLoading => _isLoading;
 

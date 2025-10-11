@@ -9,7 +9,7 @@ class DatasetTypeInfo {
   /// Display name shown in base type dropdown (e.g., "9x9 final positions")
   final String baseDisplayName;
 
-  /// Name of the pre-defined built-in dataset (e.g., "GoQuest Arena (9x9)")
+  /// Name of the pre-defined built-in dataset (e.g., "Pocket Quest (9x9)")
   final String builtInDatasetName;
 
   /// JSON file path for this dataset type
@@ -49,7 +49,7 @@ class DatasetRegistry {
     DatasetType.final9x9: DatasetTypeInfo(
       type: DatasetType.final9x9,
       baseDisplayName: '9x9 final positions',
-      builtInDatasetName: 'GoQuest Arena (9x9)',
+      builtInDatasetName: 'Pocket Quest (9x9)',
       jsonFilePath: 'final_9x9_katago.json',
       allowedPredictionTypes: [
         PredictionType.exactScorePrediction,

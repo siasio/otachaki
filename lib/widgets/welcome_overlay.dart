@@ -214,7 +214,7 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
       _WelcomeItem(
         icon: Icons.dataset_outlined,
         title: 'Explore Different Datasets',
-        description: 'Quick excercises with **GoQuest Arena** (9x9); real-life challenges with **Overtime Rush** (19x19); and more!',
+        description: 'Quick excercises with **Pocket Quest** (9x9); real-life challenges with **Overtime Rush** (19x19); and more!',
       ),
       _WelcomeItem(
         icon: Icons.analytics_outlined,

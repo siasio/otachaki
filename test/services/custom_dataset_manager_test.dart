@@ -28,7 +28,7 @@ void main() {
       final final9x9 = allDatasets.firstWhere(
         (d) => d.baseDatasetType == DatasetType.final9x9
       );
-      expect(final9x9.name, 'GoQuest Arena (9x9)');
+      expect(final9x9.name, 'Pocket Quest (9x9)');
       expect(final9x9.id, 'default_final-9x9');
     });
 
