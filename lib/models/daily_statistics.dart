@@ -66,6 +66,9 @@ class DailyDatasetStatistics {
 
   /// Calculate average points per second (speed) for positions with territory data
   double get averagePointsPerSecond {
+    // Midgame datasets don't have meaningful territory/speed data
+    if (datasetType == DatasetType.midgame19x19) return 0.0;
+
     final speedAttempts = attempts.where((a) => a.pointsPerSecond != null).toList();
     if (speedAttempts.isEmpty) return 0.0;
 

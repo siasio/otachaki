@@ -22,6 +22,7 @@ class GoBoard extends StatelessWidget {
   final OwnershipDisplayMode ownershipDisplayMode;
   final PositionType positionType;
   final bool showMoveNumbers;
+  final bool isSequenceLengthDefined;
 
   const GoBoard({
     super.key,
@@ -35,6 +36,7 @@ class GoBoard extends StatelessWidget {
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.positionType = PositionType.withFilledNeutralPoints,
     this.showMoveNumbers = true,
+    this.isSequenceLengthDefined = false,
   });
 
   @override
@@ -58,6 +60,7 @@ class GoBoard extends StatelessWidget {
             ownershipDisplayMode,
             positionType,
             showMoveNumbers,
+            isSequenceLengthDefined,
           ),
           size: Size.infinite,
         ),
@@ -76,6 +79,7 @@ class GoBoardPainter extends CustomPainter {
   final OwnershipDisplayMode ownershipDisplayMode;
   final PositionType positionType;
   final bool showMoveNumbers;
+  final bool isSequenceLengthDefined;
 
   GoBoardPainter(
     this.position,
@@ -87,6 +91,7 @@ class GoBoardPainter extends CustomPainter {
     this.ownershipDisplayMode,
     this.positionType,
     this.showMoveNumbers,
+    this.isSequenceLengthDefined,
   );
 
   @override
@@ -143,9 +148,9 @@ class GoBoardPainter extends CustomPainter {
         ? trainingPosition!.extractMoveSequenceWithType(sequenceLength, positionType, showMoveNumbers, viewMode)
         : [];
 
-    // Get last move before sequence for marker (using position-type-aware method)
+    // Get last move before sequence for marker (using unified defined/undefined logic)
     final Position? lastMovePosition = trainingPosition != null
-        ? trainingPosition!.getLastMoveBeforeSequenceWithType(sequenceLength, positionType)
+        ? trainingPosition!.getTriangleMarkerPosition(sequenceLength, isSequenceLengthDefined)
         : null;
 
     // Create a set of sequence positions for quick lookup
@@ -251,27 +256,8 @@ class GoBoardPainter extends CustomPainter {
             );
           }
 
-          // Draw last move marker (triangle) - either from game_info or sequence logic
-          // In review view, don't show last move marker when sequence length > 0 (move numbers are shown)
-          bool shouldDrawLastMoveMarker = false;
-          if (viewMode == BoardViewMode.problem) {
-            // Always show in problem view
-            if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col) {
-              shouldDrawLastMoveMarker = true; // From sequence logic
-            } else if (sequenceLength == 0 &&
-                       trainingPosition?.gameInfo?.lastMoveRow == row &&
-                       trainingPosition?.gameInfo?.lastMoveCol == col) {
-              shouldDrawLastMoveMarker = true; // From game_info (when no sequence)
-            }
-          } else if (viewMode == BoardViewMode.review && sequenceLength == 0) {
-            // Only show in review view when no sequence is displayed
-            if (trainingPosition?.gameInfo?.lastMoveRow == row &&
-                trainingPosition?.gameInfo?.lastMoveCol == col) {
-              shouldDrawLastMoveMarker = true; // From game_info (when no sequence)
-            }
-          }
-
-          if (shouldDrawLastMoveMarker) {
+          // Draw last move marker (triangle) using unified sequence length logic
+          if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col) {
             _drawLastMoveMarker(canvas, x, y, stoneRadius, stone);
           }
 
@@ -673,6 +659,7 @@ class GoBoardPainter extends CustomPainter {
            oldDelegate.viewMode != viewMode ||
            oldDelegate.ownershipDisplayMode != ownershipDisplayMode ||
            oldDelegate.positionType != positionType ||
-           oldDelegate.showMoveNumbers != showMoveNumbers;
+           oldDelegate.showMoveNumbers != showMoveNumbers ||
+           oldDelegate.isSequenceLengthDefined != isSequenceLengthDefined;
   }
 }

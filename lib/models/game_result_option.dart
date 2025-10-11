@@ -19,11 +19,18 @@ class GameResultOption {
   static List<GameResultOption> generateOptions(
     DatasetType datasetType,
     double actualScore,
-    String resultString,
-  ) {
+    String resultString, {
+    double? thresholdGood,
+    double? thresholdClose,
+  }) {
     switch (datasetType) {
       case DatasetType.midgame19x19:
-        return _generateMidgameOptions(actualScore);
+        // Use config thresholds for midgame, fallback to defaults
+        return generateRoughLeadOptions(
+          actualScore,
+          thresholdGood ?? 1.5,
+          thresholdClose ?? 4.0,
+        );
 
       case DatasetType.final9x9:
       case DatasetType.final13x13:
@@ -61,44 +68,29 @@ class GameResultOption {
   ) {
     final absScore = actualScore.abs();
 
+    String formatThreshold(double value) {
+      return value == value.roundToDouble() ? value.toInt().toString() : value.toStringAsFixed(1);
+    }
+
     return [
       GameResultOption(
-        displayText: 'White',
+        displayText: 'White >${formatThreshold(thresholdGood)}',
         buttonType: ButtonType.whiteWins,
         isCorrect: actualScore < 0 && absScore > thresholdGood,
       ),
       GameResultOption(
-        displayText: 'Close',
+        displayText: 'Close ±${formatThreshold(thresholdClose)}',
         buttonType: ButtonType.draw,
         isCorrect: absScore <= thresholdClose,
       ),
       GameResultOption(
-        displayText: 'Black',
+        displayText: 'Black >${formatThreshold(thresholdGood)}',
         buttonType: ButtonType.blackWins,
         isCorrect: actualScore > 0 && absScore > thresholdGood,
       ),
     ];
   }
 
-  static List<GameResultOption> _generateMidgameOptions(double actualScore) {
-    return [
-      GameResultOption(
-        displayText: 'White',
-        buttonType: ButtonType.whiteWins,
-        isCorrect: actualScore < -1.5,
-      ),
-      GameResultOption(
-        displayText: 'Close',
-        buttonType: ButtonType.draw,
-        isCorrect: actualScore >= -4.0 && actualScore <= 4.0,
-      ),
-      GameResultOption(
-        displayText: 'Black',
-        buttonType: ButtonType.blackWins,
-        isCorrect: actualScore > 1.5,
-      ),
-    ];
-  }
 
   static List<GameResultOption> _generateFinalOptions(
     double actualScore,

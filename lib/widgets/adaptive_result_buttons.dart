@@ -40,6 +40,8 @@ class AdaptiveResultButtons extends StatelessWidget {
   final double? komi;
   final TrainingPosition? trainingPosition;
   final PositionType? positionType;
+  final double? thresholdGood;
+  final double? thresholdClose;
 
   const AdaptiveResultButtons({
     super.key,
@@ -62,6 +64,8 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.komi,
     this.trainingPosition,
     this.positionType,
+    this.thresholdGood,
+    this.thresholdClose,
   });
 
   factory AdaptiveResultButtons.forChoices({
@@ -74,6 +78,8 @@ class AdaptiveResultButtons extends StatelessWidget {
     RoughLeadPredictionState? roughLeadPredictionState,
     AppSkin appSkin = AppSkin.classic,
     LayoutType layoutType = LayoutType.vertical,
+    double? thresholdGood,
+    double? thresholdClose,
   }) {
     return AdaptiveResultButtons(
       datasetType: datasetType,
@@ -86,6 +92,8 @@ class AdaptiveResultButtons extends StatelessWidget {
       appSkin: appSkin,
       layoutType: layoutType,
       displayMode: ButtonDisplayMode.choices,
+      thresholdGood: thresholdGood,
+      thresholdClose: thresholdClose,
     );
   }
 
@@ -167,6 +175,8 @@ class AdaptiveResultButtons extends StatelessWidget {
         onResultSelected: onResultOptionSelected!,
         appSkin: appSkin,
         layoutType: layoutType,
+        thresholdGood: thresholdGood,
+        thresholdClose: thresholdClose,
       );
     } else if (onResultSelected != null) {
       return ResultButtons(
@@ -192,6 +202,7 @@ class AdaptiveResultButtons extends StatelessWidget {
         komi: komi,
         trainingPosition: trainingPosition,
         positionType: positionType,
+        datasetType: datasetType,
       );
     } else {
       return Container();

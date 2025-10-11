@@ -13,6 +13,8 @@ class ContextAwareResultButtons extends StatelessWidget {
   final Function(GameResultOption) onResultSelected;
   final AppSkin appSkin;
   final LayoutType layoutType;
+  final double? thresholdGood;
+  final double? thresholdClose;
 
   const ContextAwareResultButtons({
     super.key,
@@ -22,6 +24,8 @@ class ContextAwareResultButtons extends StatelessWidget {
     required this.onResultSelected,
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
+    this.thresholdGood,
+    this.thresholdClose,
   });
 
   @override
@@ -30,6 +34,8 @@ class ContextAwareResultButtons extends StatelessWidget {
       datasetType,
       actualScore,
       resultString,
+      thresholdGood: thresholdGood,
+      thresholdClose: thresholdClose,
     );
 
     if (layoutType == LayoutType.horizontal) {

@@ -1,5 +1,6 @@
 import '../models/custom_dataset.dart';
 import '../models/daily_statistics.dart';
+import '../models/dataset_type.dart';
 import '../services/statistics_manager.dart';
 import '../services/custom_dataset_manager.dart';
 
@@ -36,21 +37,31 @@ class TitleSubstitutionService {
       result = result.replaceAll('%n', datasetStats.totalAttempts.toString());
 
       // %a - today's accuracy percentage
-      result = result.replaceAll('%a', '${datasetStats.accuracyPercentage.toStringAsFixed(1)}%');
+      result = result.replaceAll('%a', '${datasetStats.accuracyPercentage.round()}%');
 
       // %t - today's average time per problem
-      result = result.replaceAll('%t', '${datasetStats.averageTimeSeconds.toStringAsFixed(1)}s');
+      final formattedTime = datasetStats.averageTimeSeconds >= 4
+          ? datasetStats.averageTimeSeconds.round().toString()
+          : datasetStats.averageTimeSeconds.toStringAsFixed(1);
+      result = result.replaceAll('%t', '${formattedTime}s');
 
       // %s - today's average points/second speed
-      // if (datasetStats.hasSpeedData) {
-      result = result.replaceAll('%s', '${datasetStats.averagePointsPerSecond.toStringAsFixed(1)} pts/s');
+      // For midgame datasets, speed doesn't make sense (no territory counting)
+      if (currentDataset.baseDatasetType == DatasetType.midgame19x19) {
+        result = result.replaceAll('%s', 'N/A');
+      } else {
+        final formattedSpeed = datasetStats.averagePointsPerSecond >= 4
+            ? datasetStats.averagePointsPerSecond.round().toString()
+            : datasetStats.averagePointsPerSecond.toStringAsFixed(1);
+        result = result.replaceAll('%s', '$formattedSpeed pts/s');
+      }
       // } else {
       //   result = result.replaceAll('%s', 'N/A');
       // }
     } else {
       // No statistics for today - use default values
       result = result.replaceAll('%n', '0');
-      result = result.replaceAll('%a', '0.0%');
+      result = result.replaceAll('%a', '0%');
       result = result.replaceAll('%t', '0.0s');
       result = result.replaceAll('%s', 'N/A');
     }

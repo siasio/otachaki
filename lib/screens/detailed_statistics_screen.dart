@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../models/daily_statistics.dart';
 import '../models/custom_dataset.dart';
+import '../models/dataset_type.dart';
 import '../services/statistics_manager.dart';
 
 class DetailedStatisticsScreen extends StatefulWidget {
@@ -102,8 +103,11 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                       _buildAccuracyChart(),
                       const SizedBox(height: 24),
                       _buildAverageTimeChart(),
-                      const SizedBox(height: 24),
-                      _buildSpeedChart(),
+                      // Hide speed chart for midgame datasets
+                      if (widget.dataset.baseDatasetType != DatasetType.midgame19x19) ...[
+                        const SizedBox(height: 24),
+                        _buildSpeedChart(),
+                      ],
                       const SizedBox(height: 24),
                     ],
                   ),
@@ -200,13 +204,15 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
                     Icons.timer_outlined,
                   ),
                 ),
-                Expanded(
-                  child: _buildSummaryItem(
-                    'Avg Speed',
-                    '${overallAvgSpeed.toStringAsFixed(1)} pts/s',
-                    Icons.speed_outlined,
+                // Hide speed information for midgame datasets
+                if (widget.dataset.baseDatasetType != DatasetType.midgame19x19)
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Avg Speed',
+                      '${overallAvgSpeed.toStringAsFixed(1)} pts/s',
+                      Icons.speed_outlined,
+                    ),
                   ),
-                ),
               ],
             ),
           ],

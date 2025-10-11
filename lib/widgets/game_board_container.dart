@@ -26,6 +26,7 @@ class GameBoardContainer extends StatefulWidget {
   final OwnershipDisplayMode ownershipDisplayMode;
   final PositionType positionType;
   final bool showMoveNumbers;
+  final bool isSequenceLengthDefined;
 
   const GameBoardContainer({
     super.key,
@@ -41,6 +42,7 @@ class GameBoardContainer extends StatefulWidget {
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.positionType = PositionType.withFilledNeutralPoints,
     this.showMoveNumbers = true,
+    this.isSequenceLengthDefined = false,
   });
 
   @override
@@ -88,8 +90,11 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                           layoutType: widget.layoutType,
                           sequenceLength: widget.sequenceLength,
                           sequenceDisplayMode: widget.sequenceDisplayMode,
+                          viewMode: widget.viewMode,
+                          ownershipDisplayMode: widget.ownershipDisplayMode,
                           positionType: widget.positionType,
                           showMoveNumbers: widget.showMoveNumbers,
+                          isSequenceLengthDefined: widget.isSequenceLengthDefined,
                         ),
                       )
                     : GoBoard(
@@ -103,6 +108,7 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                         ownershipDisplayMode: widget.ownershipDisplayMode,
                         positionType: widget.positionType,
                         showMoveNumbers: widget.showMoveNumbers,
+                        isSequenceLengthDefined: widget.isSequenceLengthDefined,
                       ),
                 // Overlay for feedback widget only (no background color)
                 if (widget.showFeedbackOverlay && widget.feedbackWidget != null)

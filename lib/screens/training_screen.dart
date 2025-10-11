@@ -228,6 +228,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _positionManager.currentDataset!.metadata.datasetType,
           ScoringConfig.parseScore(effectiveResult),
           effectiveResult,
+          thresholdGood: _currentConfig?.thresholdGood,
+          thresholdClose: _currentConfig?.thresholdClose,
         );
 
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft && options.isNotEmpty) {
@@ -645,6 +647,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
           onResultOptionSelected: isEnabled ? _onResultOptionSelected : (_) {},
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+          thresholdGood: _currentConfig?.thresholdGood,
+          thresholdClose: _currentConfig?.thresholdClose,
         );
       } else {
         return AdaptiveResultButtons.forChoices(
@@ -1036,6 +1040,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
     return _currentConfig?.sequenceLength ?? 0;
   }
 
+  /// Determine if sequence length controls are defined/available for the current dataset
+  bool get _isSequenceLengthDefined {
+    if (_currentDataset == null || _currentConfig == null) {
+      return false;
+    }
+
+    final datasetType = _currentDataset!.baseDatasetType;
+    final positionType = _currentConfig!.positionType;
+
+    // Sequence length is defined when:
+    // 1. It's a midgame dataset, OR
+    // 2. It's not a final dataset, OR
+    // 3. It's a final dataset with "before filling neutral points" position type
+    return DatasetRegistry.isMiddleGameDataset(datasetType) ||
+           !DatasetRegistry.isFinalPositionDataset(datasetType) ||
+           positionType == PositionType.beforeFillingNeutralPoints;
+  }
+
   /// Determine the sequence display mode based on view mode
   SequenceDisplayMode get _currentSequenceDisplayMode {
     if (_currentSequenceLength <= 0) {
@@ -1209,6 +1231,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           ownershipDisplayMode: _currentOwnershipDisplayMode,
                           positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
                           showMoveNumbers: _shouldShowMoveNumbers,
+                          isSequenceLengthDefined: _isSequenceLengthDefined,
                           feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                         ),
                         buttons: _buildButtons(),
@@ -1278,6 +1301,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     ownershipDisplayMode: _currentOwnershipDisplayMode,
                     positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
                     showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
+                    isSequenceLengthDefined: _isSequenceLengthDefined,
                     feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
                   ),
                   buttons: _buildButtons(),

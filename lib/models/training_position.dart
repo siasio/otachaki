@@ -209,23 +209,17 @@ class TrainingPosition {
   ///
   /// Parameters:
   /// - sequenceLength: Number of moves to show in sequence
-  /// - positionType: The position type mode (affects special behavior for "Before filling neutral points")
+  /// - positionType: The position type mode (used for backward compatibility)
   /// - showMoveNumbers: Whether to show move numbers (only affects problem view)
   /// - viewMode: The current board view mode (problem vs review/feedback)
   ///
-  /// Special behavior for "Before filling neutral points" mode with sequenceLength 0:
-  /// - Returns empty list (no sequence moves) so the last move can be shown as a triangle marker
+  /// Key logic: Returns the last sequenceLength moves as numbered sequence
   List<MoveSequenceData> extractMoveSequenceWithType(int sequenceLength, PositionType positionType, bool showMoveNumbers, BoardViewMode viewMode) {
     if (movesBase64 == null) {
       return [];
     }
 
-    // For "Before filling neutral points" mode with sequence length 0:
-    // Don't return any sequence moves - let the last move marker triangle handle it
-    if (positionType == PositionType.beforeFillingNeutralPoints && sequenceLength == 0) {
-      return [];
-    }
-
+    // Show sequence moves when sequenceLength > 0
     if (sequenceLength <= 0) {
       return [];
     }
@@ -253,16 +247,19 @@ class TrainingPosition {
 
   /// Get position of last move before sequence with position type logic
   ///
-  /// Special behavior for "Before filling neutral points" mode with sequenceLength 0:
-  /// - Returns the actual last move position to show the triangle marker
+  /// Key logic: Returns the triangle marker position at (sequenceLength + 1) from the end
+  /// The caller is responsible for determining if sequence length is defined/available
   Position? getLastMoveBeforeSequenceWithType(int sequenceLength, PositionType positionType) {
     if (movesBase64 == null) {
       return null;
     }
 
-    // For "Before filling neutral points" mode with sequence length 0:
-    // Return the last move position to show the triangle marker
-    if (positionType == PositionType.beforeFillingNeutralPoints && sequenceLength == 0) {
+    if (sequenceLength < 0) {
+      return null;
+    }
+
+    if (sequenceLength == 0) {
+      // Triangle at position 1 from end (the last move)
       if (numberOfMoves > 0) {
         final lastMoves = GoLogic.extractRecentMoves(
           movesBase64!,
@@ -277,16 +274,26 @@ class TrainingPosition {
       return null;
     }
 
-    if (sequenceLength <= 0) {
-      return null;
-    }
-
+    // Triangle at position (sequenceLength + 1) from end
     return GoLogic.findLastMoveBeforeSequence(
       movesBase64!,
       boardSize,
       numberOfMoves,
       sequenceLength,
     );
+  }
+
+  /// Get position of last move for triangle marker when sequence length is defined
+  ///
+  /// Parameters:
+  /// - sequenceLength: The sequence length value (0 or positive)
+  /// - isSequenceLengthDefined: Whether sequence length controls are available for this dataset/position type
+  Position? getTriangleMarkerPosition(int sequenceLength, bool isSequenceLengthDefined) {
+    if (movesBase64 == null || !isSequenceLengthDefined) {
+      return null;
+    }
+
+    return getLastMoveBeforeSequenceWithType(sequenceLength, PositionType.beforeFillingNeutralPoints);
   }
 
   /// Extract recent move sequence for display

@@ -4,6 +4,7 @@ import '../models/app_skin.dart';
 import '../models/layout_type.dart';
 import '../models/training_position.dart';
 import '../models/position_type.dart';
+import '../models/dataset_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../core/game_result_parser.dart';
@@ -19,6 +20,7 @@ class ScoreDisplayButtons extends StatelessWidget {
   final double? komi;
   final TrainingPosition? trainingPosition;
   final PositionType? positionType;
+  final DatasetType? datasetType;
 
   const ScoreDisplayButtons({
     super.key,
@@ -32,6 +34,7 @@ class ScoreDisplayButtons extends StatelessWidget {
     this.komi,
     this.trainingPosition,
     this.positionType,
+    this.datasetType,
   });
 
   @override
@@ -268,6 +271,32 @@ class ScoreDisplayButtons extends StatelessWidget {
 
   @visibleForTesting
   ScoreInfo parseScoreInfo(String result) {
+    // Special handling for midgame datasets - show result/behind instead of territory
+    if (datasetType == DatasetType.midgame19x19) {
+      if (result.isEmpty) {
+        return ScoreInfo(whiteScore: 'Even game', blackScore: 'Even game');
+      }
+
+      final score = GameResultParser.parseScoreDifference(result);
+      if (score == 0.0) {
+        return ScoreInfo(whiteScore: 'Even game', blackScore: 'Even game');
+      }
+
+      if (score > 0) {
+        // Black is ahead
+        return ScoreInfo(
+          whiteScore: 'White\'s behind',
+          blackScore: result,
+        );
+      } else {
+        // White is ahead
+        return ScoreInfo(
+          whiteScore: result,
+          blackScore: 'Black\'s behind',
+        );
+      }
+    }
+
     // If we have complete position and type data, use the proper scoring text
     if (trainingPosition != null && positionType != null) {
       final blackText = trainingPosition!.getBlackScoringText(positionType!);

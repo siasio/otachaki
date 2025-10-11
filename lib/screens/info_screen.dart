@@ -3,6 +3,7 @@ import '../services/statistics_manager.dart';
 import '../services/custom_dataset_manager.dart';
 import '../models/daily_statistics.dart';
 import '../models/custom_dataset.dart';
+import '../models/dataset_type.dart';
 import '../utils/rich_text_formatter.dart';
 import './detailed_statistics_screen.dart';
 
@@ -370,16 +371,15 @@ class _InfoScreenState extends State<InfoScreen> {
                   Icons.timer_outlined,
                 ),
               ),
-              Expanded(
-                child: _buildMiniStat(
-                  'Avg Speed',
-                  // stats.hasSpeedData
-                  //     ? '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s'
-                  //     : 'N/A',
-                  '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s',
-                  Icons.speed_outlined,
+              // Hide speed information for midgame datasets
+              if (dataset.baseDatasetType != DatasetType.midgame19x19)
+                Expanded(
+                  child: _buildMiniStat(
+                    'Avg Speed',
+                    '${stats.averagePointsPerSecond.toStringAsFixed(1)} pts/s',
+                    Icons.speed_outlined,
+                  ),
                 ),
-              ),
             ],
           ),
         ],
