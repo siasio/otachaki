@@ -1,11 +1,11 @@
 {
-    "name": "Go Territory Trainer",
-    "short_name": "Go Trainer",
+    "name": "Otachaki",
+    "short_name": "Otachaki",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#8B4513",
     "theme_color": "#8B4513",
-    "description": "Go territory counting training app for improving your Go skills",
+    "description": "Otachaki - Go position evaluation training app",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

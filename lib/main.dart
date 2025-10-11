@@ -13,7 +13,7 @@ void main() async {
 
   // Configure logger based on build mode
   LoggerService.setDebugMode(kDebugMode);
-  LoggerService.info('Starting Go Position Evaluation App', context: 'Application');
+  LoggerService.info('Starting Otachaki', context: 'Application');
 
   ThemeEnforcement.initialize();
   await PositionManager.initialize();
@@ -61,7 +61,7 @@ class _GoCountingAppState extends State<GoCountingApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Go Position Evaluation App',
+      title: 'Otachaki',
       theme: AppTheme.getTheme(_currentSkin),
       home: TrainingScreen(onConfigurationChanged: _onConfigurationChanged),
       debugShowCheckedModeBanner: false,

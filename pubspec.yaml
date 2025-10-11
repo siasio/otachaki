@@ -1,5 +1,5 @@
-name: countingapp
-description: A Go territory counting training app
+name: otachaki
+description: Otachaki - Go position evaluation training app
 
 version: 1.0.0+1
 
