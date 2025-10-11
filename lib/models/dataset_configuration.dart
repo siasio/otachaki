@@ -3,6 +3,7 @@ import 'ownership_display_mode.dart';
 import 'prediction_type.dart';
 import 'position_type.dart';
 import 'auto_advance_mode.dart';
+import 'game_stage.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
@@ -18,6 +19,7 @@ class DatasetConfiguration {
   final PositionType positionType;
   final bool showMoveNumbers;
   final AutoAdvanceMode autoAdvanceMode;
+  final GameStage gameStage;
 
   const DatasetConfiguration({
     required this.thresholdGood,
@@ -33,6 +35,7 @@ class DatasetConfiguration {
     this.positionType = PositionType.withFilledNeutralPoints,
     this.showMoveNumbers = true,
     this.autoAdvanceMode = AutoAdvanceMode.always,
+    this.gameStage = GameStage.all,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
@@ -99,6 +102,7 @@ class DatasetConfiguration {
     PositionType? positionType,
     bool? showMoveNumbers,
     AutoAdvanceMode? autoAdvanceMode,
+    GameStage? gameStage,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
@@ -114,6 +118,7 @@ class DatasetConfiguration {
       positionType: positionType ?? this.positionType,
       showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
       autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
+      gameStage: gameStage ?? this.gameStage,
     );
   }
 
@@ -132,6 +137,7 @@ class DatasetConfiguration {
       'positionType': positionType.value,
       'showMoveNumbers': showMoveNumbers,
       'autoAdvanceMode': autoAdvanceMode.value,
+      'gameStage': gameStage.value,
     };
   }
 
@@ -159,6 +165,7 @@ class DatasetConfiguration {
       positionType: PositionType.fromString(json['positionType'] as String?) ?? PositionType.withFilledNeutralPoints,
       showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
       autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
+      gameStage: GameStage.fromString(json['gameStage'] as String?),
     );
   }
 

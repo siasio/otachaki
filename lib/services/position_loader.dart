@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/training_position.dart';
+import '../models/game_stage.dart';
 import '../core/dataset_parser.dart' as parser;
 import 'logger_service.dart';
 
@@ -147,6 +148,66 @@ class PositionLoader {
     return validPositions[randomIndex];
   }
 
+  /// Get a random position filtered by game stage (for midgame datasets)
+  static Future<TrainingPosition> getRandomPositionByGameStage(GameStage gameStage, {int sequenceLength = 0}) async {
+    final dataset = await loadDataset();
+
+    // Get the move numbers for this game stage
+    final targetMoveNumbers = gameStage.moveNumbers;
+
+
+    List<TrainingPosition> validPositions;
+
+    if (targetMoveNumbers == null) {
+      // GameStage.all - use all positions, but still filter by sequence length if needed
+      validPositions = dataset.positions.where((position) =>
+          position.hasEnoughMovesForSequence(sequenceLength)).toList();
+    } else {
+      // Filter by specific move numbers and sequence length
+      validPositions = dataset.positions.where((position) {
+        final moveNumber = position.moveNumber;
+        final hasValidMoveNumber = moveNumber != null && targetMoveNumbers.contains(moveNumber);
+        final hasEnoughMoves = position.hasEnoughMovesForSequence(sequenceLength);
+
+
+        return hasValidMoveNumber && hasEnoughMoves;
+      }).toList();
+    }
+
+    if (validPositions.isEmpty) {
+      final totalForStage = targetMoveNumbers != null
+        ? dataset.positions.where((p) => targetMoveNumbers.contains(p.moveNumber)).length
+        : dataset.positions.length;
+
+      LoggerService.warning('No positions found for game stage ${gameStage.displayName} '
+        'with at least ${sequenceLength + 1} moves (found $totalForStage positions for this stage, '
+        'but none have enough recorded moves for sequence length $sequenceLength). '
+        'Consider reducing sequence length or selecting a different game stage. '
+        'Falling back to any random position.', context: 'PositionLoader');
+
+      // Debug: Show distribution of numberOfMoves for this stage when no valid positions found
+      if (targetMoveNumbers != null) {
+        final moveCountDistribution = <int, int>{};
+        for (final position in dataset.positions) {
+          if (targetMoveNumbers.contains(position.moveNumber)) {
+            final count = position.numberOfMoves;
+            moveCountDistribution[count] = (moveCountDistribution[count] ?? 0) + 1;
+          }
+        }
+        LoggerService.debug('numberOfMoves distribution for ${gameStage.displayName}: $moveCountDistribution',
+          context: 'PositionLoader');
+      }
+      // Fallback to any random position if no valid positions found
+      final randomIndex = _random.nextInt(dataset.positions.length);
+      return dataset.positions[randomIndex];
+    }
+
+    final randomIndex = _random.nextInt(validPositions.length);
+    LoggerService.debug('Selected position for game stage ${gameStage.displayName}: '
+      'move ${validPositions[randomIndex].moveNumber}, ${validPositions.length} total options',
+      context: 'PositionLoader');
+    return validPositions[randomIndex];
+  }
 
   /// Get dataset statistics
   static Future<Map<String, dynamic>> getStatistics() async {

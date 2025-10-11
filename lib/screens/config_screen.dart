@@ -12,6 +12,7 @@ import '../models/ownership_display_mode.dart';
 import '../models/prediction_type.dart';
 import '../models/position_type.dart';
 import '../models/dataset_registry.dart';
+import '../models/game_stage.dart';
 import '../services/enhanced_configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/custom_dataset_manager.dart';
@@ -728,6 +729,30 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
+                        ],
+
+                        // Game Stage (only for midgame datasets)
+                        if (_isMidgameDataset()) ...[
+                          DropdownButtonFormField<GameStage>(
+                            value: _currentDatasetConfig!.gameStage,
+                            decoration: const InputDecoration(
+                              labelText: 'Game Stage',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: GameStage.values.map((stage) {
+                              return DropdownMenuItem<GameStage>(
+                                value: stage,
+                                child: Text(stage.displayName),
+                              );
+                            }).toList(),
+                            onChanged: (GameStage? newStage) {
+                              if (newStage != null && _currentDatasetConfig != null && _currentDataset != null) {
+                                final newConfig = _currentDatasetConfig!.copyWith(gameStage: newStage);
+                                _autoSaveDatasetConfiguration(newConfig);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 16),
                         ],
 
                         // REMOVED: Hide Game Info Bar checkbox - GameInfo functionality has been removed

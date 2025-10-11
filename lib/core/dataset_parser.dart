@@ -79,6 +79,7 @@ class DatasetParser {
       // 'ultimate_black_captured': json['ultimate-black-captured'] as int?,
       // 'ultimate_white_captured': json['ultimate-white-captured'] as int?,
       'additional_white_move': json['additional-white-move'] as bool?,
+      'move_number': json['move_number'] as int?,
     };
   }
 

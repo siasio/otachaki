@@ -30,6 +30,7 @@ class TrainingPosition {
   // final int? ultimateBlackCaptured;
   // final int? ultimateWhiteCaptured;
   final bool? additionalWhiteMove;
+  final int? moveNumber;
 
   const TrainingPosition({
     required this.id,
@@ -51,6 +52,7 @@ class TrainingPosition {
     // this.ultimateBlackCaptured,
     // this.ultimateWhiteCaptured,
     this.additionalWhiteMove,
+    this.moveNumber,
   });
 
   factory TrainingPosition.fromJson(Map<String, dynamic> json) {
@@ -77,6 +79,7 @@ class TrainingPosition {
       // ultimateBlackCaptured: parsed['ultimate_black_captured'] as int?,
       // ultimateWhiteCaptured: parsed['ultimate_white_captured'] as int?,
       additionalWhiteMove: parsed['additional_white_move'] as bool?,
+      moveNumber: parsed['move_number'] as int?,
     );
   }
 

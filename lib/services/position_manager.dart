@@ -7,6 +7,7 @@ import 'dataset_preference_manager.dart';
 import 'enhanced_configuration_manager.dart';
 import 'custom_dataset_manager.dart';
 import '../models/custom_dataset.dart';
+import '../models/dataset_registry.dart';
 import 'logger_service.dart';
 
 class PositionManager {
@@ -63,8 +64,17 @@ class PositionManager {
       final positionType = config.positionType;
       final sequenceLength = config.sequenceLength;
 
-      // Get a random position with enough moves for the sequence length
-      _currentTrainingPosition = await PositionLoader.getRandomPositionWithMinMoves(sequenceLength);
+      // Check if this is a midgame dataset to use game stage filtering
+      final isMidgameDataset = DatasetRegistry.isMiddleGameDataset(_currentCustomDataset!.baseDatasetType);
+
+      if (isMidgameDataset) {
+        // For midgame datasets, use game stage filtering
+        final gameStage = config.gameStage;
+        _currentTrainingPosition = await PositionLoader.getRandomPositionByGameStage(gameStage, sequenceLength: sequenceLength);
+      } else {
+        // For other datasets, use the existing logic
+        _currentTrainingPosition = await PositionLoader.getRandomPositionWithMinMoves(sequenceLength);
+      }
 
       // Create GoPosition with appropriate position type
       _currentPosition = GoPosition.fromTrainingPositionWithType(_currentTrainingPosition!, positionType);
