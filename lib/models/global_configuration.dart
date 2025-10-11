@@ -29,7 +29,7 @@ class GlobalConfiguration {
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.showMoveNumbers = true,
     this.showWelcomeScreen = true,
-    this.customTitle = 'Go Position Training',
+    this.customTitle = 'Otachaki - %d',
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(

@@ -84,7 +84,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   GlobalConfiguration? _globalConfig;
   StatisticsManager? _statisticsManager;
   DateTime? _problemStartTime;
-  String _dynamicTitle = 'Go Position Training';
+  String _dynamicTitle = 'Otachaki';
 
   @override
   void initState() {
@@ -317,7 +317,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
         scoreOptions = PositionedScoreOptions.generate(
           actualScoreString: effectiveResult,
-          scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
+          scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
         );
       }
 
@@ -615,7 +615,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
           final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
           _currentScoreOptions = PositionedScoreOptions.generate(
             actualScoreString: effectiveResult,
-            scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
+            scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
           );
         }
 
@@ -684,7 +684,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         final effectiveResult = _positionManager.currentTrainingPosition!.getResult(positionType);
         scoreOptions = PositionedScoreOptions.generate(
           actualScoreString: effectiveResult,
-          scoreGranularity: _currentConfig?.scoreGranularity ?? 1,
+          scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
         );
       }
 

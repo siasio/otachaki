@@ -85,23 +85,22 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
-                      'Final 19x19 Positions',
-                      'Komi = 7 points. '
-                      'Positions are picked so that both area and territory scoring give the same result. '
-                      'Practice until you can count the score within 30s (typical byo-yomi period)!',
+                      'Positions before filling neutral points',
+                      'Komi and numbers of prisoners are displayed. '
+                      'Use territory scoring. ',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'Midgame 19x19 Estimation',
                       'Positions at move 150. '
-                      'Komi and number of prisoners are shown. '
+                      'Komi and number of prisoners are displayed. '
                       'Train your quick middle game judgment!',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'In preparation:',
-                      'Datasets with variations shown by numbers (train like MuZero!). '
-                      'Dataset of board patches (train your area scoring skills!).',
+                      'Dataset of board patches (train your area scoring skills!). '
+                      'I think that if I publish this app, it won\'t have this feature... But I want to try it for myself.',
                     ),
                   ],
                 ),
@@ -118,10 +117,10 @@ class _InfoScreenState extends State<InfoScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.help_outline, size: 20),
+                        const Icon(Icons.settings, size: 20),
                         const SizedBox(width: 8),
                         const Text(
-                          'How to Use the App',
+                          'Configuration options',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -131,39 +130,53 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      '🎯 App Functionality',
+                      '🎯 Task Types',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• View Go positions from actual games and predict the winner\n'
-                      '• Choose from different datasets (9x9, 13x13, 19x19 final positions, 19x19 midgame, partial board)\n'
-                      '• Get immediate feedback on your predictions and track your accuracy with built-in scoring',
+                      '• By default, you choose the winner (Black/White) or Draw\n'
+                      '• Exact score prediction: The app shows three scores (e.g. W+10, W+2, B+6) and you choose the correct one\n'
+                      '• Rough lead prediction: Who is leading? Or is the position close? Choose thresholds on your own',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      '⌨️ Keyboard Shortcuts',
+                      '⏱️ Timing & Flow',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• ← Left Arrow: Select White Wins\n'
-                      '• ↓ Down Arrow: Select Draw/Close\n'
-                      '• → Right Arrow: Select Black Wins\n'
-                      '• ␣ Space Bar: Pause Auto-Advance to Next Problem',
+                      '• To solve a problem, press buttons, or use keyboard arrows (←, ↓, →)\n'
+                      '• Even when you have "Auto-advance to next problem" set, you can use the pause button (or ␣ Space Bar) to review the problem\n'
+                      '• Adjust time per problem, or disable the timer\n'
+                      '• Custom title bar: Use placeholders (%d dataset, %n problems, %a accuracy, ...)',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      '⚙️ Configuration Options',
+                      '🎨 Visual Appearance',
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• Use the gear icon in the training screen to access settings\n'
-                      '• Customize timer settings and scoring thresholds (especially useful for midgame dataset) for each dataset type\n'
-                      '• Choose from different themes and layouts. Horizontal layout is specifically designed for tablets. On e-ink devices, use the e-ink theme and segmented timer',
+                      '• Choose from different color themes. Use E-ink Minimalist for an e-ink device\n'
+                      '• Choose layout: Vertical (phones, PC) or Horizontal (tablets)\n'
+                      '• Ownership display: get visual feedback during problem review',
+                      // '• Timer styles: Smooth progress bar or segmented bar',
+                      style: TextStyle(color: Colors.grey[700], height: 1.4),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '📱 Position Display',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• Move sequences: Show recent moves as numbered sequence to train your visualization skill\n'
+                      '• ...or don\'t show the sequence at all and try to imagine it on your own',
+                      // '• Game info: Toggle captured stones and komi display\n'
+                      // '• Last move marker: Configurable display duration',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                   ],
@@ -249,7 +262,7 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 8),
                     RichTextFormatter.format(
-                      '*Otachaki* (Polish: *otaczaki*) is a non-existent Polish word which means \'the surrounding game\', or \'the game of Go\'.',
+                      '*Otachaki* (Polish: *otaczaki*) is a non-existent Polish word which means *The Surrounding Game*, or *The Game of Go*.',
                       style: const TextStyle(color: Colors.grey),
                     ),
                   ],

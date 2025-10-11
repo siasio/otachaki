@@ -177,7 +177,7 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome to Go Position Training!',
+                'Welcome to Otachaki!',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -186,7 +186,7 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
               ),
               const SizedBox(height: 4),
               Text(
-                'Let\'s get you started with the basics',
+                'an app to train point counting and judgment',
                 style: TextStyle(
                   fontSize: 16,
                   color: textStyle.color?.withOpacity(0.7),
