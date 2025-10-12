@@ -350,7 +350,7 @@ class _InfoScreenState extends State<InfoScreen> {
               TextButton.icon(
                 icon: const Icon(Icons.analytics_outlined, size: 18),
                 label: const Text(
-                  'View detailed statistics',
+                  'See progress',
                   style: TextStyle(fontSize: 12),
                 ),
                 onPressed: () => _navigateToDetailedStats(dataset),
