@@ -28,7 +28,7 @@ class ResultTextService {
         return PositionScoring.scoreToResult(effectiveScore);
       } else {
         // White is ahead, Black is behind
-        return 'Black\'s behind';
+        return ''; //Black\'s behind';
       }
     }
 
@@ -55,7 +55,7 @@ class ResultTextService {
         return PositionScoring.scoreToResult(effectiveScore);
       } else {
         // Black is ahead, White is behind
-        return 'White\'s behind';
+        return ''; //White\'s behind';
       }
     }
 
