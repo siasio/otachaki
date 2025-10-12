@@ -11,7 +11,7 @@ void main() {
       expect(config.thresholdClose, 0.0);
       expect(config.timePerProblemSeconds, 20);
       expect(config.predictionType.value, 'winner_prediction');
-      expect(config.positionType.value, 'with_filled_neutral_points');
+      expect(config.positionType.value, 'with-filled-neutral-points');
       expect(config.ownershipDisplayMode.name, 'squares');
       expect(config.autoAdvanceMode.value, 'on_correct_only');
     });
