@@ -146,7 +146,7 @@ void main() {
         ),
         ProblemAttempt(
           datasetType: DatasetType.final19x19,
-          datasetId: 'default_final-19x19',
+          datasetId: 'builtin_final-19x19',
           isCorrect: false,
           timeSpentMs: 8000,
           timestamp: DateTime(2024, 1, 15, 11, 45),

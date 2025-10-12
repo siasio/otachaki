@@ -45,6 +45,8 @@ class CustomDatasetManager {
       await _performMigration();
     } else {
       await _loadDatasets();
+      // Check if we need to migrate default_ IDs to builtin_ format
+      await _migrateDefaultIdsToBuiltinFormat();
     }
 
     await _loadSelectedDataset();
@@ -65,14 +67,49 @@ class CustomDatasetManager {
     // Step 2: Load any existing custom datasets
     await _loadLegacyCustomDatasets();
 
-    // Step 3: Save the unified dataset list
+    // Step 3: Migrate old default_ IDs to builtin_ format
+    await _migrateDefaultIdsToBuiltinFormat();
+
+    // Step 4: Save the unified dataset list
     await _saveDatasets();
 
-    // Step 4: Mark migration as completed
+    // Step 5: Mark migration as completed
     await _prefs!.setBool(_migrationCompletedKey, true);
 
     LoggerService.info('Dataset migration completed. Total datasets: ${_datasets.length}',
         context: 'CustomDatasetManager');
+  }
+
+  /// Migrate old default_ IDs to builtin_ format for consistency with ConfigurationManager
+  Future<void> _migrateDefaultIdsToBuiltinFormat() async {
+    bool migrationNeeded = false;
+    final List<CustomDataset> migratedDatasets = [];
+
+    for (final dataset in _datasets) {
+      if (dataset.id.startsWith('default_')) {
+        final newId = dataset.id.replaceFirst('default_', 'builtin_');
+        final migratedDataset = dataset.copyWith(id: newId);
+        migratedDatasets.add(migratedDataset);
+        migrationNeeded = true;
+        LoggerService.info('Migrated dataset ID from ${dataset.id} to $newId',
+            context: 'CustomDatasetManager');
+      } else {
+        migratedDatasets.add(dataset);
+      }
+    }
+
+    if (migrationNeeded) {
+      _datasets.clear();
+      _datasets.addAll(migratedDatasets);
+
+      // Also update selected dataset ID if it was using old format
+      if (_selectedDatasetId != null && _selectedDatasetId!.startsWith('default_')) {
+        _selectedDatasetId = _selectedDatasetId!.replaceFirst('default_', 'builtin_');
+        await _saveSelectedDataset();
+      }
+
+      LoggerService.info('Dataset ID migration completed', context: 'CustomDatasetManager');
+    }
   }
 
   /// Create default datasets for all registered types
@@ -81,7 +118,7 @@ class CustomDatasetManager {
       final defaultDataset = CustomDataset.defaultFor(
         datasetType: datasetType,
         name: DatasetRegistry.getBuiltInDatasetName(datasetType),
-        customId: 'default_${datasetType.value}',
+        customId: 'builtin_${datasetType.value}',
       );
       _datasets.add(defaultDataset);
     }
@@ -155,7 +192,7 @@ class CustomDatasetManager {
         final defaultDataset = CustomDataset.defaultFor(
           datasetType: datasetType,
           name: DatasetRegistry.getBuiltInDatasetName(datasetType),
-          customId: 'default_${datasetType.value}',
+          customId: 'builtin_${datasetType.value}',
         );
         _datasets.add(defaultDataset);
         needsDefaults = true;
@@ -323,8 +360,8 @@ class CustomDatasetManager {
     for (final entry in grouped.entries) {
       entry.value.sort((a, b) {
         // Default datasets first (identified by their predictable IDs)
-        final aIsDefault = a.id.startsWith('default_');
-        final bIsDefault = b.id.startsWith('default_');
+        final aIsDefault = a.id.startsWith('builtin_');
+        final bIsDefault = b.id.startsWith('builtin_');
 
         if (aIsDefault && !bIsDefault) return -1;
         if (!aIsDefault && bIsDefault) return 1;
@@ -368,7 +405,7 @@ class CustomDatasetManager {
   /// Get the default dataset for a specific DatasetType
   CustomDataset? getDefaultDataset(DatasetType datasetType) {
     return _datasets.firstWhere(
-      (d) => d.baseDatasetType == datasetType && d.id.startsWith('default_'),
+      (d) => d.baseDatasetType == datasetType && d.id.startsWith('builtin_'),
       orElse: () => _datasets.firstWhere(
         (d) => d.baseDatasetType == datasetType,
         orElse: () => throw StateError('No dataset found for $datasetType'),

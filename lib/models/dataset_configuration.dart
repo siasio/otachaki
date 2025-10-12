@@ -70,7 +70,7 @@ class DatasetConfiguration {
           timePerProblemSeconds: 90,
           predictionType: PredictionType.winnerPrediction,
           positionType: PositionType.beforeFillingNeutralPoints,
-          sequenceLength: 9,
+          sequenceLength: 0,
           showMoveNumbers: true,
           autoAdvanceMode: AutoAdvanceMode.never,
         );
