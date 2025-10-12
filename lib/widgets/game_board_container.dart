@@ -67,8 +67,8 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
               ? constraints.maxWidth
               : constraints.maxHeight;
 
-          // Account for margins and ensure minimum size
-          _cachedBoardSize = (availableSize - 32).clamp(200.0, double.infinity);
+          // Account for reduced margins and ensure minimum size
+          _cachedBoardSize = (availableSize - 8).clamp(200.0, double.infinity);
         }
 
         return Center(

@@ -1201,6 +1201,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     onKeyEvent: _handleKeyEvent,
                     autofocus: true,
                     child: SafeArea(
+                      left: false,
+                      right: false,
                       child: AdaptiveLayout(
                         layoutType: layoutType,
                         timerBar: (_timerRunning && isTimerEnabled && !_showWelcomeOverlay)
@@ -1271,6 +1273,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
               onKeyEvent: _handleKeyEvent,
               autofocus: true,
               child: SafeArea(
+                top: false,
+                bottom: false,
                 child: AdaptiveLayout(
                   layoutType: layoutType,
                   timerBar: (_timerRunning && isTimerEnabled && !_showWelcomeOverlay)

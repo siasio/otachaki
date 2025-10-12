@@ -68,7 +68,7 @@ class AdaptiveLayout extends StatelessWidget {
           flex: 12,
           child: Container(
             alignment: Alignment.center,
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(1.0),
             child: board,
           ),
         ),

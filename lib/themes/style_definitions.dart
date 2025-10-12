@@ -104,7 +104,7 @@ class DimensionConfig {
   static EdgeInsets getMargin(UIElement element, LayoutType layoutType) {
     switch (element) {
       case UIElement.boardBackground:
-        return const EdgeInsets.all(16);
+        return const EdgeInsets.all(2);
 
       case UIElement.gameStatusBar:
         return const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
