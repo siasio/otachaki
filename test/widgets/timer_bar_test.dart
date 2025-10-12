@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/widgets/timer_bar.dart';
-import 'package:countingapp/models/timer_type.dart';
-import 'package:countingapp/models/app_skin.dart';
-import 'package:countingapp/models/layout_type.dart';
+import 'package:otachaki/widgets/timer_bar.dart';
+import 'package:otachaki/models/timer_type.dart';
+import 'package:otachaki/models/app_skin.dart';
+import 'package:otachaki/models/layout_type.dart';
 
 void main() {
   group('TimerBar Widget Tests', () {

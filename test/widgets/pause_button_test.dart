@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/widgets/pause_button.dart';
-import 'package:countingapp/models/app_skin.dart';
+import 'package:otachaki/widgets/pause_button.dart';
+import 'package:otachaki/models/app_skin.dart';
 
 void main() {
   group('PauseButton', () {

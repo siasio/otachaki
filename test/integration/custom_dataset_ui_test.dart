@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:countingapp/widgets/streamlined_dataset_selector.dart';
-import 'package:countingapp/models/app_skin.dart';
+import 'package:otachaki/widgets/streamlined_dataset_selector.dart';
+import 'package:otachaki/models/app_skin.dart';
 
 void main() {
   group('Custom Dataset UI Integration', () {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/themes/app_theme.dart';
-import 'package:countingapp/themes/unified_theme_provider.dart';
-import 'package:countingapp/themes/element_registry.dart';
-import 'package:countingapp/models/app_skin.dart';
-import 'package:countingapp/models/layout_type.dart';
+import 'package:otachaki/themes/app_theme.dart';
+import 'package:otachaki/themes/unified_theme_provider.dart';
+import 'package:otachaki/themes/element_registry.dart';
+import 'package:otachaki/models/app_skin.dart';
+import 'package:otachaki/models/layout_type.dart';
 
 void main() {
   group('AppTheme', () {

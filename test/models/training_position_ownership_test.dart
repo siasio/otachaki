@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/training_position.dart';
+import 'package:otachaki/models/training_position.dart';
 
 void main() {
   group('TrainingPosition ownership', () {

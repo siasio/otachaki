@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/problem_attempt.dart';
-import 'package:countingapp/models/dataset_type.dart';
+import 'package:otachaki/models/problem_attempt.dart';
+import 'package:otachaki/models/dataset_type.dart';
 
 void main() {
   group('ProblemAttempt', () {

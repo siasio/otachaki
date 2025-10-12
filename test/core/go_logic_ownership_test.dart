@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/core/go_logic.dart';
+import 'package:otachaki/core/go_logic.dart';
 
 void main() {
   group('GoLogic ownership decoding', () {

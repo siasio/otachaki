@@ -1,4 +1,4 @@
-package com.example.countingapp
+package com.example.otachaki
 
 import io.flutter.embedding.android.FlutterActivity
 

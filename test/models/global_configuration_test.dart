@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/global_configuration.dart';
-import 'package:countingapp/models/timer_type.dart';
-import 'package:countingapp/models/layout_type.dart';
-import 'package:countingapp/models/app_skin.dart';
-import 'package:countingapp/models/auto_advance_mode.dart';
+import 'package:otachaki/models/global_configuration.dart';
+import 'package:otachaki/models/timer_type.dart';
+import 'package:otachaki/models/layout_type.dart';
+import 'package:otachaki/models/app_skin.dart';
+import 'package:otachaki/models/auto_advance_mode.dart';
 
 void main() {
   group('GlobalConfiguration', () {

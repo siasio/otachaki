@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/core/position_scoring.dart';
-import 'package:countingapp/models/training_position.dart';
-import 'package:countingapp/models/position_type.dart';
+import 'package:otachaki/core/position_scoring.dart';
+import 'package:otachaki/models/training_position.dart';
+import 'package:otachaki/models/position_type.dart';
 
 void main() {
   group('PositionScoring', () {

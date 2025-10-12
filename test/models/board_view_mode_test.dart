@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/board_view_mode.dart';
-import 'package:countingapp/models/sequence_display_mode.dart';
+import 'package:otachaki/models/board_view_mode.dart';
+import 'package:otachaki/models/sequence_display_mode.dart';
 
 void main() {
   group('BoardViewMode', () {

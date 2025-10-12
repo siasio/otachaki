@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/auto_advance_mode.dart';
+import 'package:otachaki/models/auto_advance_mode.dart';
 
 void main() {
   group('AutoAdvanceMode', () {

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:countingapp/models/custom_dataset.dart';
-import 'package:countingapp/models/dataset_type.dart';
-import 'package:countingapp/services/custom_dataset_manager.dart';
+import 'package:otachaki/models/custom_dataset.dart';
+import 'package:otachaki/models/dataset_type.dart';
+import 'package:otachaki/services/custom_dataset_manager.dart';
 
 void main() {
   group('UnifiedDatasetManager', () {

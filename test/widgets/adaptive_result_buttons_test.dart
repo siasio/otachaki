@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/widgets/adaptive_result_buttons.dart';
-import 'package:countingapp/models/auto_advance_mode.dart';
-import 'package:countingapp/models/app_skin.dart';
-import 'package:countingapp/models/layout_type.dart';
+import 'package:otachaki/widgets/adaptive_result_buttons.dart';
+import 'package:otachaki/models/auto_advance_mode.dart';
+import 'package:otachaki/models/app_skin.dart';
+import 'package:otachaki/models/layout_type.dart';
 
 void main() {
   group('ButtonStateManager', () {

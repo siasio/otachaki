@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/dataset_configuration.dart';
-import 'package:countingapp/models/dataset_type.dart';
+import 'package:otachaki/models/dataset_configuration.dart';
+import 'package:otachaki/models/dataset_type.dart';
 
 void main() {
   group('DatasetConfiguration', () {

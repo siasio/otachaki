@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/widgets/adaptive_layout.dart';
-import 'package:countingapp/models/layout_type.dart';
+import 'package:otachaki/widgets/adaptive_layout.dart';
+import 'package:otachaki/models/layout_type.dart';
 
 void main() {
   group('AdaptiveLayout Widget Tests', () {

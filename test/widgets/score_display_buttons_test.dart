@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/widgets/score_display_buttons.dart';
-import 'package:countingapp/models/app_skin.dart';
-import 'package:countingapp/services/result_text_service.dart';
+import 'package:otachaki/widgets/score_display_buttons.dart';
+import 'package:otachaki/models/app_skin.dart';
+import 'package:otachaki/services/result_text_service.dart';
 
 void main() {
   group('ScoreDisplayButtons', () {

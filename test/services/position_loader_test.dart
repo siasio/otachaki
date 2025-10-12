@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/services/position_loader.dart';
-import 'package:countingapp/models/training_position.dart';
+import 'package:otachaki/services/position_loader.dart';
+import 'package:otachaki/models/training_position.dart';
 
 void main() {
   group('PositionLoader', () {

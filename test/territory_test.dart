@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/models/training_position.dart';
-import 'package:countingapp/widgets/score_display_buttons.dart';
-import 'package:countingapp/models/app_skin.dart';
-import 'package:countingapp/models/layout_type.dart';
+import 'package:otachaki/models/training_position.dart';
+import 'package:otachaki/widgets/score_display_buttons.dart';
+import 'package:otachaki/models/app_skin.dart';
+import 'package:otachaki/models/layout_type.dart';
 
 void main() {
   group('Territory Display Tests', () {

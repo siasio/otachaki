@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:countingapp/services/statistics_manager.dart';
-import 'package:countingapp/models/dataset_type.dart';
+import 'package:otachaki/services/statistics_manager.dart';
+import 'package:otachaki/models/dataset_type.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
