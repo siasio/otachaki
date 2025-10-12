@@ -145,7 +145,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Next'), findsOneWidget);
+      expect(find.text('NEXT'), findsOneWidget);
       expect(find.text('B+12.5'), findsOneWidget);
     });
   });

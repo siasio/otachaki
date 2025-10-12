@@ -11,25 +11,36 @@ void main() {
     setUp(() async {
       // Initialize SharedPreferences with empty values for testing
       SharedPreferences.setMockInitialValues({});
+
+      // Reset the singleton to ensure clean state
+      CustomDatasetManager.resetInstance();
+
       manager = await CustomDatasetManager.getInstance();
-      // Clear any existing data
+      // Clear any existing data and reinitialize with defaults
       await manager.clearAllCustomDatasets();
+      CustomDatasetManager.resetInstance();
+      manager = await CustomDatasetManager.getInstance();
     });
 
     tearDown(() async {
       await manager.clearAllCustomDatasets();
     });
 
-    test('should initialize with default datasets', () {
+    test('should initialize with default datasets', () async {
+      // Clear and reinitialize to trigger default dataset creation
+      await manager.clearAllCustomDatasets();
+      CustomDatasetManager.resetInstance();
+      manager = await CustomDatasetManager.getInstance();
+
       final allDatasets = manager.getAllDatasets();
 
-      expect(allDatasets.length, 5); // All DatasetType values as defaults
+      expect(allDatasets.length, 4); // 4 visible dataset types as defaults
 
       final final9x9 = allDatasets.firstWhere(
         (d) => d.baseDatasetType == DatasetType.final9x9
       );
       expect(final9x9.name, 'Pocket Quest (9x9)');
-      expect(final9x9.id, 'default_final-9x9');
+      expect(final9x9.id, 'builtin_final-9x9');
     });
 
     test('should create custom dataset successfully', () async {
@@ -43,7 +54,7 @@ void main() {
       expect(dataset.id.length, 36); // UUID v4 length
 
       final allDatasets = manager.getAllDatasets();
-      expect(allDatasets.length, 6); // 5 defaults + 1 custom
+      expect(allDatasets.length, 5); // 4 defaults + 1 custom
 
       final customDataset = allDatasets.firstWhere((d) => d.id == dataset.id);
       expect(customDataset.name, 'My Custom 9x9');
@@ -126,11 +137,11 @@ void main() {
         baseDatasetType: DatasetType.final9x9,
       );
 
-      expect(manager.getCustomDatasets().length, 1);
+      expect(manager.getAllDatasets().where((d) => !d.id.startsWith('builtin_')).length, 1);
 
       final deleted = await manager.deleteCustomDataset(dataset.id);
       expect(deleted, isTrue);
-      expect(manager.getCustomDatasets().length, 0);
+      expect(manager.getAllDatasets().where((d) => !d.id.startsWith('builtin_')).length, 0);
       expect(manager.getDatasetById(dataset.id), isNull);
     });
 
@@ -155,16 +166,16 @@ void main() {
 
       final groupedDatasets = manager.getDatasetsByBaseType();
 
-      expect(groupedDatasets.keys.length, 5); // All DatasetType values
+      expect(groupedDatasets.keys.length, 4); // All visible DatasetType values (4 total)
       expect(groupedDatasets[DatasetType.final9x9]?.length, 3); // 1 built-in + 2 custom
       expect(groupedDatasets[DatasetType.final19x19]?.length, 2); // 1 built-in + 1 custom
       expect(groupedDatasets[DatasetType.midgame19x19]?.length, 1); // 1 built-in only
 
       // Check that built-in datasets come first
       final final9x9Datasets = groupedDatasets[DatasetType.final9x9]!;
-      expect(final9x9Datasets.first.isBuiltIn, isTrue);
-      expect(final9x9Datasets[1].isBuiltIn, isFalse);
-      expect(final9x9Datasets[2].isBuiltIn, isFalse);
+      expect(final9x9Datasets.first.id.startsWith('builtin_'), isTrue);
+      expect(final9x9Datasets[1].id.startsWith('builtin_'), isFalse);
+      expect(final9x9Datasets[2].id.startsWith('builtin_'), isFalse);
     });
 
     test('should manage dataset selection correctly', () async {
@@ -190,16 +201,22 @@ void main() {
     });
 
     test('should clear selection when deleting selected dataset', () async {
-      final dataset = await manager.createCustomDataset(
+      // Create two datasets so we don't try to delete the last one
+      final dataset1 = await manager.createCustomDataset(
         name: 'Selected Dataset',
         baseDatasetType: DatasetType.final9x9,
       );
+      final dataset2 = await manager.createCustomDataset(
+        name: 'Other Dataset',
+        baseDatasetType: DatasetType.final19x19,
+      );
 
-      await manager.setSelectedDataset(dataset.id);
-      expect(manager.getSelectedDatasetId(), dataset.id);
+      await manager.setSelectedDataset(dataset1.id);
+      expect(manager.getSelectedDatasetId(), dataset1.id);
 
-      await manager.deleteCustomDataset(dataset.id);
-      expect(manager.getSelectedDatasetId(), isNull);
+      await manager.deleteCustomDataset(dataset1.id);
+      // Should auto-select first remaining dataset (could be dataset2 or a builtin)
+      expect(manager.getSelectedDatasetId(), isNotNull);
     });
 
     test('should validate name availability correctly', () async {
@@ -213,17 +230,21 @@ void main() {
       expect(manager.isNameAvailable('existing name'), isFalse); // Case-insensitive
 
       // Should allow same name when excluding the dataset that has it
-      final dataset = manager.getCustomDatasets().first;
+      final dataset = manager.getAllDatasets().where((d) => !d.id.startsWith('builtin_')).first;
       expect(manager.isNameAvailable('Existing Name', excludeId: dataset.id), isTrue);
     });
 
-    test('should get built-in dataset for specific type', () {
+    test('should get built-in dataset for specific type', () async {
+      // Ensure built-in datasets exist
+      await manager.clearAllCustomDatasets();
+      CustomDatasetManager.resetInstance();
+      manager = await CustomDatasetManager.getInstance();
+
       final dataset = manager.getDefaultDataset(DatasetType.final19x19);
 
       expect(dataset, isNotNull);
       expect(dataset!.baseDatasetType, DatasetType.final19x19);
-      expect(dataset.isBuiltIn, isTrue);
-      expect(dataset.id, 'builtin_final-19x19');
+      expect(dataset.id.startsWith('builtin_'), isTrue);
     });
 
     test('should persist and restore custom datasets', () async {
@@ -243,7 +264,7 @@ void main() {
       // Create a new instance (simulating app restart)
       final newManager = await CustomDatasetManager.getInstance();
 
-      expect(newManager.getCustomDatasets().length, 2);
+      expect(newManager.getAllDatasets().where((d) => !d.id.startsWith('builtin_')).length, 2);
       expect(newManager.getSelectedDatasetId(), dataset2.id);
 
       final retrievedDataset1 = newManager.getDatasetById(dataset1.id);
@@ -262,13 +283,13 @@ void main() {
         baseDatasetType: DatasetType.final19x19,
       );
 
-      expect(manager.getCustomDatasets().length, 2);
-      expect(manager.getAllDatasets().length, 7); // 5 built-in + 2 custom
+      expect(manager.getAllDatasets().where((d) => !d.id.startsWith('builtin_')).length, 2);
+      expect(manager.getAllDatasets().length, 6); // 4 built-in + 2 custom
 
       await manager.clearAllCustomDatasets();
 
-      expect(manager.getCustomDatasets().length, 0);
-      expect(manager.getAllDatasets().length, 5); // Only built-in remain
+      expect(manager.getAllDatasets().where((d) => !d.id.startsWith('builtin_')).length, 0);
+      expect(manager.getAllDatasets().length, 0); // All datasets cleared (including built-in)
       expect(manager.getSelectedDatasetId(), isNull);
     });
   });

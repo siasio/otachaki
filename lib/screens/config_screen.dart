@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import '../models/dataset_type.dart';
 import '../models/dataset_configuration.dart';
 import '../models/custom_dataset.dart';
@@ -13,6 +14,8 @@ import '../models/prediction_type.dart';
 import '../models/position_type.dart';
 import '../models/dataset_registry.dart';
 import '../models/game_stage.dart';
+import '../models/problem_feedback_type.dart';
+import '../models/screen_orientation_mode.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/custom_dataset_manager.dart';
@@ -366,6 +369,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   String _getAutoAdvanceModeDisplayName(AutoAdvanceMode mode) {
     return mode.displayName;
+  }
+
+  String _getScreenOrientationModeDisplayName(ScreenOrientationMode mode) {
+    return mode.displayName;
+  }
+
+  bool _shouldShowAndroidOnlyOptions() {
+    return defaultTargetPlatform == TargetPlatform.android;
   }
 
 
@@ -753,6 +764,29 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           const SizedBox(height: 16),
                         ],
 
+                        // Problem Feedback Type (at the bottom of dataset config)
+                        DropdownButtonFormField<ProblemFeedbackType>(
+                          value: _currentDatasetConfig!.problemFeedbackType,
+                          decoration: const InputDecoration(
+                            labelText: 'Problem Feedback',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _getAvailableFeedbackTypes().map((type) {
+                            return DropdownMenuItem<ProblemFeedbackType>(
+                              value: type,
+                              child: Text(type.displayName),
+                            );
+                          }).toList(),
+                          onChanged: (ProblemFeedbackType? value) {
+                            if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
+                              final newConfig = _currentDatasetConfig!.copyWith(
+                                problemFeedbackType: value,
+                              );
+                              _autoSaveDatasetConfiguration(newConfig);
+                            }
+                          },
+                        ),
+
                         // REMOVED: Hide Game Info Bar checkbox - GameInfo functionality has been removed
                         // if (_isMidgameDataset() || !_isFinalDataset()) ...[
                         //   CheckboxListTile(
@@ -807,6 +841,50 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // App Skin
+                      DropdownButtonFormField<AppSkin>(
+                        initialValue: _globalConfig?.appSkin,
+                        decoration: const InputDecoration(
+                          labelText: 'App Skin',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: AppSkin.values.map((skin) {
+                          return DropdownMenuItem(
+                            value: skin,
+                            child: Text(_getAppSkinDisplayName(skin)),
+                          );
+                        }).toList(),
+                        onChanged: (AppSkin? newSkin) {
+                          if (newSkin != null && _globalConfig != null) {
+                            final newConfig = _globalConfig!.copyWith(appSkin: newSkin);
+                            _autoSaveGlobalConfiguration(newConfig);
+                          }
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Layout Type
+                      DropdownButtonFormField<LayoutType>(
+                        initialValue: _globalConfig?.layoutType,
+                        decoration: const InputDecoration(
+                          labelText: 'Layout Type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: LayoutType.values.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(_getLayoutTypeDisplayName(type)),
+                          );
+                        }).toList(),
+                        onChanged: (LayoutType? newType) {
+                          if (newType != null && _globalConfig != null) {
+                            final newConfig = _globalConfig!.copyWith(layoutType: newType);
+                            _autoSaveGlobalConfiguration(newConfig);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       // Mark Display Time with enable checkbox
                       Row(
                         children: [
@@ -868,50 +946,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Layout Type
-                      DropdownButtonFormField<LayoutType>(
-                        initialValue: _globalConfig?.layoutType,
-                        decoration: const InputDecoration(
-                          labelText: 'Layout Type',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: LayoutType.values.map((type) {
-                          return DropdownMenuItem(
-                            value: type,
-                            child: Text(_getLayoutTypeDisplayName(type)),
-                          );
-                        }).toList(),
-                        onChanged: (LayoutType? newType) {
-                          if (newType != null && _globalConfig != null) {
-                            final newConfig = _globalConfig!.copyWith(layoutType: newType);
-                            _autoSaveGlobalConfiguration(newConfig);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // App Skin
-                      DropdownButtonFormField<AppSkin>(
-                        initialValue: _globalConfig?.appSkin,
-                        decoration: const InputDecoration(
-                          labelText: 'App Skin',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: AppSkin.values.map((skin) {
-                          return DropdownMenuItem(
-                            value: skin,
-                            child: Text(_getAppSkinDisplayName(skin)),
-                          );
-                        }).toList(),
-                        onChanged: (AppSkin? newSkin) {
-                          if (newSkin != null && _globalConfig != null) {
-                            final newConfig = _globalConfig!.copyWith(appSkin: newSkin);
-                            _autoSaveGlobalConfiguration(newConfig);
-                          }
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
                       // Custom Title
                       TextFormField(
                         controller: _customTitleController,
@@ -944,9 +978,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             Text(
                               '%d - Current dataset name\n'
                               '%n - Problems solved today\n'
-                              '%a - Today\'s accuracy percentage\n'
-                              '%t - Today\'s average time per problem\n'
-                              '%s - Today\'s average points/second speed',
+                              '%a - Today\'s accuracy percentage',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.blue[700],
@@ -956,6 +988,47 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ],
                         ),
                       ),
+
+                      // Android-only options
+                      if (_shouldShowAndroidOnlyOptions()) ...[
+                        const SizedBox(height: 16),
+
+                        // Screen Orientation Mode
+                        DropdownButtonFormField<ScreenOrientationMode>(
+                          initialValue: _globalConfig?.screenOrientationMode,
+                          decoration: const InputDecoration(
+                            labelText: 'Screen Orientation',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: ScreenOrientationMode.values.map((mode) {
+                            return DropdownMenuItem(
+                              value: mode,
+                              child: Text(_getScreenOrientationModeDisplayName(mode)),
+                            );
+                          }).toList(),
+                          onChanged: (ScreenOrientationMode? newMode) {
+                            if (newMode != null && _globalConfig != null) {
+                              final newConfig = _globalConfig!.copyWith(screenOrientationMode: newMode);
+                              _autoSaveGlobalConfiguration(newConfig);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Enable Full Screen
+                        CheckboxListTile(
+                          title: const Text('Enable Full Screen'),
+                          subtitle: const Text('Automatically switch to full-screen mode'),
+                          value: _globalConfig?.enableFullScreen ?? false,
+                          onChanged: (bool? value) {
+                            if (value != null && _globalConfig != null) {
+                              final newConfig = _globalConfig!.copyWith(enableFullScreen: value);
+                              _autoSaveGlobalConfiguration(newConfig);
+                            }
+                          },
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1006,5 +1079,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
         ),
       ),
     );
+  }
+
+  /// Get available problem feedback types based on dataset type
+  List<ProblemFeedbackType> _getAvailableFeedbackTypes() {
+    if (_currentDataset == null) {
+      return ProblemFeedbackType.values;
+    }
+    return ProblemFeedbackType.getAvailableTypes(_currentDataset!.baseDatasetType.value);
   }
 }

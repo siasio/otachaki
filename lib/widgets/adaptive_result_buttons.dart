@@ -161,6 +161,7 @@ class AdaptiveResultButtons extends StatelessWidget {
           isCorrect: isCorrect,
           appSkin: appSkin,
           layoutType: layoutType,
+          buttonPosition: index,
         );
       }).toList();
 

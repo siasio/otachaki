@@ -7,12 +7,24 @@ import '../models/training_position.dart';
 class GameResultParser {
   /// Parse the winner from a result string
   /// Examples: "B+5.5" -> "Black", "W+12" -> "White", "Draw" -> "Draw"
+  /// Also supports direct winner names: "Black" -> "Black", "White" -> "White"
   static String parseWinner(String result) {
+    final lowerResult = result.toLowerCase();
+
+    // Handle result format (B+5.5, W+12)
     if (result.startsWith('B+')) {
       return 'Black';
     } else if (result.startsWith('W+')) {
       return 'White';
-    } else if (result.toLowerCase() == 'draw') {
+    }
+    // Handle direct winner names
+    else if (lowerResult == 'black') {
+      return 'Black';
+    } else if (lowerResult == 'white') {
+      return 'White';
+    }
+    // Handle draw
+    else if (lowerResult == 'draw') {
       return 'Draw';
     } else {
       return 'Unknown';

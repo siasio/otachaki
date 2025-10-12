@@ -89,6 +89,7 @@ class UniversalResultButton extends StatelessWidget {
     required bool isCorrect,
     AppSkin appSkin = AppSkin.classic,
     LayoutType layoutType = LayoutType.vertical,
+    int? buttonPosition, // 0=left (←), 1=middle (↓), 2=right (→)
   }) {
     return UniversalResultButton(
       displayText: scoreText,
@@ -97,6 +98,7 @@ class UniversalResultButton extends StatelessWidget {
       buttonType: UniversalButtonType.exactScore,
       appSkin: appSkin,
       layoutType: layoutType,
+      icon: _getIconForExactScorePosition(buttonPosition),
     );
   }
 
@@ -279,6 +281,20 @@ class UniversalResultButton extends StatelessWidget {
         return Icons.arrow_downward;
       case RoughLeadButtonType.black:
         return Icons.arrow_forward;
+    }
+  }
+
+  static IconData? _getIconForExactScorePosition(int? position) {
+    if (position == null) return null;
+    switch (position) {
+      case 0:
+        return Icons.arrow_back; // Left button (←)
+      case 1:
+        return Icons.arrow_downward; // Middle button (↓)
+      case 2:
+        return Icons.arrow_forward; // Right button (→)
+      default:
+        return null;
     }
   }
 }

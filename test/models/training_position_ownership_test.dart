@@ -11,8 +11,6 @@ void main() {
         boardSize: 9,
         stonesBase64: 'AAAA',
         score: 0.0,
-        blackCaptured: 0,
-        whiteCaptured: 0,
         komi: 6.5,
         ownershipBase64: 'AAAA',
       );
@@ -22,8 +20,6 @@ void main() {
         boardSize: 9,
         stonesBase64: 'AAAA',
         score: 0.0,
-        blackCaptured: 0,
-        whiteCaptured: 0,
         komi: 6.5,
         ownershipBase64: null,
       );
@@ -38,8 +34,6 @@ void main() {
         boardSize: 9,
         stonesBase64: 'AAAA',
         score: 0.0,
-        blackCaptured: 0,
-        whiteCaptured: 0,
         komi: 6.5,
         ownershipBase64: null,
       );
@@ -51,8 +45,8 @@ void main() {
       // Create test ownership data
       final testBytes = Uint8List.fromList([
         0,   // -1.0 (white)
-        128, // 0.0 (neutral)
-        255, // 1.0 (black)
+        16,  // 0.0 (neutral)
+        32,  // 1.0 (black)
       ]);
       final base64String = base64Encode(testBytes);
 
@@ -61,8 +55,6 @@ void main() {
         boardSize: 2, // 2x2 board for simplicity
         stonesBase64: 'AAAA',
         score: 0.0,
-        blackCaptured: 0,
-        whiteCaptured: 0,
         komi: 6.5,
         ownershipBase64: base64String,
       );
@@ -75,7 +67,7 @@ void main() {
       expect(ownership[0][0], closeTo(-1.0, 0.01));
       expect(ownership[0][1], closeTo(0.0, 0.01));
       expect(ownership[1][0], closeTo(1.0, 0.01));
-      expect(ownership[1][1], closeTo(0.0, 0.01)); // Default for missing data
+      expect(ownership[1][1], closeTo(0.0, 0.01)); // Default for missing data is 0.0
     });
   });
 }

@@ -182,7 +182,15 @@ class ConfigurationManager extends BaseServiceManager<Map<String, DatasetConfigu
 
   /// Get configuration for a custom dataset object
   DatasetConfiguration getConfigurationForDataset(CustomDataset dataset) {
-    return getConfigurationById(dataset.id);
+    // Check if there's a custom override for this dataset
+    final customConfig = _customConfigurations[dataset.id];
+    if (customConfig != null) {
+      return customConfig;
+    }
+
+    // No custom override exists, return the dataset's own configuration
+    // This ensures custom datasets use their correct base type defaults
+    return dataset.configuration;
   }
 
   DatasetConfiguration _getDefaultConfigurationForId(String datasetId) {

@@ -3,6 +3,7 @@ import 'layout_type.dart';
 import 'app_skin.dart';
 import 'sequence_display_mode.dart';
 import 'ownership_display_mode.dart';
+import 'screen_orientation_mode.dart';
 
 class GlobalConfiguration {
   final double markDisplayTimeSeconds;
@@ -15,6 +16,8 @@ class GlobalConfiguration {
   final bool showMoveNumbers;
   final bool showWelcomeScreen;
   final String customTitle;
+  final ScreenOrientationMode screenOrientationMode;
+  final bool enableFullScreen;
 
   /// Convenience getter for compatibility with refactored code
   double get markDisplayTime => markDisplayTimeSeconds;
@@ -30,6 +33,8 @@ class GlobalConfiguration {
     this.showMoveNumbers = true,
     this.showWelcomeScreen = true,
     this.customTitle = 'Otachaki - %d',
+    this.screenOrientationMode = ScreenOrientationMode.dontSwitch,
+    this.enableFullScreen = false,
   });
 
   static const GlobalConfiguration defaultConfig = GlobalConfiguration(
@@ -50,6 +55,8 @@ class GlobalConfiguration {
     bool? showMoveNumbers,
     bool? showWelcomeScreen,
     String? customTitle,
+    ScreenOrientationMode? screenOrientationMode,
+    bool? enableFullScreen,
   }) {
     return GlobalConfiguration(
       markDisplayTimeSeconds: markDisplayTimeSeconds ?? this.markDisplayTimeSeconds,
@@ -62,6 +69,8 @@ class GlobalConfiguration {
       showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
       showWelcomeScreen: showWelcomeScreen ?? this.showWelcomeScreen,
       customTitle: customTitle ?? this.customTitle,
+      screenOrientationMode: screenOrientationMode ?? this.screenOrientationMode,
+      enableFullScreen: enableFullScreen ?? this.enableFullScreen,
     );
   }
 
@@ -77,6 +86,8 @@ class GlobalConfiguration {
       'showMoveNumbers': showMoveNumbers,
       'showWelcomeScreen': showWelcomeScreen,
       'customTitle': customTitle,
+      'screenOrientationMode': screenOrientationMode.value,
+      'enableFullScreen': enableFullScreen,
     };
   }
 
@@ -92,6 +103,8 @@ class GlobalConfiguration {
       showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
       showWelcomeScreen: json['showWelcomeScreen'] as bool? ?? true,
       customTitle: json['customTitle'] as String? ?? defaultConfig.customTitle,
+      screenOrientationMode: ScreenOrientationMode.fromString(json['screenOrientationMode'] as String?) ?? ScreenOrientationMode.dontSwitch,
+      enableFullScreen: json['enableFullScreen'] as bool? ?? false,
     );
   }
 

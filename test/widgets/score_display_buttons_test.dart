@@ -22,9 +22,9 @@ void main() {
         ),
       );
 
-      expect(find.text('Next'), findsOneWidget);
+      expect(find.text('NEXT'), findsOneWidget);
 
-      await tester.tap(find.text('Next'));
+      await tester.tap(find.text('NEXT'));
       expect(nextPressed, true);
     });
 
@@ -42,7 +42,7 @@ void main() {
 
       expect(find.text('W+7.5'), findsOneWidget);
       expect(find.text('B loses'), findsOneWidget);
-      expect(find.text('Next'), findsOneWidget);
+      expect(find.text('NEXT'), findsOneWidget);
     });
 
     testWidgets('should parse and display black win correctly', (WidgetTester tester) async {
@@ -59,7 +59,7 @@ void main() {
 
       expect(find.text('B+12.5'), findsOneWidget);
       expect(find.text('W loses'), findsOneWidget);
-      expect(find.text('Next'), findsOneWidget);
+      expect(find.text('NEXT'), findsOneWidget);
     });
 
     testWidgets('should handle resignation correctly', (WidgetTester tester) async {

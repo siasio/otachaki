@@ -94,7 +94,7 @@ void main() {
       }
     });
 
-    testWidgets('should animate on classic and dark skins', (WidgetTester tester) async {
+    testWidgets('should not animate on classic and dark skins (button category is not animated)', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -106,8 +106,8 @@ void main() {
         ),
       );
 
-      // Should have TweenAnimationBuilder for animated skins
-      expect(find.byType(TweenAnimationBuilder<double>), findsOneWidget);
+      // Button category elements are not animated, only interactive and container categories are
+      expect(find.byType(TweenAnimationBuilder<double>), findsNothing);
     });
 
     testWidgets('should not animate on eink skin', (WidgetTester tester) async {

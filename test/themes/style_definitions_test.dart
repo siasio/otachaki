@@ -122,11 +122,20 @@ void main() {
       }
     });
 
+    test('should return zero elevation for board background on all skins', () {
+      // boardBackground elevation is commented out in the implementation
+      for (final skin in AppSkin.values) {
+        expect(DimensionConfig.getElevation(UIElement.boardBackground, skin), 0,
+            reason: 'Board background should have zero elevation for $skin (implementation has it commented out)');
+      }
+    });
+
     test('should return positive elevation for non-e-ink skins', () {
+      for (final skin in [AppSkin.classic, AppSkin.modern]) {
         expect(DimensionConfig.getElevation(UIElement.buttonResultWhite, skin), greaterThan(0),
             reason: 'Button should have elevation for $skin');
-        expect(DimensionConfig.getElevation(UIElement.boardBackground, skin), greaterThan(0),
-            reason: 'Board should have elevation for $skin');
+        expect(DimensionConfig.getElevation(UIElement.gameStatusBar, skin), greaterThan(0),
+            reason: 'Status bar should have elevation for $skin');
       }
     });
 

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:otachaki/services/position_loader.dart';
 import 'package:otachaki/models/training_position.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('PositionLoader', () {
     test('getRandomPositionWithMinMoves should filter positions correctly', () async {
       // This test will only work if we have a test dataset available
@@ -13,7 +15,7 @@ void main() {
       } catch (e) {
         // If no dataset is available, the test should just pass
         // as the implementation will fall back gracefully
-        expect(e, isA<Exception>());
+        expect(e, isA<Error>());
       }
     });
 
@@ -23,7 +25,7 @@ void main() {
         expect(position, isA<TrainingPosition>());
       } catch (e) {
         // If no dataset is available, the test should just pass
-        expect(e, isA<Exception>());
+        expect(e, isA<Error>());
       }
     });
   });

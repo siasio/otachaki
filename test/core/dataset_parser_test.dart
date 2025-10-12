@@ -75,8 +75,6 @@ void main() {
           'score': 5.5,
           'result': 'B+5.5',
           'game_info': {
-            'black_captured': 2,
-            'white_captured': 3,
             'komi': 7.5,
             'last_move_row': 10,
             'last_move_col': 15,
@@ -89,11 +87,10 @@ void main() {
         expect(position.id, equals('test_position_1'));
         expect(position.boardSize, equals(19));
         expect(position.stonesBase64, equals('AAABBBCCC'));
-        expect(position.score, equals(5.5));
-        expect(position.result, equals('B+5.5'));
+        expect(position.score, equals(6.0)); // Score is rounded to nearest integer
+        expect(position.result, equals('B+6')); // Score rounded to 6.0
         expect(position.gameInfo, isNotNull);
-        expect(position.gameInfo!.blackCaptured, equals(2));
-        expect(position.gameInfo!.whiteCaptured, equals(3));
+        // Note: blackCaptured and whiteCaptured were removed - prisoners are always equal
         expect(position.gameInfo!.komi, equals(7.5));
         expect(position.gameInfo!.lastMoveRow, equals(10));
         expect(position.gameInfo!.lastMoveCol, equals(15));
@@ -109,7 +106,7 @@ void main() {
         expect(position.boardSize, equals(19));
         expect(position.stonesBase64, equals(''));
         expect(position.score, equals(0.0));
-        expect(position.result, equals('Unknown'));
+        expect(position.result, equals('Draw')); // Result computed from score=0.0
         expect(position.gameInfo, isNull);
       });
 
@@ -134,8 +131,6 @@ void main() {
     group('parseGameInfo', () {
       test('should parse complete game info', () {
         final json = {
-          'black_captured': 5,
-          'white_captured': 3,
           'komi': 6.5,
           'last_move_row': 12,
           'last_move_col': 8,
@@ -148,8 +143,7 @@ void main() {
         final parsed = DatasetParser.parseGameInfoToMap(json);
         final gameInfo = GameInfo.fromJson(parsed);
 
-        expect(gameInfo.blackCaptured, equals(5));
-        expect(gameInfo.whiteCaptured, equals(3));
+        // Note: blackCaptured and whiteCaptured were removed - prisoners are always equal
         expect(gameInfo.komi, equals(6.5));
         expect(gameInfo.lastMoveRow, equals(12));
         expect(gameInfo.lastMoveCol, equals(8));
@@ -165,9 +159,8 @@ void main() {
         final parsed = DatasetParser.parseGameInfoToMap(json);
         final gameInfo = GameInfo.fromJson(parsed);
 
-        expect(gameInfo.blackCaptured, equals(0));
-        expect(gameInfo.whiteCaptured, equals(0));
-        expect(gameInfo.komi, equals(0.0));
+        // Note: blackCaptured and whiteCaptured were removed - prisoners are always equal
+        expect(gameInfo.komi, equals(7.0));
         expect(gameInfo.lastMoveRow, isNull);
         expect(gameInfo.lastMoveCol, isNull);
         expect(gameInfo.moveSequence, isNull);
@@ -245,7 +238,7 @@ void main() {
         expect(errors, contains('Position 0 missing required field: board_size'));
         expect(errors, contains('Position 0 missing required field: stones'));
         expect(errors, contains('Position 0 missing required field: score'));
-        expect(errors, contains('Position 0 missing required field: result'));
+        // Note: 'result' field is no longer required as it's computed from score
       });
 
       test('should handle invalid positions array', () {
@@ -269,7 +262,7 @@ void main() {
             'version': '1.0.0',
             'created_at': '2025-01-15T10:00:00.000Z',
             'total_positions': 1,
-            'dataset_type': 'midgame-19x19-estimation',
+            'dataset_type': 'midgame-19x19',
           },
           'positions': [
             {

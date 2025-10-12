@@ -3,7 +3,6 @@ import 'package:otachaki/models/global_configuration.dart';
 import 'package:otachaki/models/timer_type.dart';
 import 'package:otachaki/models/layout_type.dart';
 import 'package:otachaki/models/app_skin.dart';
-import 'package:otachaki/models/auto_advance_mode.dart';
 
 void main() {
   group('GlobalConfiguration', () {
@@ -14,7 +13,6 @@ void main() {
       expect(config.timerType, TimerType.smooth);
       expect(config.layoutType, LayoutType.vertical);
       expect(config.appSkin, AppSkin.classic);
-      expect(config.autoAdvanceMode, AutoAdvanceMode.always);
     });
 
     test('should create valid configuration', () {
@@ -23,14 +21,12 @@ void main() {
         timerType: TimerType.segmented,
         layoutType: LayoutType.horizontal,
         appSkin: AppSkin.eink,
-        autoAdvanceMode: AutoAdvanceMode.never,
       );
 
       expect(config.markDisplayTimeSeconds, 2.0);
       expect(config.timerType, TimerType.segmented);
       expect(config.layoutType, LayoutType.horizontal);
       expect(config.appSkin, AppSkin.eink);
-      expect(config.autoAdvanceMode, AutoAdvanceMode.never);
     });
 
     test('copyWith should preserve unchanged values', () {
@@ -44,7 +40,6 @@ void main() {
       expect(modified.timerType, original.timerType);
       expect(modified.layoutType, original.layoutType);
       expect(modified.appSkin, original.appSkin);
-      expect(modified.autoAdvanceMode, original.autoAdvanceMode);
     });
 
     test('should serialize to JSON correctly', () {
@@ -53,7 +48,6 @@ void main() {
         timerType: TimerType.segmented,
         layoutType: LayoutType.horizontal,
         appSkin: AppSkin.modern,
-        autoAdvanceMode: AutoAdvanceMode.onCorrectOnly,
       );
 
       final json = config.toJson();
@@ -62,7 +56,6 @@ void main() {
       expect(json['timerType'], 'segmented');
       expect(json['layoutType'], 'horizontal');
       expect(json['appSkin'], 'modern');
-      expect(json['autoAdvanceMode'], 'on_correct_only');
     });
 
     test('should deserialize from JSON correctly', () {
@@ -70,7 +63,7 @@ void main() {
         'markDisplayTimeSeconds': 3.0,
         'timerType': 'segmented',
         'layoutType': 'horizontal',
-        'autoAdvanceMode': 'never',
+        'appSkin': 'modern',
       };
 
       final config = GlobalConfiguration.fromJson(json);
@@ -78,7 +71,7 @@ void main() {
       expect(config.markDisplayTimeSeconds, 3.0);
       expect(config.timerType, TimerType.segmented);
       expect(config.layoutType, LayoutType.horizontal);
-      expect(config.autoAdvanceMode, AutoAdvanceMode.never);
+      expect(config.appSkin, AppSkin.modern);
     });
 
     test('should use defaults for missing JSON fields', () {
@@ -90,7 +83,6 @@ void main() {
       expect(config.timerType, GlobalConfiguration.defaultConfig.timerType);
       expect(config.layoutType, GlobalConfiguration.defaultConfig.layoutType);
       expect(config.appSkin, GlobalConfiguration.defaultConfig.appSkin);
-      expect(config.autoAdvanceMode, GlobalConfiguration.defaultConfig.autoAdvanceMode);
     });
 
     test('isValidConfiguration should validate mark display time', () {
@@ -99,7 +91,6 @@ void main() {
         timerType: TimerType.smooth,
         layoutType: LayoutType.vertical,
         appSkin: AppSkin.classic,
-        autoAdvanceMode: AutoAdvanceMode.always,
       );
 
       const invalidConfig = GlobalConfiguration(
@@ -107,7 +98,6 @@ void main() {
         timerType: TimerType.smooth,
         layoutType: LayoutType.vertical,
         appSkin: AppSkin.classic,
-        autoAdvanceMode: AutoAdvanceMode.always,
       );
 
       expect(validConfig.isValidConfiguration(), isTrue);

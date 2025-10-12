@@ -86,12 +86,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     _buildDatasetExplanation(
                       'Final Positions (9x9, 13x13, 19x19)',
                       'Positions are picked so that both area and territory scoring give the same result. '
+                      'If you choose positions before filling neutral points, use territory scoring. '
                       'Your big goal is to count the score on 19x19 within one byo-yomi period!',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDatasetExplanation(
-                      'Positions Before Filling Neutral Points',
-                      'A bit more challenging. Use territory scoring. ',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
@@ -102,7 +98,7 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'Define Your Custom Dataset',
-                      'Change settings for pre-defined datasets, or define new, custom dataset configurations by pressing a plus (+) button!',
+                      'Change settings for pre-defined datasets, or define new, custom configurations by pressing a plus (+) button!',
                     ),
                   ],
                 ),
@@ -162,23 +158,10 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• Choose from different color themes. Use E-ink Minimalist for an e-ink device\n'
+                      '• Choose from different color themes\n'
                       '• Choose layout: Vertical (phones) or Horizontal (tablets)\n'
-                      '• Ownership display: get visual feedback during problem review',
-                      // '• Timer styles: Smooth progress bar or segmented bar',
-                      style: TextStyle(color: Colors.grey[700], height: 1.4),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      '📱 Position Display',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '• Move sequences: Show recent moves as a numbered sequence to train your visualization skill\n'
-                      '• ...or don\'t show the sequence at all and try to guess it on your own!',
-                      // '• Game info: Toggle captured stones and komi display\n'
-                      // '• Last move marker: Configurable display duration',
+                      '• Ownership display: get visual feedback during problem review\n'
+                      '• Move sequences: Show recent moves as a numbered sequence to train your visualization skill',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                   ],

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:otachaki/core/position_scoring.dart';
-import 'package:otachaki/models/training_position.dart';
-import 'package:otachaki/models/position_type.dart';
+import '../../lib/core/position_scoring.dart';
+import '../../lib/models/training_position.dart';
+import '../../lib/models/position_type.dart';
 
 void main() {
   group('PositionScoring', () {
@@ -13,8 +13,6 @@ void main() {
         boardSize: 19,
         stonesBase64: 'test_stones',
         score: 5.5,
-        blackCaptured: 3,
-        whiteCaptured: 2,
         komi: 6.5,
         movesBase64: 'test_moves',
         numberOfMoves: 10,
@@ -22,8 +20,6 @@ void main() {
         blackTerritory: 45,
         whiteTerritory: 38,
         ultimateStonesBase64: 'test_ultimate_stones',
-        ultimateBlackCaptured: 5,
-        ultimateWhiteCaptured: 4,
         additionalWhiteMove: false,
       );
     });
@@ -51,8 +47,6 @@ void main() {
           boardSize: 19,
           stonesBase64: 'test_stones',
           score: 5.5,
-          blackCaptured: 3,
-          whiteCaptured: 2,
           komi: 6.5,
           additionalWhiteMove: true,
         );
@@ -96,16 +90,16 @@ void main() {
     group('calculateBlackTerritoryScore', () {
       test('calculates correct black territory score', () {
         final result = PositionScoring.calculateBlackTerritoryScore(testPosition);
-        // blackTerritory (45) + (ultimateWhiteCaptured (4) - whiteCaptured (2)) = 45 + 2 = 47
-        expect(result, equals(47));
+        // blackTerritory (45) - prisoners are always equal, so no adjustment
+        expect(result, equals(45));
       });
     });
 
     group('calculateWhiteTerritoryScore', () {
       test('calculates correct white territory score without adjustment', () {
         final result = PositionScoring.calculateWhiteTerritoryScore(testPosition);
-        // whiteTerritory (38) + (ultimateBlackCaptured (5) - blackCaptured (3)) + adjustment (0) = 38 + 2 + 0 = 40
-        expect(result, equals(40));
+        // whiteTerritory (38) - prisoners are always equal, so no adjustment + 0 = 38
+        expect(result, equals(38));
       });
 
       test('calculates correct white territory score with additional white move adjustment', () {
@@ -114,58 +108,21 @@ void main() {
           boardSize: 19,
           stonesBase64: 'test_stones',
           score: 5.5,
-          blackCaptured: 3,
-          whiteCaptured: 2,
           komi: 6.5,
           whiteTerritory: 38,
-          ultimateBlackCaptured: 5,
           additionalWhiteMove: true,
         );
 
         final result = PositionScoring.calculateWhiteTerritoryScore(positionWithAdditionalMove);
-        // whiteTerritory (38) + (ultimateBlackCaptured (5) - blackCaptured (3)) + adjustment (1) = 38 + 2 + 1 = 41
-        expect(result, equals(41));
+        // whiteTerritory (38) - prisoners are always equal, so no adjustment + 1 = 39
+        expect(result, equals(39));
       });
     });
 
-    group('generateBlackScoringText', () {
-      test('generates correct text for with filled neutral points mode', () {
-        final result = PositionScoring.generateBlackScoringText(
-          testPosition,
-          PositionType.withFilledNeutralPoints,
-        );
-        // blackTerritory (45) + whiteCaptured (2) = 47
-        expect(result, equals('45+2=47'));
-      });
+    // Note: generateBlackScoringText and generateWhiteScoringText methods were removed from PositionScoring
+    // These functionalities have been moved to the TrainingPosition class and ResultTextService
 
-      test('generates correct text for before filling neutral points mode', () {
-        final result = PositionScoring.generateBlackScoringText(
-          testPosition,
-          PositionType.beforeFillingNeutralPoints,
-        );
-        // territory score (47) + whiteCaptured (2) = 49
-        expect(result, equals('47+2=49'));
-      });
-    });
-
-    group('generateWhiteScoringText', () {
-      test('generates correct text for with filled neutral points mode', () {
-        final result = PositionScoring.generateWhiteScoringText(
-          testPosition,
-          PositionType.withFilledNeutralPoints,
-        );
-        // whiteTerritory (38) + blackCaptured (3) + komi (6.5) = 47.5
-        expect(result, equals('38+3+6.5=47.5'));
-      });
-
-      test('generates correct text for before filling neutral points mode', () {
-        final result = PositionScoring.generateWhiteScoringText(
-          testPosition,
-          PositionType.beforeFillingNeutralPoints,
-        );
-        // territory score (40) + blackCaptured (3) + komi (6.5) = 49.5
-        expect(result, equals('40+3+6.5=49.5'));
-      });
-    });
+    // Note: generateWhiteScoringText was removed from PositionScoring
+    // This functionality has been moved to the TrainingPosition class and ResultTextService
   });
 }

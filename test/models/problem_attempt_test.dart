@@ -8,6 +8,7 @@ void main() {
       final now = DateTime.now();
       final attempt = ProblemAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset',
         isCorrect: true,
         timeSpentMs: 5000,
         timestamp: now,
@@ -26,6 +27,7 @@ void main() {
       final now = DateTime.now();
       final attempt = ProblemAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset',
         isCorrect: true,
         timeSpentMs: 5000,
         timestamp: now,
@@ -37,6 +39,7 @@ void main() {
     test('should correctly convert time from milliseconds to seconds', () {
       final attempt = ProblemAttempt(
         datasetType: DatasetType.final9x9,
+        datasetId: 'test-dataset',
         isCorrect: true,
         timeSpentMs: 7500,
         timestamp: DateTime.now(),
@@ -49,6 +52,7 @@ void main() {
       final now = DateTime.now();
       final originalAttempt = ProblemAttempt(
         datasetType: DatasetType.midgame19x19,
+        datasetId: 'test-dataset-midgame',
         isCorrect: false,
         timeSpentMs: 12000,
         timestamp: now,
@@ -68,6 +72,7 @@ void main() {
     test('should handle null wasTimeout in JSON conversion', () {
       final json = {
         'datasetType': 'final-9x9-area',
+        'datasetId': 'test-dataset',
         'isCorrect': true,
         'timeSpentMs': 5000,
         'timestamp': DateTime.now().toIso8601String(),
@@ -81,6 +86,7 @@ void main() {
     test('should handle unknown dataset type in JSON conversion', () {
       final json = {
         'datasetType': 'unknown-dataset-type',
+        'datasetId': 'test-dataset',
         'isCorrect': true,
         'timeSpentMs': 5000,
         'timestamp': DateTime.now().toIso8601String(),

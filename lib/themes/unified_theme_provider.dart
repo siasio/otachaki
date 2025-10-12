@@ -65,7 +65,7 @@ class UnifiedThemeProvider {
 
       // Button text colors
       case UIElement.buttonResultWhite:
-        return Colors.black; // Black text on white background
+        return skin == AppSkin.classic ? _getGeneralTextColor() : Colors.black;
 
       case UIElement.buttonResultBlack:
         return Colors.white; // White text on dark background
@@ -117,7 +117,7 @@ class UnifiedThemeProvider {
 
       // Button backgrounds
       case UIElement.buttonResultWhite:
-        return Colors.white;
+        return skin == AppSkin.classic ? _getGeneralButtonColor() : Colors.white;
 
       case UIElement.buttonResultBlack:
         return _getBlackButtonColor();

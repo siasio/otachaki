@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:otachaki/models/dataset_configuration.dart';
 import 'package:otachaki/models/dataset_type.dart';
+import 'package:otachaki/models/problem_feedback_type.dart';
 
 void main() {
   group('DatasetConfiguration', () {
@@ -14,6 +15,7 @@ void main() {
       expect(config.positionType.value, 'with-filled-neutral-points');
       expect(config.ownershipDisplayMode.name, 'squares');
       expect(config.autoAdvanceMode.value, 'on_correct_only');
+      expect(config.problemFeedbackType, ProblemFeedbackType.result);
     });
 
     test('should have correct defaults for midgame19x19', () {
@@ -27,6 +29,7 @@ void main() {
       expect(config.ownershipDisplayMode.name, 'squares');
       expect(config.gameStage.value, 'all');
       expect(config.autoAdvanceMode.value, 'always');
+      expect(config.problemFeedbackType, ProblemFeedbackType.result);
     });
 
 
@@ -117,6 +120,88 @@ void main() {
       expect(validConfig.isValidConfiguration(), isTrue);
       expect(invalidThresholdConfig.isValidConfiguration(), isFalse);
       expect(invalidTimeConfig.isValidConfiguration(), isFalse);
+    });
+
+    test('should have correct problem feedback defaults for all dataset types', () {
+      // 9x9 and midgame should default to Result
+      expect(DatasetConfiguration.getDefaultFor(DatasetType.final9x9).problemFeedbackType,
+             ProblemFeedbackType.result);
+      expect(DatasetConfiguration.getDefaultFor(DatasetType.midgame19x19).problemFeedbackType,
+             ProblemFeedbackType.result);
+      expect(DatasetConfiguration.getDefaultFor(DatasetType.partialPositions).problemFeedbackType,
+             ProblemFeedbackType.result);
+
+      // 13x13 should default to Result + Time
+      expect(DatasetConfiguration.getDefaultFor(DatasetType.final13x13).problemFeedbackType,
+             ProblemFeedbackType.resultWithTime);
+
+      // 19x19 should default to Result + Speed
+      expect(DatasetConfiguration.getDefaultFor(DatasetType.final19x19).problemFeedbackType,
+             ProblemFeedbackType.resultWithSpeed);
+    });
+
+    test('copyWith should update problemFeedbackType correctly', () {
+      const original = DatasetConfiguration(
+        thresholdGood: 1.0,
+        thresholdClose: 2.0,
+        timePerProblemSeconds: 30,
+        problemFeedbackType: ProblemFeedbackType.result,
+      );
+
+      final modified = original.copyWith(
+        problemFeedbackType: ProblemFeedbackType.resultWithTime,
+      );
+
+      expect(modified.problemFeedbackType, ProblemFeedbackType.resultWithTime);
+      expect(modified.thresholdGood, 1.0); // Should preserve other values
+    });
+
+    test('should serialize problemFeedbackType to JSON correctly', () {
+      const config = DatasetConfiguration(
+        thresholdGood: 1.5,
+        thresholdClose: 3.0,
+        timePerProblemSeconds: 20,
+        problemFeedbackType: ProblemFeedbackType.resultWithSpeed,
+      );
+
+      final json = config.toJson();
+      expect(json['problemFeedbackType'], 'result_with_speed');
+    });
+
+    test('should deserialize problemFeedbackType from JSON correctly', () {
+      final json = {
+        'thresholdGood': 2.0,
+        'thresholdClose': 4.0,
+        'timePerProblemSeconds': 25,
+        'problemFeedbackType': 'result_with_time',
+      };
+
+      final config = DatasetConfiguration.fromJson(json);
+      expect(config.problemFeedbackType, ProblemFeedbackType.resultWithTime);
+    });
+
+    test('should use default problemFeedbackType for missing JSON field', () {
+      final json = {
+        'thresholdGood': 2.0,
+        'thresholdClose': 4.0,
+        'timePerProblemSeconds': 25,
+        // Missing problemFeedbackType
+      };
+
+      final config = DatasetConfiguration.fromJson(json);
+      expect(config.problemFeedbackType, ProblemFeedbackType.result);
+    });
+
+    test('should use default problemFeedbackType for invalid JSON value', () {
+      final json = {
+        'thresholdGood': 2.0,
+        'thresholdClose': 4.0,
+        'timePerProblemSeconds': 25,
+        'problemFeedbackType': 'invalid_value',
+      };
+
+      final config = DatasetConfiguration.fromJson(json);
+      expect(config.problemFeedbackType, ProblemFeedbackType.result);
     });
   });
 }

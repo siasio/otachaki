@@ -144,19 +144,19 @@ void main() {
         baseDatasetType: DatasetType.midgame19x19,
       );
 
-      // Verify they all have the default auto-advance mode
+      // Verify they have the correct default auto-advance modes for their base types
       final config9x9 = configManager.getConfigurationForDataset(dataset9x9);
       final config19x19 = configManager.getConfigurationForDataset(dataset19x19);
       final configMidgame = configManager.getConfigurationForDataset(datasetMidgame);
 
-      expect(config9x9.autoAdvanceMode, equals(AutoAdvanceMode.always),
-          reason: '9x9 dataset should have default auto-advance mode');
-      expect(config19x19.autoAdvanceMode, equals(AutoAdvanceMode.always),
-          reason: '19x19 dataset should have default auto-advance mode');
+      expect(config9x9.autoAdvanceMode, equals(AutoAdvanceMode.onCorrectOnly),
+          reason: '9x9 datasets should default to onCorrectOnly auto-advance mode');
+      expect(config19x19.autoAdvanceMode, equals(AutoAdvanceMode.never),
+          reason: '19x19 datasets should default to never auto-advance mode');
       expect(configMidgame.autoAdvanceMode, equals(AutoAdvanceMode.always),
-          reason: 'Midgame dataset should have default auto-advance mode');
+          reason: 'Midgame datasets should default to always auto-advance mode');
 
-      print('✅ Auto-advance default values are correct for different dataset types!');
+      print('✅ Auto-advance defaults vary correctly by dataset type (9x9:onCorrectOnly, 19x19:never, midgame:always)!');
     });
 
     testWidgets('All auto-advance modes can be set and retrieved correctly', (tester) async {

@@ -10,8 +10,6 @@ class TitleSubstitutionService {
   /// %d - current dataset name
   /// %n - total number of problems solved today on current dataset
   /// %a - today's accuracy percentage on current dataset
-  /// %t - today's average time per problem on current dataset
-  /// %s - today's average points/second speed on current dataset
   static Future<String> substituteTitle(
     String customTitle,
     CustomDataset? currentDataset,
@@ -36,32 +34,10 @@ class TitleSubstitutionService {
 
       // %a - today's accuracy percentage
       result = result.replaceAll('%a', '${datasetStats.accuracyPercentage.round()}%');
-
-      // %t - today's average time per problem
-      final formattedTime = datasetStats.averageTimeSeconds >= 4
-          ? datasetStats.averageTimeSeconds.round().toString()
-          : datasetStats.averageTimeSeconds.toStringAsFixed(1);
-      result = result.replaceAll('%t', '${formattedTime}s');
-
-      // %s - today's average points/second speed
-      // For midgame datasets, speed doesn't make sense (no territory counting)
-      if (currentDataset.baseDatasetType == DatasetType.midgame19x19) {
-        result = result.replaceAll('%s', 'N/A');
-      } else {
-        final formattedSpeed = datasetStats.averagePointsPerSecond >= 4
-            ? datasetStats.averagePointsPerSecond.round().toString()
-            : datasetStats.averagePointsPerSecond.toStringAsFixed(1);
-        result = result.replaceAll('%s', '$formattedSpeed pts/s');
-      }
-      // } else {
-      //   result = result.replaceAll('%s', 'N/A');
-      // }
     } else {
       // No statistics for today - use default values
       result = result.replaceAll('%n', '0');
       result = result.replaceAll('%a', '0%');
-      result = result.replaceAll('%t', '0.0s');
-      result = result.replaceAll('%s', 'N/A');
     }
 
     return result;
@@ -72,7 +48,5 @@ class TitleSubstitutionService {
     'Available placeholders:\n'
     '%d - Current dataset name\n'
     '%n - Problems solved today\n'
-    '%a - Today\'s accuracy percentage\n'
-    '%t - Today\'s average time per problem\n'
-    '%s - Today\'s average points/second speed';
+    '%a - Today\'s accuracy percentage';
 }

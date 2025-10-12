@@ -22,11 +22,6 @@ void main() {
       expect(theme.scaffoldBackgroundColor, const Color(0xFF121212));
     });
 
-
-      expect(theme.scaffoldBackgroundColor, const Color(0xFFE3F2FD));
-      expect(theme.appBarTheme.backgroundColor, const Color(0xFF1565C0));
-    });
-
     test('should return e-ink theme for AppSkin.eink', () {
       final theme = AppTheme.getTheme(AppSkin.eink);
 

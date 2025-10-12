@@ -27,6 +27,7 @@ import '../widgets/timer_bar.dart';
 import '../widgets/game_board_container.dart';
 import '../widgets/adaptive_result_buttons.dart';
 import '../models/auto_advance_mode.dart';
+import '../models/problem_feedback_type.dart';
 // REMOVED: GameStatusBar import - GameInfo functionality has been removed
 // import '../widgets/game_status_bar.dart';
 import '../widgets/pause_button.dart';
@@ -40,6 +41,9 @@ import '../models/rough_lead_button_state.dart';
 import '../widgets/welcome_overlay.dart';
 import './info_screen.dart';
 import './config_screen.dart';
+import '../models/training_state.dart';
+import '../services/training_state_manager.dart';
+import '../services/device_orientation_service.dart';
 
 class ResultDisplayColors {
   final Color backgroundColor;
@@ -66,14 +70,8 @@ class TrainingScreen extends StatefulWidget {
 
 class _TrainingScreenState extends State<TrainingScreen> {
   late GoPosition _currentPosition;
-  bool _timerRunning = true;
   final PositionManager _positionManager = PositionManager();
-  bool _loading = true;
-  bool _showFeedbackOverlay = false;
-  bool _isCorrectAnswer = false;
-  bool _hasAnswered = false;
-  bool _waitingForNext = false;
-  bool _pausePressed = false;
+  final TrainingStateManager _stateManager = TrainingStateManager();
   bool _showWelcomeOverlay = false;
   PositionedScoreOptions? _currentScoreOptions;
   RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
@@ -91,6 +89,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
   @override
   void initState() {
     super.initState();
+    _stateManager.onStateChanged = () {
+      if (mounted) {
+        setState(() {
+          // Trigger UI rebuild when state changes
+        });
+      }
+    };
     _initializeConfiguration();
     // Ensure focus for keyboard input
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -121,6 +126,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       await _updateDynamicTitle(); // Update title when config is loaded
 
+      // Apply device settings (orientation and full-screen mode)
+      await DeviceOrientationService.applyDeviceSettings(
+        orientationMode: _globalConfig!.screenOrientationMode,
+        enableFullScreen: _globalConfig!.enableFullScreen,
+      );
+
       // Check if we should show the welcome screen
       if (_globalConfig!.showWelcomeScreen) {
         setState(() {
@@ -147,7 +158,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   @override
   void dispose() {
+    _stateManager.dispose();
     _focusNode.dispose();
+    // Reset device settings when the app is disposed
+    DeviceOrientationService.resetDeviceSettings();
     super.dispose();
   }
 
@@ -173,7 +187,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         return;
       }
 
-      if (_waitingForNext) {
+      if (_stateManager.isWaitingForNext) {
         if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
           _onNextPressed();
         }
@@ -181,23 +195,23 @@ class _TrainingScreenState extends State<TrainingScreen> {
       }
 
       // Handle space key for pause during feedback overlay
-      if (_showFeedbackOverlay && event.logicalKey == LogicalKeyboardKey.space) {
+      if (_stateManager.shouldShowFeedbackOverlay && event.logicalKey == LogicalKeyboardKey.space) {
         final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
-        final stateManager = ButtonStateManager(
+        final buttonStateManager = ButtonStateManager(
           autoAdvanceMode: autoAdvanceMode,
-          isAnswerCorrect: _isCorrectAnswer,
-          hasAnswered: _hasAnswered,
-          pausePressed: _pausePressed,
+          isAnswerCorrect: _stateManager.isCorrectAnswer,
+          hasAnswered: _stateManager.hasAnswered,
+          pausePressed: _stateManager.currentState == TrainingState.paused,
         );
         // Only allow pause if the pause button would be visible
-        if (stateManager.shouldAutoAdvance() && !_pausePressed) {
+        if (buttonStateManager.shouldAutoAdvance() && _stateManager.currentState != TrainingState.paused) {
           _onPausePressed();
         }
         return;
       }
 
       final isTimerEnabled = _currentConfig?.timerEnabled ?? true;
-      if ((!_timerRunning && isTimerEnabled) || _showFeedbackOverlay) return;
+      if ((!_stateManager.shouldRunTimer && isTimerEnabled) || _stateManager.shouldShowFeedbackOverlay) return;
 
       final predictionType = _currentConfig?.predictionType ?? PredictionType.winnerPrediction;
 
@@ -253,13 +267,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _resetTrainingState() {
-    setState(() {
-      _timerRunning = false;
-      _showFeedbackOverlay = false;
-      _hasAnswered = false;
-      _waitingForNext = false;
-      _pausePressed = false;
-    });
+    _stateManager.reset();
   }
 
   Future<void> _navigateToInfo() async {
@@ -282,6 +290,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
     if (_globalConfigManager != null) {
       _globalConfig = _globalConfigManager!.getConfiguration();
       await _updateDynamicTitle(); // Update title when config changes
+
+      // Apply device settings in case they changed
+      await DeviceOrientationService.applyDeviceSettings(
+        orientationMode: _globalConfig!.screenOrientationMode,
+        enableFullScreen: _globalConfig!.enableFullScreen,
+      );
     }
 
     // Reload the current selected dataset in case it changed
@@ -341,12 +355,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       setState(() {
         _currentPosition = position;
-        _loading = false;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
-        // Only start timer if welcome overlay is not shown
-        _timerRunning = !_showWelcomeOverlay;
       });
+
+      // Always transition to solving state when position is loaded
+      // The welcome overlay (if shown) will be displayed over the game screen
+      _stateManager.transitionTo(TrainingState.solving);
+
       // Start timing the problem only if welcome overlay is not shown
       if (!_showWelcomeOverlay) {
         _problemStartTime = DateTime.now();
@@ -362,8 +378,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
         error: e, stackTrace: stackTrace, context: 'TrainingScreen');
       setState(() {
         _currentPosition = GoPosition.demo();
-        _loading = false;
       });
+      _stateManager.transitionTo(TrainingState.solving);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -390,56 +406,50 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _onResultSelected(GameResult result) {
-    setState(() {
-      _timerRunning = false;
-      _hasAnswered = true;
-    });
-
     final isCorrect = _checkResultUsingNewSystem(result);
     _recordAttempt(isCorrect, false);
 
     final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
-    setState(() {
-      _showFeedbackOverlay = markDisplayEnabled;
-      _isCorrectAnswer = isCorrect;
-    });
+    final data = TrainingStateData.answer(isCorrect: isCorrect);
+
+    if (markDisplayEnabled) {
+      _stateManager.transitionTo(TrainingState.feedback, data);
+    } else {
+      _stateManager.transitionTo(TrainingState.review, data);
+    }
 
     _handlePostAnswerFlow(isCorrect);
   }
 
   void _onResultOptionSelected(GameResultOption option) {
-    setState(() {
-      _timerRunning = false;
-      _hasAnswered = true;
-    });
-
     _recordAttempt(option.isCorrect, false);
 
     final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
-    setState(() {
-      _showFeedbackOverlay = markDisplayEnabled;
-      _isCorrectAnswer = option.isCorrect;
-    });
+    final data = TrainingStateData.answer(isCorrect: option.isCorrect);
+
+    if (markDisplayEnabled) {
+      _stateManager.transitionTo(TrainingState.feedback, data);
+    } else {
+      _stateManager.transitionTo(TrainingState.review, data);
+    }
 
     _handlePostAnswerFlow(option.isCorrect);
   }
 
   void _onExactScoreButtonPressed(int buttonPosition) {
-    setState(() {
-      _timerRunning = false;
-      _hasAnswered = true;
-    });
-
     // Check if the pressed button position is correct
     final isCorrect = buttonPosition == _currentScoreOptions?.correctButtonPosition;
 
     _recordAttempt(isCorrect, false);
 
     final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
-    setState(() {
-      _showFeedbackOverlay = markDisplayEnabled;
-      _isCorrectAnswer = isCorrect;
-    });
+    final data = TrainingStateData.answer(isCorrect: isCorrect);
+
+    if (markDisplayEnabled) {
+      _stateManager.transitionTo(TrainingState.feedback, data);
+    } else {
+      _stateManager.transitionTo(TrainingState.review, data);
+    }
 
     _handlePostAnswerFlow(isCorrect);
   }
@@ -449,11 +459,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
   /// Updates the prediction state to mark the pressed button and determines
   /// if the answer was correct based on the rough lead prediction logic.
   void _onRoughLeadButtonPressed(RoughLeadButtonType buttonType) {
-    setState(() {
-      _timerRunning = false;
-      _hasAnswered = true;
-    });
-
     if (_currentRoughLeadState != null) {
       final updatedState = _currentRoughLeadState!.markButtonPressed(buttonType);
       final isCorrect = updatedState.wasAnswerCorrect;
@@ -461,11 +466,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _recordAttempt(isCorrect, false);
 
       final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
+      final data = TrainingStateData.answer(isCorrect: isCorrect);
+
       setState(() {
         _currentRoughLeadState = updatedState;
-        _showFeedbackOverlay = markDisplayEnabled;
-        _isCorrectAnswer = isCorrect;
       });
+
+      if (markDisplayEnabled) {
+        _stateManager.transitionTo(TrainingState.feedback, data);
+      } else {
+        _stateManager.transitionTo(TrainingState.review, data);
+      }
 
       _handlePostAnswerFlow(isCorrect);
     }
@@ -489,14 +500,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   void _onTimerComplete() {
     final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
-    setState(() {
-      _timerRunning = false;
-      _showFeedbackOverlay = markDisplayEnabled;
-      _isCorrectAnswer = false;
-      _hasAnswered = true;
-    });
+    final data = TrainingStateData.answer(isCorrect: false, wasTimeout: true);
 
     _recordAttempt(false, true);
+
+    if (markDisplayEnabled) {
+      _stateManager.transitionTo(TrainingState.feedback, data);
+    } else {
+      _stateManager.transitionTo(TrainingState.review, data);
+    }
 
     _handlePostAnswerFlow(false);
   }
@@ -504,46 +516,47 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _handlePostAnswerFlow(bool isCorrect) {
     final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
     final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
-    final stateManager = ButtonStateManager(
+    final buttonStateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
       isAnswerCorrect: isCorrect,
       hasAnswered: true,
     );
 
-    if (stateManager.shouldAutoAdvance()) {
-      if (markDisplayEnabled) {
+    if (buttonStateManager.shouldAutoAdvance()) {
+      if (markDisplayEnabled && _stateManager.currentState == TrainingState.feedback) {
         final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-        Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-          // Check if pause was pressed during the delay
-          if (!_pausePressed && mounted) {
-            _loadNextPosition();
-          }
-        });
+        _stateManager.timerManager.scheduleAutoAdvance(
+          Duration(milliseconds: (markDisplayTime * 1000).round()),
+          () {
+            if (mounted && _stateManager.currentState == TrainingState.feedback) {
+              _loadNextPosition();
+            }
+          },
+        );
       } else {
-        // No mark display - advance immediately but use a minimal delay to ensure state is properly set
-        Future.delayed(const Duration(milliseconds: 50), () {
-          if (!_pausePressed && mounted) {
-            _loadNextPosition();
-          }
-        });
+        // No mark display - advance immediately
+        _stateManager.timerManager.scheduleAutoAdvance(
+          const Duration(milliseconds: 50),
+          () {
+            if (mounted) {
+              _loadNextPosition();
+            }
+          },
+        );
       }
     } else {
-      if (markDisplayEnabled) {
+      if (markDisplayEnabled && _stateManager.currentState == TrainingState.feedback) {
         final markDisplayTime = _globalConfig?.markDisplayTimeSeconds ?? 1.5;
-        Future.delayed(Duration(milliseconds: (markDisplayTime * 1000).round()), () {
-          if (mounted) {
-            setState(() {
-              _showFeedbackOverlay = false;
-              _waitingForNext = true;
-            });
-          }
-        });
+        _stateManager.timerManager.scheduleAutoAdvance(
+          Duration(milliseconds: (markDisplayTime * 1000).round()),
+          () {
+            if (mounted && _stateManager.currentState == TrainingState.feedback) {
+              _stateManager.transitionTo(TrainingState.review);
+            }
+          },
+        );
       } else {
-        // No mark display - go directly to waiting state
-        setState(() {
-          _showFeedbackOverlay = false;
-          _waitingForNext = true;
-        });
+        // Already in review state if no mark display
       }
     }
   }
@@ -553,18 +566,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _onPausePressed() {
-    setState(() {
-      _pausePressed = true;
-      _showFeedbackOverlay = false;
-      _waitingForNext = true;
-    });
+    if (_stateManager.currentState == TrainingState.feedback) {
+      _stateManager.transitionTo(TrainingState.paused);
+    }
   }
 
   void _onWelcomeDismiss() {
     setState(() {
       _showWelcomeOverlay = false;
-      _timerRunning = true; // Start timer when welcome is dismissed
     });
+    _stateManager.transitionTo(TrainingState.solving);
     // Start timing the problem now
     _problemStartTime = DateTime.now();
   }
@@ -576,25 +587,25 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
     setState(() {
       _showWelcomeOverlay = false;
-      _timerRunning = true; // Start timer when welcome is dismissed
     });
+    _stateManager.transitionTo(TrainingState.solving);
     // Start timing the problem now
     _problemStartTime = DateTime.now();
   }
 
   Widget _buildButtons() {
     final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
-    final stateManager = ButtonStateManager(
+    final buttonStateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
-      isAnswerCorrect: _isCorrectAnswer,
-      hasAnswered: _hasAnswered,
-      pausePressed: _pausePressed,
+      isAnswerCorrect: _stateManager.isCorrectAnswer,
+      hasAnswered: _stateManager.hasAnswered,
+      pausePressed: _stateManager.currentState == TrainingState.paused,
     );
 
-    final displayMode = stateManager.getDisplayMode();
+    final displayMode = buttonStateManager.getDisplayMode();
     final predictionType = _currentConfig?.predictionType ?? PredictionType.winnerPrediction;
 
-    if (_waitingForNext || (displayMode == ButtonDisplayMode.scores && _hasAnswered && !_showFeedbackOverlay)) {
+    if (_stateManager.isWaitingForNext || (displayMode == ButtonDisplayMode.scores && _stateManager.hasAnswered && !_stateManager.shouldShowFeedbackOverlay)) {
       final currentTrainingPosition = _positionManager.currentTrainingPosition;
       return AdaptiveResultButtons.forScores(
         resultString: currentTrainingPosition?.result ?? '',
@@ -610,7 +621,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         datasetType: _positionManager.currentCustomDataset?.baseDatasetType,
       );
     } else {
-      final isEnabled = ((_timerRunning || !(_currentConfig?.timerEnabled ?? true)) && !_hasAnswered && !_showWelcomeOverlay);
+      final isEnabled = ((_stateManager.shouldRunTimer || !(_currentConfig?.timerEnabled ?? true)) && !_stateManager.hasAnswered && !_showWelcomeOverlay);
 
       if (predictionType == PredictionType.exactScorePrediction && _positionManager.currentTrainingPosition != null) {
         // Use pre-generated score options (generated once when position was loaded)
@@ -662,12 +673,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Future<void> _loadNextPosition() async {
+    _stateManager.transitionTo(TrainingState.loading);
     setState(() {
-      _loading = true;
-      _showFeedbackOverlay = false;
-      _hasAnswered = false;
-      _waitingForNext = false;
-      _pausePressed = false;
       _currentScoreOptions = null;
       _currentRoughLeadState = null;
     });
@@ -711,11 +718,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       setState(() {
         _currentPosition = position;
-        _timerRunning = !_showWelcomeOverlay; // Only start timer if welcome overlay is not shown
-        _loading = false;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
       });
+
+      // Always transition to solving state when position is loaded
+      // The welcome overlay (if shown) will be displayed over the game screen
+      _stateManager.transitionTo(TrainingState.solving);
+
       // Start timing the new problem only if welcome overlay is not shown
       if (!_showWelcomeOverlay) {
         _problemStartTime = DateTime.now();
@@ -731,9 +741,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
         error: e, stackTrace: stackTrace, context: 'TrainingScreen');
       setState(() {
         _currentPosition = GoPosition.demo();
-        _timerRunning = true;
-        _loading = false;
       });
+      _stateManager.transitionTo(TrainingState.solving);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -824,13 +833,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     // Check if pause button should be shown
     final autoAdvanceMode = _currentConfig?.autoAdvanceMode ?? AutoAdvanceMode.always;
-    final stateManager = ButtonStateManager(
+    final buttonStateManager = ButtonStateManager(
       autoAdvanceMode: autoAdvanceMode,
-      isAnswerCorrect: _isCorrectAnswer,
-      hasAnswered: _hasAnswered,
-      pausePressed: _pausePressed,
+      isAnswerCorrect: _stateManager.isCorrectAnswer,
+      hasAnswered: _stateManager.hasAnswered,
+      pausePressed: _stateManager.currentState == TrainingState.paused,
     );
-    final shouldShowPauseButton = stateManager.shouldAutoAdvance() && !_pausePressed;
+    final shouldShowPauseButton = buttonStateManager.shouldAutoAdvance() && _stateManager.currentState != TrainingState.paused;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -847,18 +856,18 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: _isCorrectAnswer ? correctColor : incorrectColor,
+                    color: _stateManager.isCorrectAnswer ? correctColor : incorrectColor,
                     shape: BoxShape.circle,
                     boxShadow: currentSkin != AppSkin.eink ? [
                       BoxShadow(
-                        color: (_isCorrectAnswer ? correctColor : incorrectColor).withOpacity(0.3),
+                        color: (_stateManager.isCorrectAnswer ? correctColor : incorrectColor).withValues(alpha: 0.3),
                         blurRadius: 12,
                         spreadRadius: 4,
                       ),
                     ] : [],
                   ),
                   child: Icon(
-                    _isCorrectAnswer ? Icons.check_rounded : Icons.close_rounded,
+                    _stateManager.isCorrectAnswer ? Icons.check_rounded : Icons.close_rounded,
                     size: 80,
                     color: currentSkin == AppSkin.eink ? Colors.white : Colors.white,
                   ),
@@ -871,7 +880,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: _isCorrectAnswer ? correctColor : incorrectColor,
+              color: _stateManager.isCorrectAnswer ? correctColor : incorrectColor,
               shape: BoxShape.circle,
               border: Border.all(
                 color: currentSkin == AppSkin.eink ? Colors.black : Colors.transparent,
@@ -879,7 +888,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               ),
             ),
             child: Icon(
-              _isCorrectAnswer ? Icons.check_rounded : Icons.close_rounded,
+              _stateManager.isCorrectAnswer ? Icons.check_rounded : Icons.close_rounded,
               size: 80,
               color: Colors.white,
             ),
@@ -903,7 +912,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       border: Border.all(color: colors.borderColor, width: 2),
                       boxShadow: currentSkin != AppSkin.eink ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -911,6 +920,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     ),
                     child: Text(
                       displayResult,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -944,6 +954,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             ),
             child: Text(
               displayResult,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -965,20 +976,59 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   String _formatResultText(String result) {
-    if (result.isEmpty) return 'UNKNOWN';
-
-    // Handle resignation
-    if (result.endsWith('+R')) {
-      return result.startsWith('B') ? 'B+R' : 'W+R';
+    // Get base result text
+    String baseResult;
+    if (result.isEmpty) {
+      baseResult = 'UNKNOWN';
+    } else if (result.endsWith('+R')) {
+      // Handle resignation
+      baseResult = result.startsWith('B') ? 'B+R' : 'W+R';
+    } else if (result == 'Draw') {
+      // Handle draws (0.5 point difference or exact draw)
+      baseResult = 'DRAW';
+    } else {
+      // Return result as-is for normal wins (B+7.5, W+2, etc.)
+      baseResult = result;
     }
 
-    // Handle draws (0.5 point difference or exact draw)
-    if (result == 'Draw') { // result.contains('+0.5') || result.contains('-0.5') || 
-      return 'DRAW';
+    // Add timing/speed information based on configuration
+    final feedbackType = _currentConfig?.problemFeedbackType ?? ProblemFeedbackType.result;
+    if (feedbackType == ProblemFeedbackType.result) {
+      return baseResult;
     }
 
-    // Return result as-is for normal wins (B+7.5, W+2, etc.)
-    return result;
+    // Calculate time spent if we have timing data
+    if (_problemStartTime != null && _stateManager.hasAnswered) {
+      final timeSpentMs = DateTime.now().difference(_problemStartTime!).inMilliseconds;
+      final timeSeconds = timeSpentMs / 1000.0;
+
+      if (feedbackType == ProblemFeedbackType.resultWithTime) {
+        final formattedTime = timeSeconds >= 4
+            ? '${timeSeconds.round()}s'
+            : '${timeSeconds.toStringAsFixed(1)}s';
+        return '$baseResult\n$formattedTime';
+      } else if (feedbackType == ProblemFeedbackType.resultWithSpeed) {
+        // Calculate speed if territory data is available
+        final currentPosition = _positionManager.currentTrainingPosition;
+        if (currentPosition != null && currentPosition.hasTerritoryData && timeSeconds > 0) {
+          final totalPoints = (currentPosition.blackTerritory! + currentPosition.whiteTerritory!).toDouble();
+          final pointsPerSecond = totalPoints / timeSeconds;
+          final formattedSpeed = pointsPerSecond >= 4
+              ? '${pointsPerSecond.round()} pts/s'
+              : '${pointsPerSecond.toStringAsFixed(1)} pts/s';
+          return '$baseResult\n$formattedSpeed';
+        } else {
+          // Fallback to time if speed can't be calculated
+          final formattedTime = timeSeconds >= 4
+              ? '${timeSeconds.round()}s'
+              : '${timeSeconds.toStringAsFixed(1)}s';
+          return '$baseResult\n$formattedTime';
+        }
+      }
+    }
+
+    // Fallback to base result if no timing data available
+    return baseResult;
   }
 
   ResultDisplayColors _getResultDisplayColors(String result) {
@@ -993,7 +1043,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         backgroundColor: containerStyle.backgroundColor!,
         textColor: themeProvider.getElementStyle(UIElement.textBody).color!,
         borderColor: containerStyle.borderColor!,
-        shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withOpacity(0.3),
+        shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withValues(alpha: 0.3),
       );
     }
 
@@ -1030,9 +1080,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     return ResultDisplayColors(
       backgroundColor: containerStyle.backgroundColor!,
-      textColor: elementStyle.color!,
+      textColor: currentSkin == AppSkin.eink ? Colors.black : elementStyle.color!,
       borderColor: containerStyle.borderColor!,
-      shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withOpacity(0.3),
+      shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withValues(alpha: 0.3),
     );
   }
 
@@ -1071,18 +1121,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   /// Determine the current board view mode based on game state
   BoardViewMode get _currentViewMode {
-    // Problem view: timer running, user solving
-    if (_timerRunning && !_hasAnswered) {
-      return BoardViewMode.problem;
+    switch (_stateManager.currentState) {
+      case TrainingState.loading:
+      case TrainingState.solving:
+        return BoardViewMode.problem;
+      case TrainingState.feedback:
+      case TrainingState.review:
+      case TrainingState.paused:
+        return BoardViewMode.review;
     }
-
-    // Review view: after answering, during feedback, or waiting for next
-    if (_hasAnswered || _showFeedbackOverlay || _waitingForNext) {
-      return BoardViewMode.review;
-    }
-
-    // Default to problem view
-    return BoardViewMode.problem;
   }
 
   /// Get the ownership display mode from current configuration
@@ -1105,7 +1152,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
     final layoutType = _globalConfig?.layoutType ?? LayoutType.vertical;
 
-    if (_loading) {
+    if (_stateManager.currentState == TrainingState.loading) {
       if (layoutType == LayoutType.horizontal) {
         // Horizontal layout with vertical app bar on the left
         return Scaffold(
@@ -1205,7 +1252,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       right: false,
                       child: AdaptiveLayout(
                         layoutType: layoutType,
-                        timerBar: (_timerRunning && isTimerEnabled && !_showWelcomeOverlay)
+                        timerBar: (_stateManager.shouldRunTimer && isTimerEnabled && !_showWelcomeOverlay)
                             ? TimerBar(
                                 duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
                                 onComplete: _onTimerComplete,
@@ -1227,7 +1274,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           trainingPosition: _positionManager.currentTrainingPosition,
                           appSkin: currentSkin,
                           layoutType: layoutType,
-                          showFeedbackOverlay: _showFeedbackOverlay,
+                          showFeedbackOverlay: _stateManager.shouldShowFeedbackOverlay,
                           sequenceLength: _currentSequenceLength,
                           sequenceDisplayMode: _currentSequenceDisplayMode,
                           viewMode: _currentViewMode,
@@ -1235,7 +1282,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
                           showMoveNumbers: _shouldShowMoveNumbers,
                           isSequenceLengthDefined: _isSequenceLengthDefined,
-                          feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+                          feedbackWidget: _stateManager.shouldShowFeedbackOverlay ? _buildFeedbackWidget() : null,
                         ),
                         buttons: _buildButtons(),
                       ),
@@ -1277,7 +1324,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 bottom: false,
                 child: AdaptiveLayout(
                   layoutType: layoutType,
-                  timerBar: (_timerRunning && isTimerEnabled && !_showWelcomeOverlay)
+                  timerBar: (_stateManager.shouldRunTimer && isTimerEnabled && !_showWelcomeOverlay)
                       ? TimerBar(
                           duration: Duration(seconds: _currentConfig?.timePerProblemSeconds ?? 30),
                           onComplete: _onTimerComplete,
@@ -1299,7 +1346,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     trainingPosition: _positionManager.currentTrainingPosition,
                     appSkin: currentSkin,
                     layoutType: layoutType,
-                    showFeedbackOverlay: _showFeedbackOverlay,
+                    showFeedbackOverlay: _stateManager.shouldShowFeedbackOverlay,
                     sequenceLength: _currentSequenceLength,
                     sequenceDisplayMode: _currentSequenceDisplayMode,
                     viewMode: _currentViewMode,
@@ -1307,7 +1354,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
                     showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
                     isSequenceLengthDefined: _isSequenceLengthDefined,
-                    feedbackWidget: _showFeedbackOverlay ? _buildFeedbackWidget() : null,
+                    feedbackWidget: _stateManager.shouldShowFeedbackOverlay ? _buildFeedbackWidget() : null,
                   ),
                   buttons: _buildButtons(),
                 ),

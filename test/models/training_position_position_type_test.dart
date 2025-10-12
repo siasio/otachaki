@@ -12,8 +12,6 @@ void main() {
         boardSize: 9,
         stonesBase64: 'dGVzdF9zdG9uZXM=', // base64 for "test_stones"
         score: 3.5,
-        blackCaptured: 2,
-        whiteCaptured: 1,
         komi: 5.5,
         movesBase64: 'dGVzdF9tb3Zlcw==', // base64 for "test_moves"
         numberOfMoves: 8,
@@ -21,8 +19,6 @@ void main() {
         blackTerritory: 25,
         whiteTerritory: 20,
         ultimateStonesBase64: 'dGVzdF91bHRpbWF0ZV9zdG9uZXM=', // base64 for "test_ultimate_stones"
-        ultimateBlackCaptured: 4,
-        ultimateWhiteCaptured: 3,
         additionalWhiteMove: false,
       );
     });
@@ -38,8 +34,6 @@ void main() {
           boardSize: 9,
           stonesBase64: 'dGVzdF9zdG9uZXM=',
           score: 3.5,
-          blackCaptured: 2,
-          whiteCaptured: 1,
           komi: 5.5,
           // ultimateStonesBase64 is null
         );
@@ -59,8 +53,6 @@ void main() {
           boardSize: 9,
           stonesBase64: 'dGVzdF9zdG9uZXM=',
           score: 3.5,
-          blackCaptured: 2,
-          whiteCaptured: 1,
           komi: 5.5,
           additionalWhiteMove: true,
         );
@@ -89,8 +81,6 @@ void main() {
           boardSize: 9,
           stonesBase64: 'dGVzdF9zdG9uZXM=',
           score: 0.0,
-          blackCaptured: 2,
-          whiteCaptured: 1,
           komi: 5.5,
         );
 
@@ -126,30 +116,28 @@ void main() {
     group('getBlackScoringText', () {
       test('generates correct text for with filled neutral points mode', () {
         final result = testPosition.getBlackScoringText(PositionType.withFilledNeutralPoints);
-        // blackTerritory (25) + whiteCaptured (1) = 26
-        expect(result, equals('25+1=26'));
+        // blackTerritory (25)
+        expect(result, equals('Black: 25'));
       });
 
       test('generates correct text for before filling neutral points mode', () {
         final result = testPosition.getBlackScoringText(PositionType.beforeFillingNeutralPoints);
-        // territory score: blackTerritory (25) + (ultimateWhiteCaptured (3) - whiteCaptured (1)) = 25 + 2 = 27
-        // total: 27 + whiteCaptured (1) = 28
-        expect(result, equals('27+1=28'));
+        // blackTerritory (25)
+        expect(result, equals('Black: 25'));
       });
     });
 
     group('getWhiteScoringText', () {
       test('generates correct text for with filled neutral points mode', () {
         final result = testPosition.getWhiteScoringText(PositionType.withFilledNeutralPoints);
-        // whiteTerritory (20) + blackCaptured (2) + komi (5.5) = 27.5
-        expect(result, equals('20+2+5.5=27.5'));
+        // whiteTerritory (20) + komi (5.5) = 25.5
+        expect(result, equals('White: 20 + 5.5 = 25.5'));
       });
 
       test('generates correct text for before filling neutral points mode', () {
         final result = testPosition.getWhiteScoringText(PositionType.beforeFillingNeutralPoints);
-        // territory score: whiteTerritory (20) + (ultimateBlackCaptured (4) - blackCaptured (2)) = 20 + 2 = 22
-        // total: 22 + blackCaptured (2) + komi (5.5) = 29.5
-        expect(result, equals('22+2+5.5=29.5'));
+        // whiteTerritory (20) + komi (5.5) = 25.5
+        expect(result, equals('White: 20 + 5.5 = 25.5'));
       });
     });
   });

@@ -5,7 +5,7 @@ import 'package:otachaki/models/dataset_type.dart';
 import 'package:otachaki/services/custom_dataset_manager.dart';
 
 void main() {
-  group('UnifiedDatasetManager', () {
+  group('CustomDatasetManager', () {
     late CustomDatasetManager manager;
 
     setUp(() async {
@@ -27,16 +27,17 @@ void main() {
     test('should initialize with default datasets for all types', () {
       final allDatasets = manager.getAllDatasets();
 
-      // Should have exactly 5 default datasets (one for each DatasetType)
-      expect(allDatasets.length, 5);
+      // Should have exactly 4 default datasets (one for each visible DatasetType)
+      expect(allDatasets.length, 4);
 
-      // Check that we have one dataset for each type
-      for (final type in DatasetType.values) {
+      // Check that we have one dataset for each visible type (4 types)
+      final visibleTypes = [DatasetType.final9x9, DatasetType.final13x13, DatasetType.final19x19, DatasetType.midgame19x19];
+      for (final type in visibleTypes) {
         final datasetsOfType = allDatasets.where((d) => d.baseDatasetType == type);
         expect(datasetsOfType.length, 1, reason: 'Should have exactly one default dataset for $type');
 
         final dataset = datasetsOfType.first;
-        expect(dataset.id, 'default_${type.value}');
+        expect(dataset.id, 'builtin_${type.value}');
         expect(dataset.name, isNotEmpty);
       }
     });
@@ -151,7 +152,10 @@ void main() {
     });
 
     test('should migrate from legacy system', () async {
-      // Simulate legacy data
+      // Reset and simulate legacy data
+      await manager.clearAllCustomDatasets();
+      CustomDatasetManager.resetInstance();
+
       SharedPreferences.setMockInitialValues({
         'custom_datasets': '[{"id":"legacy-1","name":"Legacy Dataset","baseDatasetType":"final-9x9","configuration":{"timeLimit":30000,"scoreThreshold":5},"createdAt":1640995200000}]',
         'dataset_migration_completed': false,
@@ -162,8 +166,8 @@ void main() {
 
       final allDatasets = newManager.getAllDatasets();
 
-      // Should have 5 defaults + 1 migrated legacy dataset
-      expect(allDatasets.length, 6);
+      // Should have 4 defaults + 1 migrated legacy dataset
+      expect(allDatasets.length, 5);
 
       // Find the migrated dataset
       final legacyDataset = allDatasets.firstWhere((d) => d.id == 'legacy-1');
@@ -188,16 +192,16 @@ void main() {
 
       final grouped = manager.getDatasetsByBaseType();
 
-      // Should have datasets for each type
-      expect(grouped.keys.length, greaterThanOrEqualTo(2));
+      // Should have datasets for each type (4 total types)
+      expect(grouped.keys.length, equals(4));
 
       // 9x9 should have 3 datasets (1 default + 2 custom)
       final final9x9Datasets = grouped[DatasetType.final9x9];
       expect(final9x9Datasets, isNotNull);
       expect(final9x9Datasets!.length, 3);
 
-      // Default should be first (starts with 'default_')
-      expect(final9x9Datasets.first.id, startsWith('default_'));
+      // Default should be first (starts with 'builtin_')
+      expect(final9x9Datasets.first.id, startsWith('builtin_'));
 
       // 19x19 should have 2 datasets (1 default + 1 custom)
       final final19x19Datasets = grouped[DatasetType.final19x19];
@@ -206,7 +210,7 @@ void main() {
     });
 
     test('should validate dataset IDs', () {
-      final validDataset = manager.getDatasetById('default_final-9x9');
+      final validDataset = manager.getDatasetById('builtin_final-9x9');
       expect(validDataset, isNotNull);
 
       final invalidDataset = manager.getDatasetById('non-existent-id');

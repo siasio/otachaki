@@ -48,7 +48,8 @@ void main() {
       );
 
       expect(find.byType(Row), findsOneWidget);
-      expect(find.text('Game Info'), findsOneWidget);
+      // Note: gameInfoBar functionality has been removed but parameter kept for compatibility
+      // expect(find.text('Game Info'), findsOneWidget); // This text is no longer rendered
       expect(find.text('Buttons'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

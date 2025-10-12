@@ -4,6 +4,7 @@ import 'prediction_type.dart';
 import 'position_type.dart';
 import 'auto_advance_mode.dart';
 import 'game_stage.dart';
+import 'problem_feedback_type.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
@@ -20,6 +21,7 @@ class DatasetConfiguration {
   final bool showMoveNumbers;
   final AutoAdvanceMode autoAdvanceMode;
   final GameStage gameStage;
+  final ProblemFeedbackType problemFeedbackType;
 
   const DatasetConfiguration({
     required this.thresholdGood,
@@ -36,6 +38,7 @@ class DatasetConfiguration {
     this.showMoveNumbers = true,
     this.autoAdvanceMode = AutoAdvanceMode.always,
     this.gameStage = GameStage.all,
+    this.problemFeedbackType = ProblemFeedbackType.result,
   });
 
   static DatasetConfiguration getDefaultFor(DatasetType datasetType) {
@@ -49,6 +52,7 @@ class DatasetConfiguration {
           positionType: PositionType.withFilledNeutralPoints,
           ownershipDisplayMode: OwnershipDisplayMode.squares,
           autoAdvanceMode: AutoAdvanceMode.onCorrectOnly,
+          problemFeedbackType: ProblemFeedbackType.result,
         );
       case DatasetType.final13x13:
         return const DatasetConfiguration(
@@ -62,6 +66,7 @@ class DatasetConfiguration {
           sequenceLength: 0,
           showMoveNumbers: true,
           autoAdvanceMode: AutoAdvanceMode.never,
+          problemFeedbackType: ProblemFeedbackType.resultWithTime,
         );
       case DatasetType.final19x19:
         return const DatasetConfiguration(
@@ -73,6 +78,7 @@ class DatasetConfiguration {
           sequenceLength: 0,
           showMoveNumbers: true,
           autoAdvanceMode: AutoAdvanceMode.never,
+          problemFeedbackType: ProblemFeedbackType.resultWithSpeed,
         );
       case DatasetType.midgame19x19:
         return const DatasetConfiguration(
@@ -84,6 +90,7 @@ class DatasetConfiguration {
           ownershipDisplayMode: OwnershipDisplayMode.squares,
           gameStage: GameStage.all,
           autoAdvanceMode: AutoAdvanceMode.always,
+          problemFeedbackType: ProblemFeedbackType.result,
         );
       case DatasetType.partialPositions:
         return const DatasetConfiguration(
@@ -93,6 +100,7 @@ class DatasetConfiguration {
           // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
           // hideGameInfoBar: false,
           predictionType: PredictionType.winnerPrediction,
+          problemFeedbackType: ProblemFeedbackType.result,
         );
     }
   }
@@ -112,6 +120,7 @@ class DatasetConfiguration {
     bool? showMoveNumbers,
     AutoAdvanceMode? autoAdvanceMode,
     GameStage? gameStage,
+    ProblemFeedbackType? problemFeedbackType,
   }) {
     return DatasetConfiguration(
       thresholdGood: thresholdGood ?? this.thresholdGood,
@@ -128,6 +137,7 @@ class DatasetConfiguration {
       showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
       autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
       gameStage: gameStage ?? this.gameStage,
+      problemFeedbackType: problemFeedbackType ?? this.problemFeedbackType,
     );
   }
 
@@ -147,6 +157,7 @@ class DatasetConfiguration {
       'showMoveNumbers': showMoveNumbers,
       'autoAdvanceMode': autoAdvanceMode.value,
       'gameStage': gameStage.value,
+      'problemFeedbackType': problemFeedbackType.value,
     };
   }
 
@@ -175,6 +186,7 @@ class DatasetConfiguration {
       showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
       autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
       gameStage: GameStage.fromString(json['gameStage'] as String?),
+      problemFeedbackType: ProblemFeedbackType.fromString(json['problemFeedbackType'] as String?) ?? ProblemFeedbackType.result,
     );
   }
 

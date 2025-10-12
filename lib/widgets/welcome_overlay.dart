@@ -214,17 +214,17 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
       _WelcomeItem(
         icon: Icons.dataset_outlined,
         title: 'Explore Different Datasets',
-        description: 'Quick excercises with **Pocket Quest** (9x9); real-life challenges with **Overtime Rush** (19x19); and more!',
+        description: 'Start with **Pocket Quest** (9x9); challenge yourself with **Overtime Rush** (19x19); and more!',
       ),
       _WelcomeItem(
         icon: Icons.analytics_outlined,
         title: 'Track Progress',
-        description: 'View your performance statistics and accuracy trends on the info screen (ℹ️).',
+        description: 'View your performance trends on the info screen (ℹ️).',
       ),
       _WelcomeItem(
         icon: Icons.keyboard_outlined,
         title: 'Keyboard Shortcuts',
-        description: 'Use ← to select White Wins, ↓ to select Draw/Close, → to select Black Wins, and ␣ to pause auto-advance.',
+        description: 'Use ← to select White, ↓ to select Draw/Close, → to select Black, and ␣ to pause auto-advance.',
       ),
     ];
 
@@ -301,7 +301,7 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
                       : Theme.of(context).primaryColor.withOpacity(0.1),
                   foregroundColor: widget.appSkin == AppSkin.eink
                       ? Colors.black
-                      : Theme.of(context).primaryColor,
+                      : textStyle.color,
                   elevation: widget.appSkin == AppSkin.eink ? 0 : 2,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
