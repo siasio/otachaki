@@ -54,8 +54,9 @@ class DatasetParser {
 
   /// Parse training position from JSON - returns Map to avoid type conflicts
   static Map<String, dynamic> parseTrainingPositionToMap(Map<String, dynamic> json) {
-    // Primary score field
-    final score = (json['score'] as num?)?.toDouble() ?? 0.0;
+    // Primary score field - round to nearest integer for cleaner user experience
+    final rawScore = (json['score'] as num?)?.toDouble() ?? 0.0;
+    final score = rawScore.round().toDouble();
 
     return {
       'id': json['id'] as String? ?? '',

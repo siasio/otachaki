@@ -123,7 +123,6 @@ void main() {
     });
 
     test('should return positive elevation for non-e-ink skins', () {
-      for (final skin in [AppSkin.classic, AppSkin.modern, AppSkin.ocean]) {
         expect(DimensionConfig.getElevation(UIElement.buttonResultWhite, skin), greaterThan(0),
             reason: 'Button should have elevation for $skin');
         expect(DimensionConfig.getElevation(UIElement.boardBackground, skin), greaterThan(0),

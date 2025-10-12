@@ -70,7 +70,6 @@ void main() {
         'markDisplayTimeSeconds': 3.0,
         'timerType': 'segmented',
         'layoutType': 'horizontal',
-        'appSkin': 'ocean',
         'autoAdvanceMode': 'never',
       };
 
@@ -79,7 +78,6 @@ void main() {
       expect(config.markDisplayTimeSeconds, 3.0);
       expect(config.timerType, TimerType.segmented);
       expect(config.layoutType, LayoutType.horizontal);
-      expect(config.appSkin, AppSkin.ocean);
       expect(config.autoAdvanceMode, AutoAdvanceMode.never);
     });
 

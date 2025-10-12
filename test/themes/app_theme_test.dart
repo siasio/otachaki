@@ -22,8 +22,6 @@ void main() {
       expect(theme.scaffoldBackgroundColor, const Color(0xFF121212));
     });
 
-    test('should return ocean theme for AppSkin.ocean', () {
-      final theme = AppTheme.getTheme(AppSkin.ocean);
 
       expect(theme.scaffoldBackgroundColor, const Color(0xFFE3F2FD));
       expect(theme.appBarTheme.backgroundColor, const Color(0xFF1565C0));
@@ -68,12 +66,10 @@ void main() {
     test('should return correct board styles for different skins', () {
       final classicProvider = UnifiedThemeProvider(skin: AppSkin.classic, layoutType: LayoutType.vertical);
       final modernProvider = UnifiedThemeProvider(skin: AppSkin.modern, layoutType: LayoutType.vertical);
-      final oceanProvider = UnifiedThemeProvider(skin: AppSkin.ocean, layoutType: LayoutType.vertical);
       final einkProvider = UnifiedThemeProvider(skin: AppSkin.eink, layoutType: LayoutType.vertical);
 
       expect(classicProvider.getElementStyle(UIElement.boardBackground).backgroundColor, const Color(0xFFDEB887));
       expect(modernProvider.getElementStyle(UIElement.boardBackground).backgroundColor, const Color(0xFF424242));
-      expect(oceanProvider.getElementStyle(UIElement.boardBackground).backgroundColor, const Color(0xFFD2B48C));
       expect(einkProvider.getElementStyle(UIElement.boardBackground).backgroundColor, Colors.white);
     });
 

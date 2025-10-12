@@ -53,8 +53,7 @@ class UnifiedThemeProvider {
       case UIElement.lastMoveMarker:
         return switch (skin) {
           AppSkin.classic => Colors.red,
-          AppSkin.modern => Colors.orange,
-          AppSkin.ocean => Colors.amber,
+          AppSkin.modern => const Color(0xFFFF9E80), // Softer orange-pink
           AppSkin.eink => Colors.black,
         };
 
@@ -92,10 +91,18 @@ class UnifiedThemeProvider {
 
       // Interactive feedback
       case UIElement.correctIndicator:
-        return skin == AppSkin.eink ? Colors.black : Colors.green;
+        return switch (skin) {
+          AppSkin.classic => Colors.green,
+          AppSkin.modern => const Color(0xFF81C784), // Soft green
+          AppSkin.eink => Colors.black,
+        };
 
       case UIElement.incorrectIndicator:
-        return skin == AppSkin.eink ? Colors.black : Colors.red;
+        return switch (skin) {
+          AppSkin.classic => Colors.red,
+          AppSkin.modern => const Color(0xFFE57373), // Soft red
+          AppSkin.eink => Colors.black,
+        };
 
       default:
         return _getGeneralTextColor();
@@ -147,7 +154,6 @@ class UnifiedThemeProvider {
         return switch (skin) {
           AppSkin.classic => const Color(0xFF8B4513), // Brown theme color
           AppSkin.modern => const Color(0xFF424242), // Dark gray theme color
-          AppSkin.ocean => const Color(0xFF1565C0), // Blue theme color
           AppSkin.eink => Colors.transparent,
         };
 
@@ -222,8 +228,6 @@ class UnifiedThemeProvider {
         return const Color(0xFFDEB887); // Tan
       case AppSkin.modern:
         return const Color(0xFF424242); // Dark grey
-      case AppSkin.ocean:
-        return const Color(0xFFD2B48C); // Light brown
       case AppSkin.eink:
         return Colors.white;
     }
@@ -235,8 +239,6 @@ class UnifiedThemeProvider {
         return Colors.black87;
       case AppSkin.modern:
         return const Color(0xFF1A1A1A);
-      case AppSkin.ocean:
-        return const Color(0xFF0D47A1);
       case AppSkin.eink:
         return Colors.black;
     }
@@ -247,9 +249,7 @@ class UnifiedThemeProvider {
       case AppSkin.classic:
         return const Color(0xFFD4B896); // Warm beige
       case AppSkin.modern:
-        return const Color(0xFF424242); // Dark grey
-      case AppSkin.ocean:
-        return const Color(0xFF42A5F5); // Light blue
+        return const Color(0xFF9E9E9E); // Much brighter grey for better text contrast
       case AppSkin.eink:
         return Colors.grey.shade400;
     }
@@ -261,8 +261,6 @@ class UnifiedThemeProvider {
         return const Color(0xFF5D4037); // Dark brown
       case AppSkin.modern:
         return Colors.white;
-      case AppSkin.ocean:
-        return Colors.white;
       case AppSkin.eink:
         return Colors.black;
     }
@@ -271,9 +269,9 @@ class UnifiedThemeProvider {
   Color _getNextButtonColor() {
     switch (skin) {
       case AppSkin.classic:
-      case AppSkin.modern:
-      case AppSkin.ocean:
         return Colors.green;
+      case AppSkin.modern:
+        return const Color(0xFF7986CB); // Soft indigo to match timer
       case AppSkin.eink:
         return Colors.grey.shade400;
     }
@@ -285,8 +283,6 @@ class UnifiedThemeProvider {
         return const Color(0xFFF5F5DC); // Beige
       case AppSkin.modern:
         return const Color(0xFF2D2D2D); // Dark grey
-      case AppSkin.ocean:
-        return const Color(0xFFE3F2FD); // Light blue
       case AppSkin.eink:
         return Colors.white;
     }
@@ -298,8 +294,6 @@ class UnifiedThemeProvider {
         return const Color.fromRGBO(210, 180, 140, 0.9); // Tan/beige
       case AppSkin.modern:
         return const Color(0xFF2D2D2D);
-      case AppSkin.ocean:
-        return const Color(0xFFE3F2FD);
       case AppSkin.eink:
         return Colors.white;
     }
@@ -310,9 +304,7 @@ class UnifiedThemeProvider {
       case AppSkin.classic:
         return Colors.green;
       case AppSkin.modern:
-        return Colors.indigo;
-      case AppSkin.ocean:
-        return Colors.blue;
+        return const Color(0xFF7986CB); // Softer indigo
       case AppSkin.eink:
         return Colors.black;
     }
@@ -324,8 +316,6 @@ class UnifiedThemeProvider {
         return Colors.grey[300]!;
       case AppSkin.modern:
         return const Color(0xFF2D2D2D);
-      case AppSkin.ocean:
-        return const Color(0xFFBBDEFB);
       case AppSkin.eink:
         return Colors.grey.shade200;
     }
@@ -337,8 +327,6 @@ class UnifiedThemeProvider {
         return const Color(0xFF8B4513);
       case AppSkin.modern:
         return const Color(0xFF1F1F1F);
-      case AppSkin.ocean:
-        return const Color(0xFF1565C0);
       case AppSkin.eink:
         return Colors.white;
     }
@@ -350,8 +338,6 @@ class UnifiedThemeProvider {
         return const Color(0xFF8B4513); // Brown
       case AppSkin.modern:
         return const Color(0xFF424242); // Dark grey
-      case AppSkin.ocean:
-        return const Color(0xFF1565C0); // Blue
       case AppSkin.eink:
         return Colors.black;
     }
@@ -363,8 +349,6 @@ class UnifiedThemeProvider {
         return const Color(0xFF3E2723); // Dark brown
       case AppSkin.modern:
         return Colors.white;
-      case AppSkin.ocean:
-        return const Color(0xFF0D47A1); // Dark blue
       case AppSkin.eink:
         return Colors.black;
     }

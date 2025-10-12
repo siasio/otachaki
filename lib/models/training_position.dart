@@ -2,7 +2,7 @@ import '../core/dataset_parser.dart' as core;
 import '../core/go_logic.dart';
 import '../core/game_result_parser.dart';
 import '../core/position_scoring.dart';
-import '../core/result_text_service.dart';
+import '../services/result_text_service.dart';
 import 'dataset_type.dart';
 import 'position_type.dart';
 import 'board_view_mode.dart';

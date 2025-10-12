@@ -10,6 +10,9 @@ import 'logger_service.dart';
 class ConfigurationManager extends BaseServiceManager<Map<String, DatasetConfiguration>>
     with JsonServiceMixin {
 
+  /// Configuration version to detect when defaults have changed
+  static const int currentConfigurationVersion = 2; // Increment when defaults change
+
   // Legacy configurations by DatasetType (for backward compatibility)
   final Map<DatasetType, DatasetConfiguration> _legacyConfigurations = {};
 
@@ -32,6 +35,14 @@ class ConfigurationManager extends BaseServiceManager<Map<String, DatasetConfigu
 
     if (configMap != null) {
       _loadConfigurationsFromMap(configMap);
+
+      // Check if we need to update built-in configurations due to version change
+      final savedVersion = configMap['version'] as int? ?? 1;
+      if (savedVersion < currentConfigurationVersion) {
+        LoggerService.info('Configuration version upgraded from $savedVersion to $currentConfigurationVersion. Updating built-in defaults.',
+          context: serviceName);
+        await resetBuiltInConfigurationsToDefaults();
+      }
     } else {
       // Try to migrate from legacy configuration manager
       await _migrateLegacyConfigurations();
@@ -139,6 +150,7 @@ class ConfigurationManager extends BaseServiceManager<Map<String, DatasetConfigu
 
   Future<void> _saveConfigurations() async {
     final configMap = <String, dynamic>{
+      'version': currentConfigurationVersion,
       'legacy': <String, dynamic>{},
       'custom': <String, dynamic>{},
     };
@@ -279,6 +291,18 @@ class ConfigurationManager extends BaseServiceManager<Map<String, DatasetConfigu
     await _saveConfigurations();
 
     LoggerService.info('All configurations reset to defaults', context: serviceName);
+  }
+
+  /// Force reset all built-in dataset configurations to current code defaults
+  Future<void> resetBuiltInConfigurationsToDefaults() async {
+    for (final type in DatasetType.values) {
+      final defaultConfig = DatasetConfiguration.getDefaultFor(type);
+      _legacyConfigurations[type] = defaultConfig;
+      _customConfigurations['builtin_${type.value}'] = defaultConfig;
+    }
+    await _saveConfigurations();
+
+    LoggerService.info('All built-in configurations reset to current code defaults', context: serviceName);
   }
 
   /// Get all legacy configurations (read-only)

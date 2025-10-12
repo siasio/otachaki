@@ -44,37 +44,46 @@ class DatasetConfiguration {
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
-          timePerProblemSeconds: 15,
-          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
-          // hideGameInfoBar: true,
+          timePerProblemSeconds: 20,
           predictionType: PredictionType.winnerPrediction,
+          positionType: PositionType.withFilledNeutralPoints,
+          ownershipDisplayMode: OwnershipDisplayMode.squares,
+          autoAdvanceMode: AutoAdvanceMode.onCorrectOnly,
         );
       case DatasetType.final13x13:
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
-          timePerProblemSeconds: 30,
-          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
-          // hideGameInfoBar: true,
-          predictionType: PredictionType.winnerPrediction,
+          timePerProblemSeconds: 45,
+          timerEnabled: false,
+          predictionType: PredictionType.exactScorePrediction,
+          scoreGranularity: 2,
+          positionType: PositionType.beforeFillingNeutralPoints,
+          sequenceLength: 0,
+          showMoveNumbers: true,
+          autoAdvanceMode: AutoAdvanceMode.never,
         );
       case DatasetType.final19x19:
         return const DatasetConfiguration(
           thresholdGood: 0.0,
           thresholdClose: 0.0,
-          timePerProblemSeconds: 60,
-          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
-          // hideGameInfoBar: true,
+          timePerProblemSeconds: 90,
           predictionType: PredictionType.winnerPrediction,
+          positionType: PositionType.beforeFillingNeutralPoints,
+          sequenceLength: 9,
+          showMoveNumbers: true,
+          autoAdvanceMode: AutoAdvanceMode.never,
         );
       case DatasetType.midgame19x19:
         return const DatasetConfiguration(
-          thresholdGood: 1.5,
-          thresholdClose: 5.0,
-          timePerProblemSeconds: 15,
-          // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
-          // hideGameInfoBar: false,
+          thresholdGood: 3.0,
+          thresholdClose: 7.0,
+          timePerProblemSeconds: 30,
           predictionType: PredictionType.roughLeadPrediction,
+          sequenceLength: 5,
+          ownershipDisplayMode: OwnershipDisplayMode.squares,
+          gameStage: GameStage.all,
+          autoAdvanceMode: AutoAdvanceMode.always,
         );
       case DatasetType.partialPositions:
         return const DatasetConfiguration(

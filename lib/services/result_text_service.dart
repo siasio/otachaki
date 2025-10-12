@@ -1,8 +1,8 @@
 import '../models/training_position.dart';
 import '../models/position_type.dart';
 import '../models/dataset_type.dart';
-import 'position_scoring.dart';
-import 'game_result_parser.dart';
+import '../core/position_scoring.dart';
+import '../core/game_result_parser.dart';
 
 /// Centralized service for generating all score and result text displays
 class ResultTextService {
@@ -78,7 +78,7 @@ class ResultTextService {
 
         if (adjustment > 0) {
           final total = whiteTerritory + adjustment + komi;
-          return 'White: ${formatNumber(whiteTerritory.toDouble())} + ${formatNumber(adjustment.toDouble())} + ${formatNumber(komi)} = ${formatNumber(total)}';
+          return 'White: ${formatNumber(whiteTerritory.toDouble() + adjustment.toDouble())} + ${formatNumber(komi)} = ${formatNumber(total)}';
         } else {
           final total = whiteTerritory + komi;
           return 'White: ${formatNumber(whiteTerritory.toDouble())} + ${formatNumber(komi)} = ${formatNumber(total)}';

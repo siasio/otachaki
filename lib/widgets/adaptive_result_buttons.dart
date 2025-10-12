@@ -9,11 +9,8 @@ import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
 import '../models/training_position.dart';
 import '../models/position_type.dart';
-import 'result_buttons.dart';
-import 'context_aware_result_buttons.dart';
 import 'score_display_buttons.dart';
-import 'exact_score_buttons.dart';
-import 'rough_lead_prediction_buttons.dart';
+import 'universal_result_button.dart';
 
 enum ButtonDisplayMode {
   choices,
@@ -153,16 +150,38 @@ class AdaptiveResultButtons extends StatelessWidget {
 
   Widget _buildChoiceButtons() {
     if (positionedScoreOptions != null && onExactScoreButtonPressed != null) {
-      return ExactScoreButtons(
-        scoreOptions: positionedScoreOptions!,
-        onButtonPressed: onExactScoreButtonPressed!,
+      // Exact score buttons
+      final buttons = positionedScoreOptions!.options.asMap().entries.map((entry) {
+        final index = entry.key;
+        final option = entry.value;
+        final isCorrect = index == positionedScoreOptions!.correctButtonPosition;
+        return UniversalResultButton.exactScore(
+          scoreText: option.scoreText,
+          onPressed: () => onExactScoreButtonPressed!(index),
+          isCorrect: isCorrect,
+          appSkin: appSkin,
+          layoutType: layoutType,
+        );
+      }).toList();
+
+      return UniversalResultButtonGroup(
+        buttons: buttons,
         appSkin: appSkin,
         layoutType: layoutType,
       );
     } else if (roughLeadPredictionState != null && onRoughLeadButtonPressed != null) {
-      return RoughLeadPredictionButtons(
-        predictionState: roughLeadPredictionState!,
-        onButtonPressed: onRoughLeadButtonPressed!,
+      // Rough lead prediction buttons
+      final buttons = roughLeadPredictionState!.buttons.map((buttonState) {
+        return UniversalResultButton.roughLead(
+          buttonState: buttonState,
+          onPressed: () => onRoughLeadButtonPressed!(buttonState.buttonType),
+          appSkin: appSkin,
+          layoutType: layoutType,
+        );
+      }).toList();
+
+      return UniversalResultButtonGroup(
+        buttons: buttons,
         appSkin: appSkin,
         layoutType: layoutType,
       );
@@ -170,19 +189,57 @@ class AdaptiveResultButtons extends StatelessWidget {
         actualScore != null &&
         resultString != null &&
         onResultOptionSelected != null) {
-      return ContextAwareResultButtons(
-        datasetType: datasetType!,
-        actualScore: actualScore!,
-        resultString: resultString!,
-        onResultSelected: onResultOptionSelected!,
-        appSkin: appSkin,
-        layoutType: layoutType,
+      // Context-aware buttons (dataset-specific logic)
+      final options = GameResultOption.generateOptions(
+        datasetType!,
+        actualScore!,
+        resultString!,
         thresholdGood: thresholdGood,
         thresholdClose: thresholdClose,
       );
+
+      final buttons = options.map((option) {
+        return UniversalResultButton.contextAware(
+          option: option,
+          onPressed: () => onResultOptionSelected!(option),
+          appSkin: appSkin,
+          layoutType: layoutType,
+        );
+      }).toList();
+
+      return UniversalResultButtonGroup(
+        buttons: buttons,
+        appSkin: appSkin,
+        layoutType: layoutType,
+      );
     } else if (onResultSelected != null) {
-      return ResultButtons(
-        onResultSelected: onResultSelected!,
+      // Basic result buttons (White/Draw/Black)
+      final buttons = [
+        UniversalResultButton.basic(
+          text: 'White Wins',
+          onPressed: () => onResultSelected!(GameResult.whiteWins),
+          buttonType: ButtonType.whiteWins,
+          appSkin: appSkin,
+          layoutType: layoutType,
+        ),
+        UniversalResultButton.basic(
+          text: 'Draw',
+          onPressed: () => onResultSelected!(GameResult.draw),
+          buttonType: ButtonType.draw,
+          appSkin: appSkin,
+          layoutType: layoutType,
+        ),
+        UniversalResultButton.basic(
+          text: 'Black Wins',
+          onPressed: () => onResultSelected!(GameResult.blackWins),
+          buttonType: ButtonType.blackWins,
+          appSkin: appSkin,
+          layoutType: layoutType,
+        ),
+      ];
+
+      return UniversalResultButtonGroup(
+        buttons: buttons,
         appSkin: appSkin,
         layoutType: layoutType,
       );

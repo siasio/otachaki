@@ -9,17 +9,24 @@ void main() {
 
       expect(config.thresholdGood, 0.0);
       expect(config.thresholdClose, 0.0);
-      expect(config.timePerProblemSeconds, 15);
-      expect(config.hideGameInfoBar, isTrue);
+      expect(config.timePerProblemSeconds, 20);
+      expect(config.predictionType.value, 'winner_prediction');
+      expect(config.positionType.value, 'with_filled_neutral_points');
+      expect(config.ownershipDisplayMode.name, 'squares');
+      expect(config.autoAdvanceMode.value, 'on_correct_only');
     });
 
     test('should have correct defaults for midgame19x19', () {
       final config = DatasetConfiguration.getDefaultFor(DatasetType.midgame19x19);
 
-      expect(config.thresholdGood, 1.5);
-      expect(config.thresholdClose, 5.0);
-      expect(config.timePerProblemSeconds, 15);
-      expect(config.hideGameInfoBar, isFalse);
+      expect(config.thresholdGood, 3.0);
+      expect(config.thresholdClose, 7.0);
+      expect(config.timePerProblemSeconds, 30);
+      expect(config.predictionType.value, 'rough_lead_prediction');
+      expect(config.sequenceLength, 5);
+      expect(config.ownershipDisplayMode.name, 'squares');
+      expect(config.gameStage.value, 'all');
+      expect(config.autoAdvanceMode.value, 'always');
     });
 
 
@@ -28,18 +35,18 @@ void main() {
         thresholdGood: 1.0,
         thresholdClose: 2.0,
         timePerProblemSeconds: 30,
-        hideGameInfoBar: false,
+        timerEnabled: false,
       );
 
       final modified = original.copyWith(
         thresholdGood: 1.5,
-        hideGameInfoBar: true,
+        timerEnabled: true,
       );
 
       expect(modified.thresholdGood, 1.5);
       expect(modified.thresholdClose, 2.0);
       expect(modified.timePerProblemSeconds, 30);
-      expect(modified.hideGameInfoBar, isTrue);
+      expect(modified.timerEnabled, isTrue);
     });
 
     test('should serialize to JSON correctly', () {
@@ -47,7 +54,7 @@ void main() {
         thresholdGood: 1.5,
         thresholdClose: 3.0,
         timePerProblemSeconds: 20,
-        hideGameInfoBar: true,
+        timerEnabled: true,
       );
 
       final json = config.toJson();
@@ -55,7 +62,7 @@ void main() {
       expect(json['thresholdGood'], 1.5);
       expect(json['thresholdClose'], 3.0);
       expect(json['timePerProblemSeconds'], 20);
-      expect(json['hideGameInfoBar'], isTrue);
+      expect(json['timerEnabled'], isTrue);
     });
 
     test('should deserialize from JSON correctly', () {
@@ -63,7 +70,7 @@ void main() {
         'thresholdGood': 2.0,
         'thresholdClose': 4.0,
         'timePerProblemSeconds': 25,
-        'hideGameInfoBar': true,
+        'timerEnabled': true,
       };
 
       final config = DatasetConfiguration.fromJson(json);
@@ -71,7 +78,7 @@ void main() {
       expect(config.thresholdGood, 2.0);
       expect(config.thresholdClose, 4.0);
       expect(config.timePerProblemSeconds, 25);
-      expect(config.hideGameInfoBar, isTrue);
+      expect(config.timerEnabled, isTrue);
     });
 
     test('should use defaults for missing JSON fields', () {
@@ -82,7 +89,7 @@ void main() {
       expect(config.thresholdGood, 0.0);
       expect(config.thresholdClose, 0.0);
       expect(config.timePerProblemSeconds, 30);
-      expect(config.hideGameInfoBar, isFalse);
+      expect(config.timerEnabled, isTrue);
     });
 
     test('isValidConfiguration should validate thresholds and time', () {
@@ -90,21 +97,21 @@ void main() {
         thresholdGood: 1.0,
         thresholdClose: 2.0,
         timePerProblemSeconds: 30,
-        hideGameInfoBar: false,
+        timerEnabled: false,
       );
 
       const invalidThresholdConfig = DatasetConfiguration(
         thresholdGood: 3.0,
         thresholdClose: 2.0, // Close < Good is invalid
         timePerProblemSeconds: 30,
-        hideGameInfoBar: false,
+        timerEnabled: false,
       );
 
       const invalidTimeConfig = DatasetConfiguration(
         thresholdGood: 1.0,
         thresholdClose: 2.0,
         timePerProblemSeconds: 0, // Time <= 0 is invalid
-        hideGameInfoBar: false,
+        timerEnabled: false,
       );
 
       expect(validConfig.isValidConfiguration(), isTrue);

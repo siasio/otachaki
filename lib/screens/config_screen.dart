@@ -359,8 +359,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
         return 'Classic Wood';
       case AppSkin.modern:
         return 'Modern Dark';
-      case AppSkin.ocean:
-        return 'Ocean Blue';
       case AppSkin.eink:
         return 'E-ink Minimalist';
     }

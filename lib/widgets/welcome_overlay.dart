@@ -203,7 +203,7 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
     final items = [
       _WelcomeItem(
         icon: Icons.psychology_outlined,
-        title: 'Get Started!',
+        title: 'How to Solve',
         description: '**Komi = 7.0, equal prisoners**. Both area and territory scoring works!',
       ),
       _WelcomeItem(
@@ -343,16 +343,6 @@ class _WelcomeOverlayState extends State<WelcomeOverlay>
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'You can access this information anytime through the config screen',
-          style: TextStyle(
-            fontSize: 12,
-            color: textStyle.color?.withOpacity(0.6),
-            fontStyle: FontStyle.italic,
-          ),
-          textAlign: TextAlign.center,
         ),
       ],
     );

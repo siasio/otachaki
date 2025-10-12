@@ -7,7 +7,7 @@ import '../models/position_type.dart';
 import '../models/dataset_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
-import '../core/result_text_service.dart';
+import '../services/result_text_service.dart';
 
 class ScoreDisplayButtons extends StatelessWidget {
   final String resultString;

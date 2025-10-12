@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'dataset_type.dart';
-import '../core/result_text_service.dart';
+import '../services/result_text_service.dart';
 
 enum ButtonType { whiteWins, draw, blackWins }
 

@@ -163,8 +163,10 @@ class _TimerBarState extends State<TimerBar>
       return Colors.black;
     }
 
+    final themeProvider = UnifiedThemeProvider(skin: widget.appSkin, layoutType: widget.layoutType);
+
     if (value > 0.3) {
-      return Colors.green;
+      return themeProvider.getElementStyle(UIElement.timerBarProgress).backgroundColor!;
     } else if (value > 0.1) {
       return Colors.orange;
     } else {
@@ -184,7 +186,7 @@ class _TimerBarState extends State<TimerBar>
       segmentColor = Colors.black;
     } else {
       if (progress > 0.3) {
-        segmentColor = Colors.green;
+        segmentColor = themeProvider.getElementStyle(UIElement.timerBarProgress).backgroundColor!;
       } else if (progress > 0.1) {
         segmentColor = Colors.orange;
       } else {

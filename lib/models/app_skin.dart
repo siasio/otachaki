@@ -5,9 +5,6 @@ enum AppSkin {
   /// Modern dark theme
   modern('modern'),
 
-  /// Blue ocean theme
-  ocean('ocean'),
-
   /// Minimalist black and white theme for e-ink displays
   eink('eink');
 

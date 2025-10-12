@@ -79,22 +79,30 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 16),
                     _buildDatasetExplanation(
+                      'Komi = 7 points, equal numbers of prisoners',
+                      '',
+                    ),
+                    // const SizedBox(height: 4),
+                    _buildDatasetExplanation(
                       'Final Positions (9x9, 13x13, 19x19)',
-                      'Komi = 7 points, equal numbers of prisoners. '
                       'Positions are picked so that both area and territory scoring give the same result. '
                       'Your big goal is to count the score on 19x19 within one byo-yomi period!',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'Positions Before Filling Neutral Points',
-                      'Use territory scoring. '
-                      'Display the last few moves as a numbered sequence to train your visualization.',
+                      'A bit more challenging. Use territory scoring. ',
                     ),
                     const SizedBox(height: 12),
                     _buildDatasetExplanation(
                       'Midgame 19x19 Estimation',
-                      'Positions at different game stages: early (move 100/101), middle (move 150/151) and late (200/201). '
-                      'Train your quick middle game judgment!',
+                      'Positions at different game stages. '
+                      'Train your quick middle game and endgame judgment!',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDatasetExplanation(
+                      'Define Your Custom Dataset',
+                      'Change settings for pre-defined datasets, or define new, custom dataset configurations by pressing a plus (+) button!',
                     ),
                   ],
                 ),
@@ -129,9 +137,9 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• By default, you choose the winner (Black/White) or Draw\n'
+                      '• In final positions, by default, you choose the winner (Black/White) or Draw\n'
                       '• Exact score prediction: The app shows three scores (e.g. W+10, W+2, B+6) and you choose the correct one\n'
-                      '• Rough lead prediction: Who is leading? Or is the position close? Choose thresholds on your own',
+                      '• Rough lead prediction in middle game: Who is leading? Or is the position close? Choose thresholds on your own',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),
@@ -143,8 +151,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     Text(
                       '• To solve a problem, press buttons, or use keyboard arrows (←, ↓, →)\n'
                       '• Even when you have "Auto-advance to next problem" set, you can use the pause button (or ␣ Space Bar) to review the problem\n'
-                      '• Adjust time per problem, or disable the timer\n'
-                      '• Custom title bar: Use placeholders (%d dataset, %n problems, %a accuracy, ...)',
+                      '• Adjust time per problem, or disable the timer for a more relaxed practice\n'
+                      '• Custom title bar: Use placeholders (%d dataset, %n problems, %a accuracy, ...) to display today\'s statistics for the current dataset',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 16),
@@ -155,7 +163,7 @@ class _InfoScreenState extends State<InfoScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '• Choose from different color themes. Use E-ink Minimalist for an e-ink device\n'
-                      '• Choose layout: Vertical (phones, PC) or Horizontal (tablets)\n'
+                      '• Choose layout: Vertical (phones) or Horizontal (tablets)\n'
                       '• Ownership display: get visual feedback during problem review',
                       // '• Timer styles: Smooth progress bar or segmented bar',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
@@ -167,8 +175,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• Move sequences: Show recent moves as numbered sequence to train your visualization skill\n'
-                      '• ...or don\'t show the sequence at all and try to imagine it on your own',
+                      '• Move sequences: Show recent moves as a numbered sequence to train your visualization skill\n'
+                      '• ...or don\'t show the sequence at all and try to guess it on your own!',
                       // '• Game info: Toggle captured stones and komi display\n'
                       // '• Last move marker: Configurable display duration',
                       style: TextStyle(color: Colors.grey[700], height: 1.4),
@@ -251,7 +259,8 @@ class _InfoScreenState extends State<InfoScreen> {
                     const Text(
                       'Designed by Stanisław Frejlak, 2p. '
                       'Written by ClaudeCode. '
-                      'Inspiration taken from antonTobi: https://count.antontobi.com/',
+                      'Inspiration taken from antonTobi: https://count.antontobi.com/\n'
+                      'Positions were evaluated by KataGo',
                       style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 8),
@@ -338,12 +347,18 @@ class _InfoScreenState extends State<InfoScreen> {
                   ),
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.analytics_outlined, size: 20),
+              TextButton.icon(
+                icon: const Icon(Icons.analytics_outlined, size: 18),
+                label: const Text(
+                  'View detailed statistics',
+                  style: TextStyle(fontSize: 12),
+                ),
                 onPressed: () => _navigateToDetailedStats(dataset),
-                tooltip: 'View detailed statistics',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minHeight: 24, minWidth: 24),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ],
           ),

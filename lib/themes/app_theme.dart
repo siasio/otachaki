@@ -8,8 +8,6 @@ class AppTheme {
         return _classicTheme;
       case AppSkin.modern:
         return _modernTheme;
-      case AppSkin.ocean:
-        return _oceanTheme;
       case AppSkin.eink:
         return _einkTheme;
     }
@@ -51,23 +49,6 @@ class AppTheme {
     ),
   );
 
-  // Ocean blue theme
-  static final ThemeData _oceanTheme = ThemeData(
-    primarySwatch: Colors.blue,
-    useMaterial3: true,
-    scaffoldBackgroundColor: const Color(0xFFE3F2FD),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1565C0),
-      foregroundColor: Colors.white,
-      elevation: 4,
-      centerTitle: true,
-    ),
-    cardColor: Colors.white,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1565C0),
-      brightness: Brightness.light,
-    ),
-  );
 
   // E-ink minimalist black and white theme
   static final ThemeData _einkTheme = ThemeData(
