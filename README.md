@@ -2,7 +2,7 @@
 
 ## App for training Go territory counting and position evaluation
 
-Live Demo: https://siasio.github.io/go-eval/
+Live Demo: https://siasio.github.io/otachaki/
 For an Android app, download an .apk file from the Releases tab and enable installing from unknown sources on your device.
 
 ## Features

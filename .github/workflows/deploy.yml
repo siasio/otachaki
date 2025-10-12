@@ -32,7 +32,7 @@ jobs:
       run: flutter config --enable-web
 
     - name: Build web app
-      run: flutter build web --release --base-href /go-eval/
+      run: flutter build web --release --base-href /otachaki/
 
     - name: Setup Pages
       if: github.ref == 'refs/heads/main'
@@ -78,5 +78,5 @@ jobs:
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: go-eval-app-release.apk
+        name: otachaki-release-apk
         path: build/app/outputs/flutter-apk/app-release.apk
