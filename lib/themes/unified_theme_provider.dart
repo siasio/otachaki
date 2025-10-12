@@ -152,7 +152,7 @@ class UnifiedThemeProvider {
 
       case UIElement.boardOverlay:
         return switch (skin) {
-          AppSkin.classic => const Color(0xFF8B4513), // Brown theme color
+          AppSkin.classic => const Color(0xFF6E6760), // Brown theme color
           AppSkin.modern => const Color(0xFF424242), // Dark gray theme color
           AppSkin.eink => Colors.transparent,
         };
