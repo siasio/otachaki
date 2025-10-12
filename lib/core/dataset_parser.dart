@@ -21,7 +21,7 @@ class DatasetParser {
       // REMOVED: Captured stones - prisoners are always equal
       // 'black_captured': json['black_captured'] as int? ?? 0,
       // 'white_captured': json['white_captured'] as int? ?? 0,
-      'komi': (json['komi'] as num?)?.toDouble() ?? 0.0,
+      'komi': (json['komi'] as num?)?.toDouble() ?? 7.0,
       'last_move_row': json['last_move_row'] as int?,
       'last_move_col': json['last_move_col'] as int?,
       'move_sequence': json['move_sequence'],
@@ -74,7 +74,7 @@ class DatasetParser {
       // REMOVED: Captured stones - prisoners are always equal
       // 'black_captured': json['black_captured'] as int? ?? 0,
       // 'white_captured': json['white_captured'] as int? ?? 0,
-      'komi': (json['komi'] as num?)?.toDouble() ?? 0.0,
+      'komi': (json['komi'] as num?)?.toDouble() ?? 7.0,
       'ultimate_stones': json['ultimate-stones'] as String?,
       // REMOVED: Ultimate captured stones - prisoners are always equal
       // 'ultimate_black_captured': json['ultimate-black-captured'] as int?,
