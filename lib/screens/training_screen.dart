@@ -1250,6 +1250,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     child: SafeArea(
                       left: false,
                       right: false,
+                      bottom: true,
                       child: AdaptiveLayout(
                         layoutType: layoutType,
                         timerBar: (_stateManager.shouldRunTimer && isTimerEnabled && !_showWelcomeOverlay)
@@ -1321,7 +1322,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
               autofocus: true,
               child: SafeArea(
                 top: false,
-                bottom: false,
+                bottom: true,
                 child: AdaptiveLayout(
                   layoutType: layoutType,
                   timerBar: (_stateManager.shouldRunTimer && isTimerEnabled && !_showWelcomeOverlay)

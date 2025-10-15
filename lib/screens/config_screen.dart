@@ -511,7 +511,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                                 controller: _timeProblemController,
                                 enabled: _currentDatasetConfig!.timerEnabled,
                                 decoration: InputDecoration(
-                                  labelText: 'Time per Problem (uncheck to disable)',
+                                  labelText: 'Timer (uncheck to disable)',
                                   border: const OutlineInputBorder(),
                                   suffix: const Text('seconds'),
                                   filled: !_currentDatasetConfig!.timerEnabled,

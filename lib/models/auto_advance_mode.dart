@@ -24,9 +24,9 @@ enum AutoAdvanceMode {
       case AutoAdvanceMode.always:
         return 'Auto-advance to the next problem';
       case AutoAdvanceMode.never:
-        return 'Don\'t auto-advance to the next problem';
+        return 'Pause to review the problem';
       case AutoAdvanceMode.onCorrectOnly:
-        return 'Auto-advance to the next problem after correct solutions';
+        return 'Pause on mistakes';
     }
   }
 }
