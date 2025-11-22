@@ -16,6 +16,7 @@ import '../models/dataset_registry.dart';
 import '../models/game_stage.dart';
 import '../models/problem_feedback_type.dart';
 import '../models/screen_orientation_mode.dart';
+import '../models/sequence_visualization_type.dart';
 import '../services/configuration_manager.dart';
 import '../services/global_configuration_manager.dart';
 import '../services/custom_dataset_manager.dart';
@@ -620,8 +621,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Score Granularity (only show if exact score prediction is selected)
-                        if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction) ...[
+                        // Score Granularity (only show if exact score prediction or black territory prediction is selected)
+                        if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction ||
+                            _currentDatasetConfig!.predictionType == PredictionType.blackTerritoryPrediction) ...[
                           TextFormField(
                             controller: _scoreGranularityController,
                             decoration: const InputDecoration(
@@ -694,23 +696,80 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Show Move Numbers checkbox (only for final datasets with "Before filling neutral points" mode, not for midgame)
-                          if (_isFinalDataset() && !_isMidgameDataset() && _currentDatasetConfig!.positionType == PositionType.beforeFillingNeutralPoints) ...[
-                            CheckboxListTile(
-                              title: const Text('Show Move Numbers'),
-                              subtitle: null,
-                              value: _currentDatasetConfig!.showMoveNumbers,
-                              onChanged: (bool? value) {
+                          // Show Sequence As dropdown (only when sequence length > 0)
+                          if (_currentDatasetConfig!.sequenceLength > 0) ...[
+                            DropdownButtonFormField<SequenceVisualizationType>(
+                              value: _currentDatasetConfig!.sequenceVisualization,
+                              decoration: const InputDecoration(
+                                labelText: 'Show Sequence As',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: SequenceVisualizationType.values.map((type) {
+                                return DropdownMenuItem<SequenceVisualizationType>(
+                                  value: type,
+                                  child: Text(type.displayName),
+                                );
+                              }).toList(),
+                              onChanged: (SequenceVisualizationType? value) {
                                 if (value != null && _currentDatasetConfig != null && _currentDataset != null) {
                                   final newConfig = _currentDatasetConfig!.copyWith(
-                                    showMoveNumbers: value,
+                                    sequenceVisualization: value,
                                   );
                                   _autoSaveDatasetConfiguration(newConfig);
                                 }
                               },
-                              contentPadding: EdgeInsets.zero,
                             ),
                             const SizedBox(height: 16),
+
+                            // Time Per Move field (only when sequence length > 0 and visualization is dots)
+                            if (_currentDatasetConfig!.sequenceVisualization == SequenceVisualizationType.dots) ...[
+                              TextFormField(
+                                initialValue: _currentDatasetConfig!.initialTimeSeconds.toString(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Initial Time',
+                                  helperText: 'Time in seconds to show the first move marker (e.g., 1.0)',
+                                  border: OutlineInputBorder(),
+                                  suffix: Text('seconds'),
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                ],
+                                onChanged: (String value) {
+                                  final timeValue = double.tryParse(value);
+                                  if (timeValue != null && timeValue > 0 && _currentDatasetConfig != null && _currentDataset != null) {
+                                    final newConfig = _currentDatasetConfig!.copyWith(
+                                      initialTimeSeconds: timeValue,
+                                    );
+                                    _autoSaveDatasetConfiguration(newConfig);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                initialValue: _currentDatasetConfig!.timePerMoveSeconds.toString(),
+                                decoration: const InputDecoration(
+                                  labelText: 'Time Per Move',
+                                  helperText: 'Time in seconds for each dot to appear (e.g., 1.0)',
+                                  border: OutlineInputBorder(),
+                                  suffix: Text('seconds'),
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                ],
+                                onChanged: (String value) {
+                                  final timeValue = double.tryParse(value);
+                                  if (timeValue != null && timeValue > 0 && _currentDatasetConfig != null && _currentDataset != null) {
+                                    final newConfig = _currentDatasetConfig!.copyWith(
+                                      timePerMoveSeconds: timeValue,
+                                    );
+                                    _autoSaveDatasetConfiguration(newConfig);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                           ],
                         ],
 

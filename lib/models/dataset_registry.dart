@@ -54,6 +54,7 @@ class DatasetRegistry {
       allowedPredictionTypes: [
         PredictionType.exactScorePrediction,
         PredictionType.winnerPrediction,
+        PredictionType.blackTerritoryPrediction,
       ],
       isFinalPositionDataset: true,
     ),
@@ -66,6 +67,7 @@ class DatasetRegistry {
       allowedPredictionTypes: [
         PredictionType.exactScorePrediction,
         PredictionType.winnerPrediction,
+        PredictionType.blackTerritoryPrediction,
       ],
       isFinalPositionDataset: true,
     ),
@@ -78,6 +80,7 @@ class DatasetRegistry {
       allowedPredictionTypes: [
         PredictionType.exactScorePrediction,
         PredictionType.winnerPrediction,
+        PredictionType.blackTerritoryPrediction,
       ],
       isFinalPositionDataset: true,
     ),

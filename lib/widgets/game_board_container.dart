@@ -7,9 +7,12 @@ import '../models/sequence_display_mode.dart';
 import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
 import '../models/position_type.dart';
+import '../models/sequence_visualization_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
+import '../core/go_logic.dart';
 import 'go_board.dart';
+import 'move_sequence_dot_animator.dart';
 
 /// A container widget that encapsulates the Go board with consistent overlay behavior
 /// and stable sizing across different layout modes.
@@ -27,6 +30,11 @@ class GameBoardContainer extends StatefulWidget {
   final PositionType positionType;
   final bool showMoveNumbers;
   final bool isSequenceLengthDefined;
+  final bool shouldAnimateDots;
+  final SequenceVisualizationType sequenceVisualization;
+  final double initialTimeSeconds;
+  final double timePerMoveSeconds;
+  final VoidCallback? onDotAnimationComplete;
 
   const GameBoardContainer({
     super.key,
@@ -43,6 +51,11 @@ class GameBoardContainer extends StatefulWidget {
     this.positionType = PositionType.withFilledNeutralPoints,
     this.showMoveNumbers = true,
     this.isSequenceLengthDefined = false,
+    this.shouldAnimateDots = false,
+    this.sequenceVisualization = SequenceVisualizationType.numbers,
+    this.initialTimeSeconds = 1.0,
+    this.timePerMoveSeconds = 1.0,
+    this.onDotAnimationComplete,
   });
 
   @override
@@ -95,6 +108,11 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                           positionType: widget.positionType,
                           showMoveNumbers: widget.showMoveNumbers,
                           isSequenceLengthDefined: widget.isSequenceLengthDefined,
+                          sequenceVisualization: widget.sequenceVisualization,
+                          shouldAnimateDots: widget.shouldAnimateDots,
+                          initialTimeSeconds: widget.initialTimeSeconds,
+                          timePerMoveSeconds: widget.timePerMoveSeconds,
+                          onDotAnimationComplete: widget.onDotAnimationComplete,
                         ),
                       )
                     : GoBoard(
@@ -109,6 +127,11 @@ class _GameBoardContainerState extends State<GameBoardContainer> {
                         positionType: widget.positionType,
                         showMoveNumbers: widget.showMoveNumbers,
                         isSequenceLengthDefined: widget.isSequenceLengthDefined,
+                        sequenceVisualization: widget.sequenceVisualization,
+                        shouldAnimateDots: widget.shouldAnimateDots,
+                        initialTimeSeconds: widget.initialTimeSeconds,
+                        timePerMoveSeconds: widget.timePerMoveSeconds,
+                        onDotAnimationComplete: widget.onDotAnimationComplete,
                       ),
                 // Overlay for feedback widget only (no background color)
                 if (widget.showFeedbackOverlay && widget.feedbackWidget != null)

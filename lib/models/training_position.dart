@@ -294,6 +294,12 @@ class TrainingPosition {
       return null;
     }
 
+    // Special case: when sequenceLength == 0, only show marker for midgame datasets
+    // Midgame datasets have moveNumber field set, final position datasets don't
+    if (sequenceLength == 0 && moveNumber == null) {
+      return null;
+    }
+
     return getLastMoveBeforeSequenceWithType(sequenceLength, PositionType.beforeFillingNeutralPoints);
   }
 

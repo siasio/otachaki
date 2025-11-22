@@ -447,9 +447,17 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
   }
 
   LineChartData _createAccuracyLineChart() {
+    // Filter out days with no attempts
+    final filteredStats = <DailyDatasetStatistics>[];
+    for (var stat in _historicalStats) {
+      if (stat.totalAttempts > 0) {
+        filteredStats.add(stat);
+      }
+    }
+
     final spots = <FlSpot>[];
-    for (int i = 0; i < _historicalStats.length; i++) {
-      spots.add(FlSpot(i.toDouble(), _historicalStats[i].accuracyPercentage));
+    for (int i = 0; i < filteredStats.length; i++) {
+      spots.add(FlSpot(i.toDouble(), filteredStats[i].accuracyPercentage));
     }
 
     // For accuracy, use smart interval but ensure we don't go below 10% steps for readability
@@ -485,8 +493,8 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
             interval: _calculateXAxisInterval(),
             getTitlesWidget: (value, meta) {
               final index = value.toInt();
-              if (index >= 0 && index < _historicalStats.length) {
-                final date = _historicalStats[index].date;
+              if (index >= 0 && index < filteredStats.length) {
+                final date = filteredStats[index].date;
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
@@ -526,7 +534,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       minX: 0,
-      maxX: (_historicalStats.length - 1).toDouble(),
+      maxX: math.max(0, (filteredStats.length - 1).toDouble()),
       minY: 0,
       maxY: 100,
       lineBarsData: [
@@ -547,13 +555,21 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
   }
 
   LineChartData _createAverageTimeLineChart() {
+    // Filter out days with no attempts
+    final filteredStats = <DailyDatasetStatistics>[];
+    for (var stat in _historicalStats) {
+      if (stat.totalAttempts > 0) {
+        filteredStats.add(stat);
+      }
+    }
+
     final spots = <FlSpot>[];
-    for (int i = 0; i < _historicalStats.length; i++) {
-      spots.add(FlSpot(i.toDouble(), _historicalStats[i].averageTimeSeconds));
+    for (int i = 0; i < filteredStats.length; i++) {
+      spots.add(FlSpot(i.toDouble(), filteredStats[i].averageTimeSeconds));
     }
 
     // Calculate smart interval for time chart
-    final maxValue = _historicalStats.isEmpty ? 15.0 : _historicalStats.map((s) => s.averageTimeSeconds).reduce((a, b) => a > b ? a : b);
+    final maxValue = filteredStats.isEmpty ? 15.0 : filteredStats.map((s) => s.averageTimeSeconds).reduce((a, b) => a > b ? a : b);
     final yInterval = _calculateSmartInterval(maxValue, 5); // Target ~5 ticks
 
     return LineChartData(
@@ -586,8 +602,8 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
             interval: _calculateXAxisInterval(),
             getTitlesWidget: (value, meta) {
               final index = value.toInt();
-              if (index >= 0 && index < _historicalStats.length) {
-                final date = _historicalStats[index].date;
+              if (index >= 0 && index < filteredStats.length) {
+                final date = filteredStats[index].date;
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
@@ -627,7 +643,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       minX: 0,
-      maxX: (_historicalStats.length - 1).toDouble(),
+      maxX: math.max(0, (filteredStats.length - 1).toDouble()),
       minY: 0,
       maxY: (maxValue * 1.1).ceilToDouble(), // Add 10% padding at top
       lineBarsData: [
@@ -648,14 +664,22 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
   }
 
   LineChartData _createSpeedLineChart() {
+    // Filter out days with no attempts
+    final filteredStats = <DailyDatasetStatistics>[];
+    for (var stat in _historicalStats) {
+      if (stat.totalAttempts > 0) {
+        filteredStats.add(stat);
+      }
+    }
+
     final spots = <FlSpot>[];
-    for (int i = 0; i < _historicalStats.length; i++) {
-      final stat = _historicalStats[i];
+    for (int i = 0; i < filteredStats.length; i++) {
+      final stat = filteredStats[i];
       spots.add(FlSpot(i.toDouble(), stat.averagePointsPerSecond));
     }
 
     // Calculate smart interval for speed chart
-    final maxValue = _historicalStats.isEmpty ? 10.0 : _historicalStats
+    final maxValue = filteredStats.isEmpty ? 10.0 : filteredStats
         .map((s) => s.averagePointsPerSecond)
         .fold(0.0, (a, b) => a > b ? a : b);
     final yInterval = _calculateSmartInterval(maxValue, 5);
@@ -690,8 +714,8 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
             interval: _calculateXAxisInterval(),
             getTitlesWidget: (value, meta) {
               final index = value.toInt();
-              if (index >= 0 && index < _historicalStats.length) {
-                final date = _historicalStats[index].date;
+              if (index >= 0 && index < filteredStats.length) {
+                final date = filteredStats[index].date;
                 return SideTitleWidget(
                   axisSide: meta.axisSide,
                   child: Text(
@@ -731,7 +755,7 @@ class _DetailedStatisticsScreenState extends State<DetailedStatisticsScreen> {
         border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       minX: 0,
-      maxX: (_historicalStats.length - 1).toDouble(),
+      maxX: math.max(0, (filteredStats.length - 1).toDouble()),
       minY: 0,
       maxY: (maxValue * 1.1).ceilToDouble(), // Add 10% padding at top
       lineBarsData: [

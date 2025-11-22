@@ -5,6 +5,7 @@ import 'position_type.dart';
 import 'auto_advance_mode.dart';
 import 'game_stage.dart';
 import 'problem_feedback_type.dart';
+import 'sequence_visualization_type.dart';
 
 class DatasetConfiguration {
   final double thresholdGood;
@@ -18,7 +19,9 @@ class DatasetConfiguration {
   final PredictionType predictionType;
   final int scoreGranularity;
   final PositionType positionType;
-  final bool showMoveNumbers;
+  final SequenceVisualizationType sequenceVisualization;
+  final double timePerMoveSeconds;
+  final double initialTimeSeconds;
   final AutoAdvanceMode autoAdvanceMode;
   final GameStage gameStage;
   final ProblemFeedbackType problemFeedbackType;
@@ -35,7 +38,9 @@ class DatasetConfiguration {
     this.predictionType = PredictionType.winnerPrediction,
     this.scoreGranularity = 2,
     this.positionType = PositionType.withFilledNeutralPoints,
-    this.showMoveNumbers = true,
+    this.sequenceVisualization = SequenceVisualizationType.numbers,
+    this.timePerMoveSeconds = 1.0,
+    this.initialTimeSeconds = 1.0,
     this.autoAdvanceMode = AutoAdvanceMode.always,
     this.gameStage = GameStage.all,
     this.problemFeedbackType = ProblemFeedbackType.result,
@@ -64,7 +69,9 @@ class DatasetConfiguration {
           scoreGranularity: 2,
           positionType: PositionType.beforeFillingNeutralPoints,
           sequenceLength: 0,
-          showMoveNumbers: true,
+          sequenceVisualization: SequenceVisualizationType.numbers,
+          timePerMoveSeconds: 1.0,
+          initialTimeSeconds: 1.0,
           autoAdvanceMode: AutoAdvanceMode.never,
           problemFeedbackType: ProblemFeedbackType.resultWithTime,
         );
@@ -76,7 +83,9 @@ class DatasetConfiguration {
           predictionType: PredictionType.winnerPrediction,
           positionType: PositionType.beforeFillingNeutralPoints,
           sequenceLength: 0,
-          showMoveNumbers: true,
+          sequenceVisualization: SequenceVisualizationType.numbers,
+          timePerMoveSeconds: 1.0,
+          initialTimeSeconds: 1.0,
           autoAdvanceMode: AutoAdvanceMode.never,
           problemFeedbackType: ProblemFeedbackType.resultWithSpeed,
         );
@@ -117,7 +126,9 @@ class DatasetConfiguration {
     PredictionType? predictionType,
     int? scoreGranularity,
     PositionType? positionType,
-    bool? showMoveNumbers,
+    SequenceVisualizationType? sequenceVisualization,
+    double? timePerMoveSeconds,
+    double? initialTimeSeconds,
     AutoAdvanceMode? autoAdvanceMode,
     GameStage? gameStage,
     ProblemFeedbackType? problemFeedbackType,
@@ -134,7 +145,9 @@ class DatasetConfiguration {
       predictionType: predictionType ?? this.predictionType,
       scoreGranularity: scoreGranularity ?? this.scoreGranularity,
       positionType: positionType ?? this.positionType,
-      showMoveNumbers: showMoveNumbers ?? this.showMoveNumbers,
+      sequenceVisualization: sequenceVisualization ?? this.sequenceVisualization,
+      timePerMoveSeconds: timePerMoveSeconds ?? this.timePerMoveSeconds,
+      initialTimeSeconds: initialTimeSeconds ?? this.initialTimeSeconds,
       autoAdvanceMode: autoAdvanceMode ?? this.autoAdvanceMode,
       gameStage: gameStage ?? this.gameStage,
       problemFeedbackType: problemFeedbackType ?? this.problemFeedbackType,
@@ -154,7 +167,9 @@ class DatasetConfiguration {
       'predictionType': predictionType.value,
       'scoreGranularity': scoreGranularity,
       'positionType': positionType.value,
-      'showMoveNumbers': showMoveNumbers,
+      'sequenceVisualization': sequenceVisualization.value,
+      'timePerMoveSeconds': timePerMoveSeconds,
+      'initialTimeSeconds': initialTimeSeconds,
       'autoAdvanceMode': autoAdvanceMode.value,
       'gameStage': gameStage.value,
       'problemFeedbackType': problemFeedbackType.value,
@@ -183,7 +198,10 @@ class DatasetConfiguration {
       predictionType: PredictionType.fromString(json['predictionType'] as String?) ?? PredictionType.winnerPrediction,
       scoreGranularity: json['scoreGranularity'] as int? ?? 2,
       positionType: PositionType.fromString(json['positionType'] as String?) ?? PositionType.withFilledNeutralPoints,
-      showMoveNumbers: json['showMoveNumbers'] as bool? ?? true,
+      sequenceVisualization: SequenceVisualizationType.fromString(json['sequenceVisualization'] as String?) ?? 
+          (json['showMoveNumbers'] as bool? ?? true ? SequenceVisualizationType.numbers : SequenceVisualizationType.dontShow),
+      timePerMoveSeconds: (json['timePerMoveSeconds'] as num?)?.toDouble() ?? 1.0,
+      initialTimeSeconds: (json['initialTimeSeconds'] as num?)?.toDouble() ?? 1.0,
       autoAdvanceMode: AutoAdvanceMode.fromString(json['autoAdvanceMode'] as String?),
       gameStage: GameStage.fromString(json['gameStage'] as String?),
       problemFeedbackType: ProblemFeedbackType.fromString(json['problemFeedbackType'] as String?) ?? ProblemFeedbackType.result,

@@ -7,6 +7,7 @@ import '../models/auto_advance_mode.dart';
 import '../models/scoring_config.dart';
 import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
+import '../models/black_territory_options.dart';
 import '../models/training_position.dart';
 import '../models/position_type.dart';
 import 'score_display_buttons.dart';
@@ -24,9 +25,11 @@ class AdaptiveResultButtons extends StatelessWidget {
   final Function(GameResultOption)? onResultOptionSelected;
   final Function(GameResult)? onResultSelected;
   final Function(int)? onExactScoreButtonPressed; // Takes button position
+  final Function(int)? onBlackTerritoryButtonPressed; // Takes button position
   final Function(RoughLeadButtonType)? onRoughLeadButtonPressed;
   final VoidCallback? onNextPressed;
   final PositionedScoreOptions? positionedScoreOptions;
+  final BlackTerritoryOptions? blackTerritoryOptions;
   final RoughLeadPredictionState? roughLeadPredictionState;
   final AppSkin appSkin;
   final LayoutType layoutType;
@@ -48,9 +51,11 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.onResultOptionSelected,
     this.onResultSelected,
     this.onExactScoreButtonPressed,
+    this.onBlackTerritoryButtonPressed,
     this.onRoughLeadButtonPressed,
     this.onNextPressed,
     this.positionedScoreOptions,
+    this.blackTerritoryOptions,
     this.roughLeadPredictionState,
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
@@ -109,6 +114,21 @@ class AdaptiveResultButtons extends StatelessWidget {
     );
   }
 
+  factory AdaptiveResultButtons.forBlackTerritory({
+    required BlackTerritoryOptions blackTerritoryOptions,
+    required Function(int) onBlackTerritoryButtonPressed,
+    AppSkin appSkin = AppSkin.classic,
+    LayoutType layoutType = LayoutType.vertical,
+  }) {
+    return AdaptiveResultButtons(
+      blackTerritoryOptions: blackTerritoryOptions,
+      onBlackTerritoryButtonPressed: onBlackTerritoryButtonPressed,
+      appSkin: appSkin,
+      layoutType: layoutType,
+      displayMode: ButtonDisplayMode.choices,
+    );
+  }
+
   factory AdaptiveResultButtons.forScores({
     required String resultString,
     required VoidCallback onNextPressed,
@@ -158,6 +178,27 @@ class AdaptiveResultButtons extends StatelessWidget {
         return UniversalResultButton.exactScore(
           scoreText: option.scoreText,
           onPressed: () => onExactScoreButtonPressed!(index),
+          isCorrect: isCorrect,
+          appSkin: appSkin,
+          layoutType: layoutType,
+          buttonPosition: index,
+        );
+      }).toList();
+
+      return UniversalResultButtonGroup(
+        buttons: buttons,
+        appSkin: appSkin,
+        layoutType: layoutType,
+      );
+    } else if (blackTerritoryOptions != null && onBlackTerritoryButtonPressed != null) {
+      // Black territory buttons
+      final buttons = blackTerritoryOptions!.options.asMap().entries.map((entry) {
+        final index = entry.key;
+        final option = entry.value;
+        final isCorrect = index == blackTerritoryOptions!.correctButtonPosition;
+        return UniversalResultButton.exactScore(
+          scoreText: option.territoryText,
+          onPressed: () => onBlackTerritoryButtonPressed!(index),
           isCorrect: isCorrect,
           appSkin: appSkin,
           layoutType: layoutType,

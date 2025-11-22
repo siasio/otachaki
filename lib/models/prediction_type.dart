@@ -10,7 +10,12 @@ enum PredictionType {
   /// Rough lead prediction buttons (White/Close/Black with custom thresholds)
   /// Allows multiple correct answers based on configurable thresholds.
   /// Provides educational feedback showing which answers would be acceptable.
-  roughLeadPrediction('rough_lead_prediction');
+  roughLeadPrediction('rough_lead_prediction'),
+
+  /// Black territory prediction buttons (specific black territory counts)
+  /// Shows three possible black territory counts with only one correct answer.
+  /// Only available for final position datasets.
+  blackTerritoryPrediction('black_territory_prediction');
 
   const PredictionType(this.value);
 
@@ -34,6 +39,8 @@ enum PredictionType {
         return 'Exact Score Prediction';
       case PredictionType.roughLeadPrediction:
         return 'Rough Lead Prediction';
+      case PredictionType.blackTerritoryPrediction:
+        return "Black's Territory";
     }
   }
 

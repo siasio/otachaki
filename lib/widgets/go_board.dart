@@ -4,12 +4,14 @@ import '../models/training_position.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
 import '../models/sequence_display_mode.dart';
+import '../models/sequence_visualization_type.dart';
 import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
 import '../models/position_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../core/go_logic.dart';
+import 'move_sequence_dot_animator.dart';
 
 class GoBoard extends StatelessWidget {
   final GoPosition position;
@@ -23,6 +25,11 @@ class GoBoard extends StatelessWidget {
   final PositionType positionType;
   final bool showMoveNumbers;
   final bool isSequenceLengthDefined;
+  final SequenceVisualizationType sequenceVisualization;
+  final bool shouldAnimateDots;
+  final double initialTimeSeconds;
+  final double timePerMoveSeconds;
+  final VoidCallback? onDotAnimationComplete;
 
   const GoBoard({
     super.key,
@@ -37,6 +44,11 @@ class GoBoard extends StatelessWidget {
     this.positionType = PositionType.withFilledNeutralPoints,
     this.showMoveNumbers = true,
     this.isSequenceLengthDefined = false,
+    this.sequenceVisualization = SequenceVisualizationType.numbers,
+    this.shouldAnimateDots = false,
+    this.initialTimeSeconds = 1.0,
+    this.timePerMoveSeconds = 1.0,
+    this.onDotAnimationComplete,
   });
 
   @override
@@ -44,28 +56,84 @@ class GoBoard extends StatelessWidget {
     final themeProvider = UnifiedThemeProvider(skin: appSkin, layoutType: layoutType);
     final boardStyle = themeProvider.getElementStyle(UIElement.boardBackground);
 
+    // Check if we need to show dot animation
+    // Only show animator while actively animating dots
+    final shouldShowAnimator = shouldAnimateDots &&
+        sequenceVisualization == SequenceVisualizationType.dots &&
+        sequenceLength > 0 &&
+        trainingPosition != null;
+
     return AspectRatio(
       aspectRatio: 1.0,
       child: Container(
         margin: boardStyle.margin,
         decoration: themeProvider.getContainerDecoration(UIElement.boardBackground),
-        child: CustomPaint(
-          painter: GoBoardPainter(
-            position,
-            trainingPosition,
-            themeProvider,
-            sequenceLength,
-            sequenceDisplayMode,
-            viewMode,
-            ownershipDisplayMode,
-            positionType,
-            showMoveNumbers,
-            isSequenceLengthDefined,
-          ),
-          size: Size.infinite,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate board parameters for dot animator
+            final boardDisplay = trainingPosition?.gameInfo?.boardDisplay;
+            final int displayWidth = boardDisplay?.cropWidth ?? position.size;
+            final double cellSize = constraints.maxWidth / (displayWidth + 1);
+            final double boardStart = cellSize;
+            final int displayStartRow = boardDisplay?.cropStartRow ?? 0;
+            final int displayStartCol = boardDisplay?.cropStartCol ?? 0;
+
+            return Stack(
+              children: [
+                // Base board
+                CustomPaint(
+                  painter: GoBoardPainter(
+                    position,
+                    trainingPosition,
+                    themeProvider,
+                    sequenceLength,
+                    sequenceDisplayMode,
+                    viewMode,
+                    ownershipDisplayMode,
+                    positionType,
+                    showMoveNumbers,
+                    isSequenceLengthDefined,
+                    sequenceVisualization,
+                  ),
+                  size: Size.infinite,
+                ),
+                // Dot animator overlay - only shown while actively animating
+                if (shouldShowAnimator)
+                  MoveSequenceDotAnimator(
+                    sequence: trainingPosition!.extractMoveSequenceWithType(
+                      sequenceLength,
+                      positionType,
+                      showMoveNumbers,
+                      viewMode,
+                    ),
+                    initialTimeSeconds: initialTimeSeconds,
+                    timePerMoveSeconds: timePerMoveSeconds,
+                    onAnimationComplete: onDotAnimationComplete,
+                    cellSize: cellSize,
+                    boardStart: boardStart,
+                    displayStartRow: displayStartRow,
+                    displayStartCol: displayStartCol,
+                    dotColor: themeProvider.getElementStyle(UIElement.boardGridLines).color!,
+                    hasLastMoveMarker: sequenceLength > 0 && isSequenceLengthDefined,
+                    lastMoveData: sequenceLength > 0 && isSequenceLengthDefined && trainingPosition != null
+                        ? _getLastMoveAsSequenceData(trainingPosition!)
+                        : null,
+                    position: position,
+                    stoneRadius: cellSize * 0.4,
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
+  }
+
+  /// Helper to get last move marker position as MoveSequenceData
+  MoveSequenceData? _getLastMoveAsSequenceData(TrainingPosition tp) {
+    final pos = tp.getTriangleMarkerPosition(sequenceLength, isSequenceLengthDefined);
+    if (pos == null) return null;
+    return MoveSequenceData(row: pos.row, col: pos.col, moveNumber: 0);
   }
 }
 
@@ -80,6 +148,7 @@ class GoBoardPainter extends CustomPainter {
   final PositionType positionType;
   final bool showMoveNumbers;
   final bool isSequenceLengthDefined;
+  final SequenceVisualizationType sequenceVisualization;
 
   GoBoardPainter(
     this.position,
@@ -92,6 +161,7 @@ class GoBoardPainter extends CustomPainter {
     this.positionType,
     this.showMoveNumbers,
     this.isSequenceLengthDefined,
+    this.sequenceVisualization,
   );
 
   @override
@@ -257,12 +327,16 @@ class GoBoardPainter extends CustomPainter {
           }
 
           // Draw last move marker (triangle) using unified sequence length logic
-          if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col) {
+          // Skip when using dot visualization (handled by animator)
+          if (lastMovePosition != null && lastMovePosition.row == row && lastMovePosition.col == col && 
+              sequenceVisualization != SequenceVisualizationType.dots) {
             _drawLastMoveMarker(canvas, x, y, stoneRadius, stone);
           }
 
           // Draw sequence numbers on stones (for stonesWithNumbers mode)
-          if (isSequencePosition && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers) {
+          // Skip when using dot visualization (handled by animator)
+          if (isSequencePosition && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers &&
+              sequenceVisualization != SequenceVisualizationType.dots) {
             final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
             if (sequenceMove.moveNumber > 0) { // Only draw if not hidden
               _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, stone);
@@ -271,7 +345,8 @@ class GoBoardPainter extends CustomPainter {
         }
 
         // Draw sequence numbers based on view mode and sequence display mode
-        if (isSequencePosition) {
+        // Skip when using dot visualization (handled by animator)
+        if (isSequencePosition && sequenceVisualization != SequenceVisualizationType.dots) {
           final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
           final double x = boardStart + (col - displayStartCol) * cellSize;
           final double y = boardStart + (row - displayStartRow) * cellSize;

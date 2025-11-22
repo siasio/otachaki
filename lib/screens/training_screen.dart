@@ -33,11 +33,13 @@ import '../models/problem_feedback_type.dart';
 import '../widgets/pause_button.dart';
 import '../models/game_result_option.dart';
 import '../models/sequence_display_mode.dart';
+import '../models/sequence_visualization_type.dart';
 import '../models/board_view_mode.dart';
 import '../models/ownership_display_mode.dart';
 import '../models/prediction_type.dart';
 import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
+import '../models/black_territory_options.dart';
 import '../widgets/welcome_overlay.dart';
 import './info_screen.dart';
 import './config_screen.dart';
@@ -75,6 +77,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   bool _showWelcomeOverlay = false;
   PositionedScoreOptions? _currentScoreOptions;
   RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
+  BlackTerritoryOptions? _currentBlackTerritoryOptions; // State for black territory prediction mode
   final FocusNode _focusNode = FocusNode();
   ConfigurationManager? _configManager;
   CustomDatasetManager? _datasetManager;
@@ -225,6 +228,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _onExactScoreButtonPressed(2); // Right button
         }
       }
+      // Handle black territory prediction mode
+      else if (predictionType == PredictionType.blackTerritoryPrediction && _currentBlackTerritoryOptions != null) {
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          _onBlackTerritoryButtonPressed(0); // Left button
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          _onBlackTerritoryButtonPressed(1); // Middle button
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          _onBlackTerritoryButtonPressed(2); // Right button
+        }
+      }
       // Handle rough lead prediction mode
       else if (predictionType == PredictionType.roughLeadPrediction && _currentRoughLeadState != null) {
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
@@ -353,10 +366,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
         );
       }
 
+      // Generate black territory options (if needed)
+      BlackTerritoryOptions? blackTerritoryOptions;
+      if (_currentConfig?.predictionType == PredictionType.blackTerritoryPrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        final blackTerritory = _positionManager.currentTrainingPosition!.blackTerritory;
+        if (blackTerritory != null) {
+          blackTerritoryOptions = BlackTerritoryOptions.generate(
+            actualBlackTerritory: blackTerritory,
+            scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
+          );
+        }
+      }
+
       setState(() {
         _currentPosition = position;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
+        _currentBlackTerritoryOptions = blackTerritoryOptions;
       });
 
       // Always transition to solving state when position is loaded
@@ -439,6 +466,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _onExactScoreButtonPressed(int buttonPosition) {
     // Check if the pressed button position is correct
     final isCorrect = buttonPosition == _currentScoreOptions?.correctButtonPosition;
+
+    _recordAttempt(isCorrect, false);
+
+    final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
+    final data = TrainingStateData.answer(isCorrect: isCorrect);
+
+    if (markDisplayEnabled) {
+      _stateManager.transitionTo(TrainingState.feedback, data);
+    } else {
+      _stateManager.transitionTo(TrainingState.review, data);
+    }
+
+    _handlePostAnswerFlow(isCorrect);
+  }
+
+  void _onBlackTerritoryButtonPressed(int buttonPosition) {
+    // Check if the pressed button position is correct
+    final isCorrect = buttonPosition == _currentBlackTerritoryOptions?.correctButtonPosition;
 
     _recordAttempt(isCorrect, false);
 
@@ -641,6 +686,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
         );
+      } else if (predictionType == PredictionType.blackTerritoryPrediction && _currentBlackTerritoryOptions != null) {
+        return AdaptiveResultButtons.forBlackTerritory(
+          blackTerritoryOptions: _currentBlackTerritoryOptions!,
+          onBlackTerritoryButtonPressed: isEnabled ? _onBlackTerritoryButtonPressed : (_) {},
+          appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        );
       } else if (predictionType == PredictionType.roughLeadPrediction && _currentRoughLeadState != null) {
         return AdaptiveResultButtons.forChoices(
           roughLeadPredictionState: _currentRoughLeadState!,
@@ -677,6 +729,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     setState(() {
       _currentScoreOptions = null;
       _currentRoughLeadState = null;
+      _currentBlackTerritoryOptions = null;
     });
 
     try {
@@ -716,19 +769,45 @@ class _TrainingScreenState extends State<TrainingScreen> {
         );
       }
 
+      // Generate black territory options (if needed)
+      BlackTerritoryOptions? blackTerritoryOptions;
+      if (_currentConfig?.predictionType == PredictionType.blackTerritoryPrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        final blackTerritory = _positionManager.currentTrainingPosition!.blackTerritory;
+        if (blackTerritory != null) {
+          blackTerritoryOptions = BlackTerritoryOptions.generate(
+            actualBlackTerritory: blackTerritory,
+            scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
+          );
+        }
+      }
+
       setState(() {
         _currentPosition = position;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
+        _currentBlackTerritoryOptions = blackTerritoryOptions;
       });
 
       // Always transition to solving state when position is loaded
       // The welcome overlay (if shown) will be displayed over the game screen
       _stateManager.transitionTo(TrainingState.solving);
 
-      // Start timing the new problem only if welcome overlay is not shown
-      if (!_showWelcomeOverlay) {
-        _problemStartTime = DateTime.now();
+      // Check if we need to animate move sequence dots
+      final shouldAnimateDots = _currentConfig != null &&
+          _currentConfig!.sequenceLength > 0 &&
+          _currentConfig!.sequenceVisualization == SequenceVisualizationType.dots &&
+          !_showWelcomeOverlay;
+
+      if (shouldAnimateDots) {
+        // Set animation flag to prevent timer from starting
+        _stateManager.isAnimatingDots = true;
+        // Timer will be started after animation completes via callback
+      } else {
+        // Start timing the new problem only if welcome overlay is not shown
+        if (!_showWelcomeOverlay) {
+          _problemStartTime = DateTime.now();
+        }
       }
       // Request focus for keyboard input
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -763,6 +842,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
         if (mounted) {
           _focusNode.requestFocus();
         }
+      });
+    }
+  }
+
+  /// Called when move sequence dot animation completes
+  void _onDotAnimationComplete() {
+    if (mounted) {
+      setState(() {
+        _stateManager.isAnimatingDots = false;
+        // Start timing now that animation is complete
+        _problemStartTime = DateTime.now();
       });
     }
   }
@@ -976,6 +1066,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   String _formatResultText(String result) {
+    // Check if we're in black territory mode
+    final predictionType = _currentConfig?.predictionType ?? PredictionType.winnerPrediction;
+    if (predictionType == PredictionType.blackTerritoryPrediction) {
+      final currentPosition = _positionManager.currentTrainingPosition;
+      if (currentPosition != null && currentPosition.blackTerritory != null) {
+        return 'B=${currentPosition.blackTerritory}';
+      }
+    }
+
     // Get base result text
     String baseResult;
     if (result.isEmpty) {
@@ -1143,7 +1242,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
     if (datasetType != null && DatasetRegistry.isMiddleGameDataset(datasetType)) {
       return true;  // Always show move numbers for midgame datasets
     }
-    return _currentConfig?.showMoveNumbers ?? true;
+    // Convert new sequenceVisualization to boolean for backward compatibility
+    return _currentConfig?.sequenceVisualization != SequenceVisualizationType.dontShow;
   }
 
 
@@ -1283,6 +1383,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
                           showMoveNumbers: _shouldShowMoveNumbers,
                           isSequenceLengthDefined: _isSequenceLengthDefined,
+                          shouldAnimateDots: _stateManager.isAnimatingDots,
+                          sequenceVisualization: _currentConfig?.sequenceVisualization ?? SequenceVisualizationType.numbers,
+                          initialTimeSeconds: _currentConfig?.initialTimeSeconds ?? 1.0,
+                          timePerMoveSeconds: _currentConfig?.timePerMoveSeconds ?? 1.0,
+                          onDotAnimationComplete: _onDotAnimationComplete,
                           feedbackWidget: _stateManager.shouldShowFeedbackOverlay ? _buildFeedbackWidget() : null,
                         ),
                         buttons: _buildButtons(),
@@ -1353,8 +1458,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     viewMode: _currentViewMode,
                     ownershipDisplayMode: _currentOwnershipDisplayMode,
                     positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
-                    showMoveNumbers: _currentConfig?.showMoveNumbers ?? true,
+                    showMoveNumbers: _shouldShowMoveNumbers,
                     isSequenceLengthDefined: _isSequenceLengthDefined,
+                    shouldAnimateDots: _stateManager.isAnimatingDots,
+                    sequenceVisualization: _currentConfig?.sequenceVisualization ?? SequenceVisualizationType.numbers,
+                    initialTimeSeconds: _currentConfig?.initialTimeSeconds ?? 1.0,
+                    timePerMoveSeconds: _currentConfig?.timePerMoveSeconds ?? 1.0,
+                    onDotAnimationComplete: _onDotAnimationComplete,
                     feedbackWidget: _stateManager.shouldShowFeedbackOverlay ? _buildFeedbackWidget() : null,
                   ),
                   buttons: _buildButtons(),

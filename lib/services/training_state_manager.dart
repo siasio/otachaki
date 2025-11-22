@@ -8,6 +8,7 @@ class TrainingStateManager {
   TrainingState _currentState = TrainingState.loading;
   TrainingStateData _currentData = TrainingStateData.empty();
   final TrainingTimerManager _timerManager = TrainingTimerManager();
+  bool _isAnimatingDots = false;
 
   /// Current training state
   TrainingState get currentState => _currentState;
@@ -17,6 +18,15 @@ class TrainingStateManager {
 
   /// Timer manager for handling delayed transitions
   TrainingTimerManager get timerManager => _timerManager;
+
+  /// Whether we're currently animating move sequence dots
+  bool get isAnimatingDots => _isAnimatingDots;
+
+  /// Set whether we're animating dots
+  set isAnimatingDots(bool value) {
+    _isAnimatingDots = value;
+    onStateChanged?.call();
+  }
 
   /// Callback for state change notifications
   VoidCallback? onStateChanged;
@@ -66,7 +76,7 @@ class TrainingStateManager {
   }
 
   /// Get derived properties from current state
-  bool get shouldRunTimer => _currentState.shouldRunTimer;
+  bool get shouldRunTimer => _currentState.shouldRunTimer && !_isAnimatingDots;
   bool get shouldShowFeedbackOverlay => _currentState.shouldShowFeedbackOverlay;
   bool get hasAnswered => _currentState.hasAnswered;
   bool get isWaitingForNext => _currentState.isWaitingForNext;
@@ -100,6 +110,7 @@ class TrainingStateManager {
     _timerManager.cancelAllTimers();
     _currentState = TrainingState.loading;
     _currentData = TrainingStateData.empty();
+    _isAnimatingDots = false;
     onStateChanged?.call();
   }
 
