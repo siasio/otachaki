@@ -250,9 +250,17 @@ class UniversalResultButton extends StatelessWidget {
   ButtonColors _getButtonColors(UnifiedThemeProvider themeProvider, UIElement uiElement) {
     final style = themeProvider.getElementStyle(uiElement);
 
+    // If button is pressed (but not yet showing feedback), make it darker
+    Color backgroundColor = style.backgroundColor!;
+    if (isPressed && !showCorrectnessFeedback) {
+      // Darken the background color by reducing brightness by 20%
+      final hsl = HSLColor.fromColor(backgroundColor);
+      backgroundColor = hsl.withLightness((hsl.lightness * 0.8).clamp(0.0, 1.0)).toColor();
+    }
+
     // Use consistent styling for all button types
     return ButtonColors(
-      backgroundColor: style.backgroundColor!,
+      backgroundColor: backgroundColor,
       borderColor: style.borderColor!,
       borderWidth: 2.0,
       textColor: style.color!,

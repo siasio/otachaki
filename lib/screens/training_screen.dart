@@ -40,6 +40,7 @@ import '../models/prediction_type.dart';
 import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
 import '../models/black_territory_options.dart';
+import '../models/both_territories_state.dart';
 import '../widgets/welcome_overlay.dart';
 import './info_screen.dart';
 import './config_screen.dart';
@@ -78,6 +79,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   PositionedScoreOptions? _currentScoreOptions;
   RoughLeadPredictionState? _currentRoughLeadState; // State for rough lead prediction mode
   BlackTerritoryOptions? _currentBlackTerritoryOptions; // State for black territory prediction mode
+  BothTerritoriesState? _currentBothTerritoriesState; // State for both territories prediction mode
   final FocusNode _focusNode = FocusNode();
   ConfigurationManager? _configManager;
   CustomDatasetManager? _datasetManager;
@@ -236,6 +238,22 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _onBlackTerritoryButtonPressed(1); // Middle button
         } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
           _onBlackTerritoryButtonPressed(2); // Right button
+        }
+      }
+      // Handle both territories prediction mode (use numbers 1-3 for black, 4-6 for white)
+      else if (predictionType == PredictionType.bothTerritoriesPrediction && _currentBothTerritoriesState != null) {
+        if (event.logicalKey == LogicalKeyboardKey.digit1 || event.logicalKey == LogicalKeyboardKey.numpad1) {
+          _onBothTerritoriesButtonPressed(0, true); // Black left
+        } else if (event.logicalKey == LogicalKeyboardKey.digit2 || event.logicalKey == LogicalKeyboardKey.numpad2) {
+          _onBothTerritoriesButtonPressed(1, true); // Black middle
+        } else if (event.logicalKey == LogicalKeyboardKey.digit3 || event.logicalKey == LogicalKeyboardKey.numpad3) {
+          _onBothTerritoriesButtonPressed(2, true); // Black right
+        } else if (event.logicalKey == LogicalKeyboardKey.digit4 || event.logicalKey == LogicalKeyboardKey.numpad4) {
+          _onBothTerritoriesButtonPressed(0, false); // White left
+        } else if (event.logicalKey == LogicalKeyboardKey.digit5 || event.logicalKey == LogicalKeyboardKey.numpad5) {
+          _onBothTerritoriesButtonPressed(1, false); // White middle
+        } else if (event.logicalKey == LogicalKeyboardKey.digit6 || event.logicalKey == LogicalKeyboardKey.numpad6) {
+          _onBothTerritoriesButtonPressed(2, false); // White right
         }
       }
       // Handle rough lead prediction mode
@@ -407,11 +425,29 @@ class _TrainingScreenState extends State<TrainingScreen> {
         }
       }
 
+      // Generate both territories state (if needed)
+      BothTerritoriesState? bothTerritoriesState;
+      if (_currentConfig?.predictionType == PredictionType.bothTerritoriesPrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        final blackTerritory = _positionManager.currentTrainingPosition!.blackTerritory;
+        final whiteTerritory = _positionManager.currentTrainingPosition!.whiteTerritory;
+        final komi = _positionManager.currentTrainingPosition!.komi;
+        if (blackTerritory != null && whiteTerritory != null) {
+          bothTerritoriesState = BothTerritoriesState.generate(
+            actualBlackTerritory: blackTerritory,
+            actualWhiteTerritory: whiteTerritory,
+            komi: komi,
+            scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
+          );
+        }
+      }
+
       setState(() {
         _currentPosition = position;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
         _currentBlackTerritoryOptions = blackTerritoryOptions;
+        _currentBothTerritoriesState = bothTerritoriesState;
       });
 
       // Always transition to solving state when position is loaded
@@ -525,6 +561,37 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
 
     _handlePostAnswerFlow(isCorrect);
+  }
+
+  void _onBothTerritoriesButtonPressed(int position, bool isBlackRow) {
+    if (_currentBothTerritoriesState == null) return;
+
+    // Update state with the button selection
+    final updatedState = isBlackRow
+        ? _currentBothTerritoriesState!.selectBlackButton(position)
+        : _currentBothTerritoriesState!.selectWhiteButton(position);
+
+    setState(() {
+      _currentBothTerritoriesState = updatedState;
+    });
+
+    // Only trigger feedback when both selections are made
+    if (updatedState.hasAnswered) {
+      final isCorrect = updatedState.wasAnswerCorrect;
+
+      _recordAttempt(isCorrect, false);
+
+      final markDisplayEnabled = _globalConfig?.markDisplayEnabled ?? true;
+      final data = TrainingStateData.answer(isCorrect: isCorrect);
+
+      if (markDisplayEnabled) {
+        _stateManager.transitionTo(TrainingState.feedback, data);
+      } else {
+        _stateManager.transitionTo(TrainingState.review, data);
+      }
+
+      _handlePostAnswerFlow(isCorrect);
+    }
   }
 
   /// Handles button presses in rough lead prediction mode.
@@ -721,6 +788,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
           appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
           layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
         );
+      } else if (predictionType == PredictionType.bothTerritoriesPrediction && _currentBothTerritoriesState != null) {
+        return AdaptiveResultButtons.forBothTerritories(
+          bothTerritoriesState: _currentBothTerritoriesState!,
+          onBothTerritoriesButtonPressed: isEnabled ? _onBothTerritoriesButtonPressed : (_, __) {},
+          appSkin: _globalConfig?.appSkin ?? AppSkin.classic,
+          layoutType: _globalConfig?.layoutType ?? LayoutType.vertical,
+        );
       } else if (predictionType == PredictionType.roughLeadPrediction && _currentRoughLeadState != null) {
         return AdaptiveResultButtons.forChoices(
           roughLeadPredictionState: _currentRoughLeadState!,
@@ -758,6 +832,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _currentScoreOptions = null;
       _currentRoughLeadState = null;
       _currentBlackTerritoryOptions = null;
+      _currentBothTerritoriesState = null;
     });
 
     try {
@@ -810,11 +885,29 @@ class _TrainingScreenState extends State<TrainingScreen> {
         }
       }
 
+      // Generate both territories state (if needed)
+      BothTerritoriesState? bothTerritoriesState;
+      if (_currentConfig?.predictionType == PredictionType.bothTerritoriesPrediction &&
+          _positionManager.currentTrainingPosition != null) {
+        final blackTerritory = _positionManager.currentTrainingPosition!.blackTerritory;
+        final whiteTerritory = _positionManager.currentTrainingPosition!.whiteTerritory;
+        final komi = _positionManager.currentTrainingPosition!.komi;
+        if (blackTerritory != null && whiteTerritory != null) {
+          bothTerritoriesState = BothTerritoriesState.generate(
+            actualBlackTerritory: blackTerritory,
+            actualWhiteTerritory: whiteTerritory,
+            komi: komi,
+            scoreGranularity: _currentConfig?.scoreGranularity ?? 2,
+          );
+        }
+      }
+
       setState(() {
         _currentPosition = position;
         _currentScoreOptions = scoreOptions;
         _currentRoughLeadState = roughLeadState;
         _currentBlackTerritoryOptions = blackTerritoryOptions;
+        _currentBothTerritoriesState = bothTerritoriesState;
       });
 
       // Always transition to solving state when position is loaded
@@ -1100,6 +1193,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
       final currentPosition = _positionManager.currentTrainingPosition;
       if (currentPosition != null && currentPosition.blackTerritory != null) {
         return 'B=${currentPosition.blackTerritory}';
+      }
+    }
+
+    // Check if we're in both territories mode
+    if (predictionType == PredictionType.bothTerritoriesPrediction) {
+      final currentPosition = _positionManager.currentTrainingPosition;
+      if (currentPosition != null && 
+          currentPosition.blackTerritory != null && 
+          currentPosition.whiteTerritory != null) {
+        final whiteWithKomi = (currentPosition.whiteTerritory! + currentPosition.komi).round();
+        return 'B=${currentPosition.blackTerritory}\nW=$whiteWithKomi';
       }
     }
 

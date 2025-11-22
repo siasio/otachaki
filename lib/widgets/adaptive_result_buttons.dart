@@ -8,6 +8,7 @@ import '../models/scoring_config.dart';
 import '../models/positioned_score_options.dart';
 import '../models/rough_lead_button_state.dart';
 import '../models/black_territory_options.dart';
+import '../models/both_territories_state.dart';
 import '../models/training_position.dart';
 import '../models/position_type.dart';
 import 'score_display_buttons.dart';
@@ -27,9 +28,11 @@ class AdaptiveResultButtons extends StatelessWidget {
   final Function(int)? onExactScoreButtonPressed; // Takes button position
   final Function(int)? onBlackTerritoryButtonPressed; // Takes button position
   final Function(RoughLeadButtonType)? onRoughLeadButtonPressed;
+  final Function(int, bool)? onBothTerritoriesButtonPressed; // Takes position and isBlackRow
   final VoidCallback? onNextPressed;
   final PositionedScoreOptions? positionedScoreOptions;
   final BlackTerritoryOptions? blackTerritoryOptions;
+  final BothTerritoriesState? bothTerritoriesState;
   final RoughLeadPredictionState? roughLeadPredictionState;
   final AppSkin appSkin;
   final LayoutType layoutType;
@@ -53,9 +56,11 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.onExactScoreButtonPressed,
     this.onBlackTerritoryButtonPressed,
     this.onRoughLeadButtonPressed,
+    this.onBothTerritoriesButtonPressed,
     this.onNextPressed,
     this.positionedScoreOptions,
     this.blackTerritoryOptions,
+    this.bothTerritoriesState,
     this.roughLeadPredictionState,
     this.appSkin = AppSkin.classic,
     this.layoutType = LayoutType.vertical,
@@ -123,6 +128,21 @@ class AdaptiveResultButtons extends StatelessWidget {
     return AdaptiveResultButtons(
       blackTerritoryOptions: blackTerritoryOptions,
       onBlackTerritoryButtonPressed: onBlackTerritoryButtonPressed,
+      appSkin: appSkin,
+      layoutType: layoutType,
+      displayMode: ButtonDisplayMode.choices,
+    );
+  }
+
+  factory AdaptiveResultButtons.forBothTerritories({
+    required BothTerritoriesState bothTerritoriesState,
+    required Function(int, bool) onBothTerritoriesButtonPressed,
+    AppSkin appSkin = AppSkin.classic,
+    LayoutType layoutType = LayoutType.vertical,
+  }) {
+    return AdaptiveResultButtons(
+      bothTerritoriesState: bothTerritoriesState,
+      onBothTerritoriesButtonPressed: onBothTerritoriesButtonPressed,
       appSkin: appSkin,
       layoutType: layoutType,
       displayMode: ButtonDisplayMode.choices,
@@ -211,6 +231,116 @@ class AdaptiveResultButtons extends StatelessWidget {
         appSkin: appSkin,
         layoutType: layoutType,
       );
+    } else if (bothTerritoriesState != null && onBothTerritoriesButtonPressed != null) {
+      // Both territories buttons
+      if (layoutType == LayoutType.horizontal) {
+        // Horizontal mode: Two columns (Black left, White right)
+        return Row(
+          children: [
+            // Black territory column
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: bothTerritoriesState!.blackButtons.map((button) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: UniversalResultButton(
+                        displayText: button.displayText,
+                        onPressed: () => onBothTerritoriesButtonPressed!(button.buttonPosition, true),
+                        isCorrect: button.isCorrect,
+                        isPressed: button.wasPressed,
+                        buttonType: UniversalButtonType.exactScore,
+                        appSkin: appSkin,
+                        layoutType: layoutType,
+                        showCorrectnessFeedback: false,
+                        icon: _getIconForPosition(button.buttonPosition),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // White territory column
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: bothTerritoriesState!.whiteButtons.map((button) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: UniversalResultButton(
+                        displayText: button.displayText,
+                        onPressed: () => onBothTerritoriesButtonPressed!(button.buttonPosition, false),
+                        isCorrect: button.isCorrect,
+                        isPressed: button.wasPressed,
+                        buttonType: UniversalButtonType.exactScore,
+                        appSkin: appSkin,
+                        layoutType: layoutType,
+                        showCorrectnessFeedback: false,
+                        icon: _getIconForPosition(button.buttonPosition),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        );
+      } else {
+        // Vertical mode: Two rows (Black top, White bottom)
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Black territory row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: bothTerritoriesState!.blackButtons.map((button) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: UniversalResultButton(
+                      displayText: button.displayText,
+                      onPressed: () => onBothTerritoriesButtonPressed!(button.buttonPosition, true),
+                      isCorrect: button.isCorrect,
+                      isPressed: button.wasPressed,
+                      buttonType: UniversalButtonType.exactScore,
+                      appSkin: appSkin,
+                      layoutType: layoutType,
+                      showCorrectnessFeedback: false,
+                      icon: _getIconForPosition(button.buttonPosition),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            // White territory row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: bothTerritoriesState!.whiteButtons.map((button) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: UniversalResultButton(
+                      displayText: button.displayText,
+                      onPressed: () => onBothTerritoriesButtonPressed!(button.buttonPosition, false),
+                      isCorrect: button.isCorrect,
+                      isPressed: button.wasPressed,
+                      buttonType: UniversalButtonType.exactScore,
+                      appSkin: appSkin,
+                      layoutType: layoutType,
+                      showCorrectnessFeedback: false,
+                      icon: _getIconForPosition(button.buttonPosition),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        );
+      }
     } else if (roughLeadPredictionState != null && onRoughLeadButtonPressed != null) {
       // Rough lead prediction buttons
       final buttons = roughLeadPredictionState!.buttons.map((buttonState) {
@@ -287,6 +417,19 @@ class AdaptiveResultButtons extends StatelessWidget {
       );
     } else {
       return Container();
+    }
+  }
+
+  IconData? _getIconForPosition(int position) {
+    switch (position) {
+      case 0:
+        return Icons.arrow_back; // Left
+      case 1:
+        return Icons.arrow_downward; // Middle
+      case 2:
+        return Icons.arrow_forward; // Right
+      default:
+        return null;
     }
   }
 

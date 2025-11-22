@@ -15,7 +15,12 @@ enum PredictionType {
   /// Black territory prediction buttons (specific black territory counts)
   /// Shows three possible black territory counts with only one correct answer.
   /// Only available for final position datasets.
-  blackTerritoryPrediction('black_territory_prediction');
+  blackTerritoryPrediction('black_territory_prediction'),
+
+  /// Both territories prediction mode
+  /// Shows two rows of buttons: black territory and white territory (with komi).
+  /// User must select one button from each row. Only available for final position datasets.
+  bothTerritoriesPrediction('both_territories_prediction');
 
   const PredictionType(this.value);
 
@@ -41,6 +46,8 @@ enum PredictionType {
         return 'Rough Lead Prediction';
       case PredictionType.blackTerritoryPrediction:
         return "Black's Territory";
+      case PredictionType.bothTerritoriesPrediction:
+        return "Both Territories";
     }
   }
 

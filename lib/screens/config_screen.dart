@@ -621,9 +621,10 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Score Granularity (only show if exact score prediction or black territory prediction is selected)
+                        // Score Granularity (only show if exact score prediction or black territory prediction or both territories prediction is selected)
                         if (_currentDatasetConfig!.predictionType == PredictionType.exactScorePrediction ||
-                            _currentDatasetConfig!.predictionType == PredictionType.blackTerritoryPrediction) ...[
+                            _currentDatasetConfig!.predictionType == PredictionType.blackTerritoryPrediction ||
+                            _currentDatasetConfig!.predictionType == PredictionType.bothTerritoriesPrediction) ...[
                           TextFormField(
                             controller: _scoreGranularityController,
                             decoration: const InputDecoration(
