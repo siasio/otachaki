@@ -284,21 +284,39 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Future<void> _navigateToInfo() async {
-    _resetTrainingState();
+    // Preserve the current state if in review/paused mode
+    final wasInReviewMode = _stateManager.currentState == TrainingState.review ||
+                             _stateManager.currentState == TrainingState.paused;
+    
+    if (!wasInReviewMode) {
+      _resetTrainingState();
+    }
+    
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const InfoScreen()),
     );
-    // Load fresh position when returning
-    _loadNextPosition();
+    
+    // Only load fresh position if we weren't in review mode
+    if (!wasInReviewMode) {
+      _loadNextPosition();
+    }
   }
 
   Future<void> _navigateToConfig() async {
-    _resetTrainingState();
+    // Preserve the current state if in review/paused mode
+    var wasInReviewMode = _stateManager.currentState == TrainingState.review ||
+                          _stateManager.currentState == TrainingState.paused;
+    
+    if (!wasInReviewMode) {
+      _resetTrainingState();
+    }
+    
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const ConfigScreen()),
     );
+    
     // Reload global configuration in case it changed
     if (_globalConfigManager != null) {
       _globalConfig = _globalConfigManager!.getConfiguration();
@@ -319,13 +337,23 @@ class _TrainingScreenState extends State<TrainingScreen> {
           _currentDataset = newSelectedDataset;
         });
         await _updateDynamicTitle(); // Update title when dataset changes
+        // Dataset changed - must load new position even if in review mode
+        wasInReviewMode = false;
       }
     }
 
     // Notify parent app of configuration changes
     widget.onConfigurationChanged?.call();
-    // Load fresh position when returning (dataset may have changed)
-    _loadNextPosition();
+    
+    // Only load fresh position if we weren't in review mode or if dataset changed
+    if (!wasInReviewMode) {
+      _loadNextPosition();
+    } else {
+      // Update configuration for current position
+      await _updateConfiguration();
+      // Trigger UI refresh to apply any visual changes from settings
+      setState(() {});
+    }
   }
 
   Future<void> _loadInitialPosition() async {
@@ -1121,6 +1149,25 @@ class _TrainingScreenState extends State<TrainingScreen> {
           final formattedTime = timeSeconds >= 4
               ? '${timeSeconds.round()}s'
               : '${timeSeconds.toStringAsFixed(1)}s';
+          return '$baseResult\n$formattedTime';
+        }
+      } else if (feedbackType == ProblemFeedbackType.resultWithTimeAndSpeed) {
+        // Show both time and speed
+        final formattedTime = timeSeconds >= 4
+            ? '${timeSeconds.round()}s'
+            : '${timeSeconds.toStringAsFixed(1)}s';
+        
+        // Calculate speed if territory data is available
+        final currentPosition = _positionManager.currentTrainingPosition;
+        if (currentPosition != null && currentPosition.hasTerritoryData && timeSeconds > 0) {
+          final totalPoints = (currentPosition.blackTerritory! + currentPosition.whiteTerritory!).toDouble();
+          final pointsPerSecond = totalPoints / timeSeconds;
+          final formattedSpeed = pointsPerSecond >= 4
+              ? '${pointsPerSecond.round()} pts/s'
+              : '${pointsPerSecond.toStringAsFixed(1)} pts/s';
+          return '$baseResult\n$formattedTime\n$formattedSpeed';
+        } else {
+          // Fallback to just time if speed can't be calculated
           return '$baseResult\n$formattedTime';
         }
       }

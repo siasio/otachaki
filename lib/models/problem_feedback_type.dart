@@ -7,7 +7,10 @@ enum ProblemFeedbackType {
   resultWithTime('result_with_time'),
 
   /// Show result with speed for this problem (e.g., "W+5.5\n3.2 pts/s")
-  resultWithSpeed('result_with_speed');
+  resultWithSpeed('result_with_speed'),
+
+  /// Show result with both time and speed (e.g., "W+5.5\n2.3s\n3.2 pts/s")
+  resultWithTimeAndSpeed('result_with_time_and_speed');
 
   const ProblemFeedbackType(this.value);
 
@@ -22,6 +25,8 @@ enum ProblemFeedbackType {
         return ProblemFeedbackType.resultWithTime;
       case 'result_with_speed':
         return ProblemFeedbackType.resultWithSpeed;
+      case 'result_with_time_and_speed':
+        return ProblemFeedbackType.resultWithTimeAndSpeed;
       default:
         return null;
     }
@@ -36,6 +41,8 @@ enum ProblemFeedbackType {
         return 'Result + Time';
       case ProblemFeedbackType.resultWithSpeed:
         return 'Result + Speed';
+      case ProblemFeedbackType.resultWithTimeAndSpeed:
+        return 'Result + Time + Speed';
     }
   }
 
