@@ -45,6 +45,7 @@ class AdaptiveResultButtons extends StatelessWidget {
   final PositionType? positionType;
   final double? thresholdGood;
   final double? thresholdClose;
+  final bool noPaddingForScores;
 
   const AdaptiveResultButtons({
     super.key,
@@ -73,6 +74,7 @@ class AdaptiveResultButtons extends StatelessWidget {
     this.positionType,
     this.thresholdGood,
     this.thresholdClose,
+    this.noPaddingForScores = false,
   });
 
   factory AdaptiveResultButtons.forChoices({
@@ -161,13 +163,15 @@ class AdaptiveResultButtons extends StatelessWidget {
     TrainingPosition? trainingPosition,
     PositionType? positionType,
     DatasetType? datasetType,
+    bool noPadding = false,
+    bool useTwoRowLayout = false,
   }) {
     return AdaptiveResultButtons(
       resultString: resultString,
       onNextPressed: onNextPressed,
       appSkin: appSkin,
       layoutType: layoutType,
-      displayMode: ButtonDisplayMode.scores,
+      displayMode: useTwoRowLayout ? ButtonDisplayMode.choices : ButtonDisplayMode.scores,
       useColoredBackgroundForScores: useColoredBackgroundForScores,
       blackTerritory: blackTerritory,
       whiteTerritory: whiteTerritory,
@@ -175,6 +179,7 @@ class AdaptiveResultButtons extends StatelessWidget {
       trainingPosition: trainingPosition,
       positionType: positionType,
       datasetType: datasetType,
+      noPaddingForScores: noPadding,
     );
   }
 
@@ -237,7 +242,7 @@ class AdaptiveResultButtons extends StatelessWidget {
         // Horizontal mode: Two columns (Black left, White right)
         return Row(
           children: [
-            // Black territory column
+            // Black territory column (keys 1, 2, 3)
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -254,7 +259,7 @@ class AdaptiveResultButtons extends StatelessWidget {
                         appSkin: appSkin,
                         layoutType: layoutType,
                         showCorrectnessFeedback: false,
-                        icon: _getIconForPosition(button.buttonPosition),
+                        keyText: _getKeyTextForBothTerritoriesPosition(button.buttonPosition, true),
                       ),
                     ),
                   );
@@ -262,7 +267,7 @@ class AdaptiveResultButtons extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // White territory column
+            // White territory column (keys 4, 5, 6)
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -279,7 +284,7 @@ class AdaptiveResultButtons extends StatelessWidget {
                         appSkin: appSkin,
                         layoutType: layoutType,
                         showCorrectnessFeedback: false,
-                        icon: _getIconForPosition(button.buttonPosition),
+                        keyText: _getKeyTextForBothTerritoriesPosition(button.buttonPosition, false),
                       ),
                     ),
                   );
@@ -293,7 +298,7 @@ class AdaptiveResultButtons extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Black territory row
+            // Black territory row (keys 1, 2, 3)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: bothTerritoriesState!.blackButtons.map((button) {
@@ -309,14 +314,14 @@ class AdaptiveResultButtons extends StatelessWidget {
                       appSkin: appSkin,
                       layoutType: layoutType,
                       showCorrectnessFeedback: false,
-                      icon: _getIconForPosition(button.buttonPosition),
+                      keyText: _getKeyTextForBothTerritoriesPosition(button.buttonPosition, true),
                     ),
                   ),
                 );
               }).toList(),
             ),
             const SizedBox(height: 12),
-            // White territory row
+            // White territory row (keys 4, 5, 6)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: bothTerritoriesState!.whiteButtons.map((button) {
@@ -332,7 +337,7 @@ class AdaptiveResultButtons extends StatelessWidget {
                       appSkin: appSkin,
                       layoutType: layoutType,
                       showCorrectnessFeedback: false,
-                      icon: _getIconForPosition(button.buttonPosition),
+                      keyText: _getKeyTextForBothTerritoriesPosition(button.buttonPosition, false),
                     ),
                   ),
                 );
@@ -433,6 +438,34 @@ class AdaptiveResultButtons extends StatelessWidget {
     }
   }
 
+  String? _getKeyTextForBothTerritoriesPosition(int position, bool isBlackRow) {
+    if (isBlackRow) {
+      // Black territory row uses keys 1, 2, 3
+      switch (position) {
+        case 0:
+          return '1';
+        case 1:
+          return '2';
+        case 2:
+          return '3';
+        default:
+          return null;
+      }
+    } else {
+      // White territory row uses keys 4, 5, 6
+      switch (position) {
+        case 0:
+          return '4';
+        case 1:
+          return '5';
+        case 2:
+          return '6';
+        default:
+          return null;
+      }
+    }
+  }
+
   Widget _buildScoreDisplay() {
     if (resultString != null && onNextPressed != null) {
       return ScoreDisplayButtons(
@@ -447,6 +480,7 @@ class AdaptiveResultButtons extends StatelessWidget {
         trainingPosition: trainingPosition,
         positionType: positionType,
         datasetType: datasetType,
+        noPadding: noPaddingForScores,
       );
     } else {
       return Container();

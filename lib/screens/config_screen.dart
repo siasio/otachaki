@@ -437,7 +437,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
         child: Scaffold(
           appBar: AppBar(
             title: const Text('Settings'),
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           ),
           body: const Center(child: CircularProgressIndicator()),
         ),
@@ -449,7 +448,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Settings'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),

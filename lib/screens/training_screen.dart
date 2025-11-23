@@ -26,6 +26,7 @@ import '../themes/element_registry.dart';
 import '../widgets/timer_bar.dart';
 import '../widgets/game_board_container.dart';
 import '../widgets/adaptive_result_buttons.dart';
+import '../widgets/universal_result_button.dart';
 import '../models/auto_advance_mode.dart';
 import '../models/problem_feedback_type.dart';
 // REMOVED: GameStatusBar import - GameInfo functionality has been removed
@@ -747,6 +748,62 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     if (_stateManager.isWaitingForNext || (displayMode == ButtonDisplayMode.scores && _stateManager.hasAnswered && !_stateManager.shouldShowFeedbackOverlay)) {
       final currentTrainingPosition = _positionManager.currentTrainingPosition;
+      
+      // In Both Territories mode, maintain two-row structure to prevent board resizing
+      if (predictionType == PredictionType.bothTerritoriesPrediction) {
+        final layoutType = _globalConfig?.layoutType ?? LayoutType.vertical;
+        final currentSkin = _globalConfig?.appSkin ?? AppSkin.classic;
+        if (layoutType == LayoutType.vertical) {
+          // Create score buttons without padding
+          final scoreButtons = AdaptiveResultButtons.forScores(
+            resultString: currentTrainingPosition?.result ?? '',
+            onNextPressed: _onNextPressed,
+            appSkin: currentSkin,
+            layoutType: layoutType,
+            useColoredBackgroundForScores: true,
+            blackTerritory: currentTrainingPosition?.blackTerritory,
+            whiteTerritory: currentTrainingPosition?.whiteTerritory,
+            komi: currentTrainingPosition?.komi,
+            trainingPosition: currentTrainingPosition,
+            positionType: _currentConfig?.positionType ?? PositionType.withFilledNeutralPoints,
+            datasetType: _positionManager.currentCustomDataset?.baseDatasetType,
+            noPadding: true,
+          );
+          
+          // Create a two-row layout matching the solving mode structure EXACTLY
+          // Use invisible UniversalResultButtons in first row to match rendering characteristics
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // First row: invisible buttons with same structure as solving mode
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(3, (index) {
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Opacity(
+                        opacity: 0.0,
+                        child: UniversalResultButton(
+                          displayText: '',
+                          onPressed: () {},
+                          buttonType: UniversalButtonType.exactScore,
+                          appSkin: currentSkin,
+                          layoutType: layoutType,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 12),
+              // Second row: score display
+              scoreButtons,
+            ],
+          );
+        }
+      }
+      
       return AdaptiveResultButtons.forScores(
         resultString: currentTrainingPosition?.result ?? '',
         onNextPressed: _onNextPressed,
@@ -1187,39 +1244,45 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   String _formatResultText(String result) {
-    // Check if we're in black territory mode
+    // Determine base result text based on prediction type
     final predictionType = _currentConfig?.predictionType ?? PredictionType.winnerPrediction;
+    String baseResult;
+
+    // Check if we're in black territory mode
     if (predictionType == PredictionType.blackTerritoryPrediction) {
       final currentPosition = _positionManager.currentTrainingPosition;
       if (currentPosition != null && currentPosition.blackTerritory != null) {
-        return 'B=${currentPosition.blackTerritory}';
+        baseResult = 'B=${currentPosition.blackTerritory}';
+      } else {
+        baseResult = 'UNKNOWN';
       }
     }
-
     // Check if we're in both territories mode
-    if (predictionType == PredictionType.bothTerritoriesPrediction) {
+    else if (predictionType == PredictionType.bothTerritoriesPrediction) {
       final currentPosition = _positionManager.currentTrainingPosition;
       if (currentPosition != null && 
           currentPosition.blackTerritory != null && 
           currentPosition.whiteTerritory != null) {
         final whiteWithKomi = (currentPosition.whiteTerritory! + currentPosition.komi).round();
-        return 'B=${currentPosition.blackTerritory}\nW=$whiteWithKomi';
+        baseResult = 'B=${currentPosition.blackTerritory}\nW=$whiteWithKomi';
+      } else {
+        baseResult = 'UNKNOWN';
       }
     }
-
-    // Get base result text
-    String baseResult;
-    if (result.isEmpty) {
-      baseResult = 'UNKNOWN';
-    } else if (result.endsWith('+R')) {
-      // Handle resignation
-      baseResult = result.startsWith('B') ? 'B+R' : 'W+R';
-    } else if (result == 'Draw') {
-      // Handle draws (0.5 point difference or exact draw)
-      baseResult = 'DRAW';
-    } else {
-      // Return result as-is for normal wins (B+7.5, W+2, etc.)
-      baseResult = result;
+    // Standard result formatting for other modes
+    else {
+      if (result.isEmpty) {
+        baseResult = 'UNKNOWN';
+      } else if (result.endsWith('+R')) {
+        // Handle resignation
+        baseResult = result.startsWith('B') ? 'B+R' : 'W+R';
+      } else if (result == 'Draw') {
+        // Handle draws (0.5 point difference or exact draw)
+        baseResult = 'DRAW';
+      } else {
+        // Return result as-is for normal wins (B+7.5, W+2, etc.)
+        baseResult = result;
+      }
     }
 
     // Add timing/speed information based on configuration
@@ -1328,9 +1391,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final elementStyle = themeProvider.getElementStyle(buttonElement);
     final containerStyle = themeProvider.getElementStyle(UIElement.gameStatusBar);
 
+    // Determine text color based on skin
+    final Color textColor;
+    if (currentSkin == AppSkin.eink) {
+      textColor = Colors.black;
+    } else if (currentSkin == AppSkin.modern) {
+      // Always use white text on dark background for Modern skin
+      textColor = Colors.white;
+    } else {
+      // Classic skin uses button element color (varies by result)
+      textColor = elementStyle.color!;
+    }
+
     return ResultDisplayColors(
       backgroundColor: containerStyle.backgroundColor!,
-      textColor: currentSkin == AppSkin.eink ? Colors.black : elementStyle.color!,
+      textColor: textColor,
       borderColor: containerStyle.borderColor!,
       shadowColor: currentSkin == AppSkin.eink ? null : Colors.black.withValues(alpha: 0.3),
     );

@@ -6,6 +6,7 @@ import '../models/rough_lead_button_state.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../themes/theme_enforcement.dart';
+import 'keyboard_key_icon.dart';
 
 /// Universal button widget that handles all interactive result button types
 ///
@@ -29,6 +30,7 @@ class UniversalResultButton extends StatelessWidget {
   final LayoutType layoutType;
   final bool showCorrectnessFeedback;
   final IconData? icon;
+  final String? keyText;
   final double? exactScore;
 
   const UniversalResultButton({
@@ -42,6 +44,7 @@ class UniversalResultButton extends StatelessWidget {
     this.layoutType = LayoutType.vertical,
     this.showCorrectnessFeedback = false,
     this.icon,
+    this.keyText,
     this.exactScore,
   });
 
@@ -174,11 +177,20 @@ class UniversalResultButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (icon != null) ...[
-                        Icon(
-                          icon,
-                          size: style.fontSize?.clamp(16, 24) ?? 20,
-                          color: colors.iconColor,
+                      if (keyText != null) ...[
+                        KeyboardKeyText(
+                          text: keyText!,
+                          size: 16,
+                          color: colors.textColor,
+                          appSkin: appSkin,
+                        ),
+                        const SizedBox(height: 8),
+                      ] else if (icon != null) ...[
+                        KeyboardKeyIcon(
+                          icon: icon!,
+                          size: 16,
+                          color: colors.textColor,
+                          appSkin: appSkin,
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -197,11 +209,20 @@ class UniversalResultButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (icon != null) ...[
-                        Icon(
-                          icon,
-                          size: style.fontSize?.clamp(14, 20) ?? 16,
-                          color: colors.iconColor,
+                      if (keyText != null) ...[
+                        KeyboardKeyText(
+                          text: keyText!,
+                          size: 14,
+                          color: colors.textColor,
+                          appSkin: appSkin,
+                        ),
+                        const SizedBox(width: 6),
+                      ] else if (icon != null) ...[
+                        KeyboardKeyIcon(
+                          icon: icon!,
+                          size: 14,
+                          color: colors.textColor,
+                          appSkin: appSkin,
                         ),
                         const SizedBox(width: 6),
                       ],

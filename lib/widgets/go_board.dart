@@ -292,11 +292,19 @@ class GoBoardPainter extends CustomPainter {
               ..style = PaintingStyle.fill;
 
             if (stone == StoneColor.black) {
+              // Use much darker gradient for Modern skin to ensure visibility on dark board
+              final blackGradientColors = themeProvider.skin == AppSkin.modern
+                  ? [
+                      const Color(0xFF2A2A2A), // Very dark center
+                      const Color(0xFF000000), // Pure black edges
+                    ]
+                  : [
+                      const Color(0xFF4A4A4A), // Medium gray center
+                      const Color(0xFF1A1A1A), // Dark gray edges
+                    ];
+              
               stonePaint.shader = RadialGradient(
-                colors: [
-                  const Color(0xFF4A4A4A),
-                  const Color(0xFF1A1A1A),
-                ],
+                colors: blackGradientColors,
               ).createShader(Rect.fromCircle(
                 center: Offset(x, y),
                 radius: stoneRadius,

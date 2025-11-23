@@ -65,56 +65,66 @@ class AdaptiveAppBar extends StatelessWidget {
     return Material(
       elevation: elevation,
       color: effectiveBackgroundColor,
-      child: SizedBox(
-        width: 72, // Standard width for vertical app bar
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Settings icon at the top
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: IconButton(
-                icon: Icon(
-                  Icons.settings,
-                  color: effectiveForegroundColor,
-                ),
-                onPressed: onSettingsPressed,
-                tooltip: 'Settings',
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            right: BorderSide(
+              color: Colors.grey.withValues(alpha: 0.3),
+              width: 1,
             ),
+          ),
+        ),
+        child: SizedBox(
+          width: 72, // Standard width for vertical app bar
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Settings icon at the top
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.settings,
+                    color: effectiveForegroundColor,
+                  ),
+                  onPressed: onSettingsPressed,
+                  tooltip: 'Settings',
+                ),
+              ),
 
-            // Title in the center (rotated 90 degrees)
-            if (title != null)
-              Expanded(
-                child: Center(
-                  child: RotatedBox(
-                    quarterTurns: 3, // Rotate 90 degrees counterclockwise
-                    child: Text(
-                      title!,
-                      style: TextStyle(
-                        color: effectiveForegroundColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+              // Title in the center (rotated 90 degrees)
+              if (title != null)
+                Expanded(
+                  child: Center(
+                    child: RotatedBox(
+                      quarterTurns: 3, // Rotate 90 degrees counterclockwise
+                      child: Text(
+                        title!,
+                        style: TextStyle(
+                          color: effectiveForegroundColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-              ),
 
-            // Info icon at the bottom
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: IconButton(
-                icon: Icon(
-                  Icons.info_outline,
-                  color: effectiveForegroundColor,
+              // Info icon at the bottom
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.info_outline,
+                    color: effectiveForegroundColor,
+                  ),
+                  onPressed: onInfoPressed,
+                  tooltip: 'App Information',
                 ),
-                onPressed: onInfoPressed,
-                tooltip: 'App Information',
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

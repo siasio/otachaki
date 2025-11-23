@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import '../models/app_skin.dart';
 import '../models/layout_type.dart';
 import '../models/training_position.dart';
@@ -8,6 +7,7 @@ import '../models/dataset_type.dart';
 import '../themes/unified_theme_provider.dart';
 import '../themes/element_registry.dart';
 import '../services/result_text_service.dart';
+import 'keyboard_key_icon.dart';
 
 class ScoreDisplayButtons extends StatelessWidget {
   final String resultString;
@@ -21,6 +21,7 @@ class ScoreDisplayButtons extends StatelessWidget {
   final TrainingPosition? trainingPosition;
   final PositionType? positionType;
   final DatasetType? datasetType;
+  final bool noPadding;
 
   const ScoreDisplayButtons({
     super.key,
@@ -35,6 +36,7 @@ class ScoreDisplayButtons extends StatelessWidget {
     this.trainingPosition,
     this.positionType,
     this.datasetType,
+    this.noPadding = false,
   });
 
   @override
@@ -44,7 +46,7 @@ class ScoreDisplayButtons extends StatelessWidget {
 
     if (layoutType == LayoutType.horizontal) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: noPadding ? EdgeInsets.zero : const EdgeInsets.all(16),
         child: Column(
           children: [
             Expanded(
@@ -71,7 +73,7 @@ class ScoreDisplayButtons extends StatelessWidget {
       );
     } else {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: noPadding ? EdgeInsets.zero : const EdgeInsets.all(16),
         child: Row(
           children: [
             Expanded(
@@ -116,10 +118,14 @@ class ScoreDisplayButtons extends StatelessWidget {
             : themeProvider.getElementStyle(UIElement.buttonResultBlack).color!)
         : themeProvider.getElementStyle(UIElement.textBody).color!;
 
-    // Use thick dashed border of opposite color for territory displays
-    final shouldUseDashedBorder = blackTerritory != null && whiteTerritory != null;
-    final borderColor = shouldUseDashedBorder
-        ? (isWhite ? Colors.black : Colors.white)
+    // For territory displays, use simple thin border like in solving mode
+    // For white background (white territory), use theme border color (dark)
+    // For black background (black territory), use white border for visibility
+    final showingTerritory = blackTerritory != null && whiteTerritory != null;
+    final borderColor = showingTerritory
+        ? (isWhite 
+            ? themeProvider.getElementStyle(UIElement.buttonResultWhite).borderColor!
+            : Colors.white)
         : themeProvider.getElementStyle(UIElement.buttonResultWhite).borderColor!;
 
     final isVertical = layoutType == LayoutType.horizontal;
@@ -131,9 +137,7 @@ class ScoreDisplayButtons extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: shouldUseDashedBorder
-            ? null  // We'll use a custom dashed border painter
-            : Border.all(color: borderColor, width: 2),
+        border: Border.all(color: borderColor, width: 2),
         boxShadow: appSkin == AppSkin.eink ? [] : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -142,49 +146,17 @@ class ScoreDisplayButtons extends StatelessWidget {
           ),
         ],
       ),
-      foregroundDecoration: shouldUseDashedBorder
-          ? ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide.none,
-              ),
-            )
-          : null,
-      child: shouldUseDashedBorder
-          ? CustomPaint(
-              painter: DashedBorderPainter(
-                color: borderColor,
-                strokeWidth: 4.0,
-                dashLength: 8.0,
-                dashGap: 4.0,
-                borderRadius: 12.0,
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: layoutType == LayoutType.horizontal ? 20 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            )
-          : Center(
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: layoutType == LayoutType.horizontal ? 20 : 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: layoutType == LayoutType.horizontal ? 20 : 18,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 
@@ -222,12 +194,11 @@ class ScoreDisplayButtons extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.arrow_downward,
-                        size: 20,
-                        color: appSkin == AppSkin.eink
-                            ? textColor
-                            : textColor.withOpacity(0.7),
+                      KeyboardKeyIcon(
+                        icon: Icons.arrow_downward,
+                        size: 16,
+                        color: textColor,
+                        appSkin: appSkin,
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -245,12 +216,11 @@ class ScoreDisplayButtons extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.arrow_downward,
-                        size: 18,
-                        color: appSkin == AppSkin.eink
-                            ? textColor
-                            : textColor.withOpacity(0.7),
+                      KeyboardKeyIcon(
+                        icon: Icons.arrow_downward,
+                        size: 14,
+                        color: textColor,
+                        appSkin: appSkin,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -281,53 +251,4 @@ class ScoreDisplayButtons extends StatelessWidget {
       komi: komi,
     );
   }
-}
-
-
-class DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double dashLength;
-  final double dashGap;
-  final double borderRadius;
-
-  DashedBorderPainter({
-    required this.color,
-    required this.strokeWidth,
-    required this.dashLength,
-    required this.dashGap,
-    required this.borderRadius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2,
-                     size.width - strokeWidth, size.height - strokeWidth),
-        Radius.circular(borderRadius),
-      ));
-
-    _drawDashedPath(canvas, path, paint);
-  }
-
-  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
-    final pathMetrics = path.computeMetrics();
-    for (final pathMetric in pathMetrics) {
-      double distance = 0.0;
-      while (distance < pathMetric.length) {
-        final segment = pathMetric.extractPath(distance, distance + dashLength);
-        canvas.drawPath(segment, paint);
-        distance += dashLength + dashGap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
