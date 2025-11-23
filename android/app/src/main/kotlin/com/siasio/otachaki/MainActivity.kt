@@ -1,4 +1,4 @@
-package com.example.otachaki
+package com.siasio.otachaki
 
 import io.flutter.embedding.android.FlutterActivity
 
