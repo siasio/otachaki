@@ -20,3 +20,7 @@ Designed by Stanisław Frejlak, 2p. Written by ClaudeCode. Inspiration taken fro
 Positions were evaluated by KataGo.
 
 *Otachaki* (Polish: *otaczaki*) is a non-existent Polish word which means *The Surrounding Game*, or *The Game of Go*.
+
+## Privacy
+
+See our [Privacy Policy](PRIVACY_POLICY.md). TL;DR: We don't collect any data. Everything stays on your device.
