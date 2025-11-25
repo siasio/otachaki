@@ -1,7 +1,7 @@
 name: otachaki
 description: Otachaki - Go position evaluation training app
 
-version: 1.1.1+3
+version: 1.1.1+4
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -16,6 +16,7 @@ dependencies:
   fl_chart: ^0.68.0
   intl: ^0.19.0
   uuid: ^4.5.1
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/go_position.dart';
 import '../core/go_logic.dart';
 
@@ -57,6 +59,8 @@ class MoveSequenceDotAnimator extends StatefulWidget {
 class _MoveSequenceDotAnimatorState extends State<MoveSequenceDotAnimator> {
   int _currentDotIndex = -1; // -1 means showing last move marker, 0+ means showing dot
   Timer? _timer;
+  Timer? _refreshTimer; // Periodic timer to force UI refresh on e-ink devices
+  bool _isAnimating = false;
 
   @override
   void initState() {
@@ -64,7 +68,27 @@ class _MoveSequenceDotAnimatorState extends State<MoveSequenceDotAnimator> {
     _startAnimation();
   }
 
-  void _startAnimation() {
+  void _startAnimation() async {
+    _isAnimating = true;
+    
+    // Enable wakelock to prevent screen from sleeping during animation
+    // This helps prevent aggressive power management from freezing the animation
+    try {
+      await WakelockPlus.enable();
+    } catch (e) {
+      // Silently fail if wakelock not available (e.g., on desktop)
+    }
+    
+    // Start periodic refresh timer to force UI updates
+    // This prevents e-ink devices from suspending rendering
+    // Update every 500ms to ensure smooth state changes are reflected
+    _refreshTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      if (mounted && _isAnimating) {
+        // Force a frame to be scheduled
+        SchedulerBinding.instance.scheduleFrame();
+      }
+    });
+    
     // Start with last move marker if present
     if (widget.hasLastMoveMarker && widget.lastMoveData != null) {
       _currentDotIndex = -1;
@@ -82,8 +106,19 @@ class _MoveSequenceDotAnimatorState extends State<MoveSequenceDotAnimator> {
   }
 
   void _advanceToNextDot() {
+    if (!mounted) return;
+    
     setState(() {
       _currentDotIndex++;
+    });
+    
+    // Force an immediate frame callback to ensure the UI updates
+    // This is crucial for e-ink devices that might delay rendering
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Trigger a rebuild to ensure changes are visible
+        // This is a no-op but forces the render pipeline to process
+      }
     });
 
     if (_currentDotIndex < widget.sequence.length) {
@@ -95,13 +130,28 @@ class _MoveSequenceDotAnimatorState extends State<MoveSequenceDotAnimator> {
       });
     } else {
       // Animation complete
+      _stopAnimation();
       widget.onAnimationComplete?.call();
+    }
+  }
+
+  void _stopAnimation() async {
+    _isAnimating = false;
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    
+    // Disable wakelock when animation completes
+    try {
+      await WakelockPlus.disable();
+    } catch (e) {
+      // Silently fail if wakelock not available
     }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _stopAnimation();
     super.dispose();
   }
 
