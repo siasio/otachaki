@@ -13,7 +13,8 @@ class DatasetConfiguration {
   final int timePerProblemSeconds;
   // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
   // final bool hideGameInfoBar;
-  final int sequenceLength;
+  final int minSequenceLength;
+  final int maxSequenceLength;
   final OwnershipDisplayMode ownershipDisplayMode;
   final bool timerEnabled;
   final PredictionType predictionType;
@@ -32,7 +33,8 @@ class DatasetConfiguration {
     required this.timePerProblemSeconds,
     // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
     // required this.hideGameInfoBar,
-    this.sequenceLength = 0,
+    this.minSequenceLength = 0,
+    this.maxSequenceLength = 0,
     this.ownershipDisplayMode = OwnershipDisplayMode.none,
     this.timerEnabled = true,
     this.predictionType = PredictionType.winnerPrediction,
@@ -68,7 +70,8 @@ class DatasetConfiguration {
           predictionType: PredictionType.exactScorePrediction,
           scoreGranularity: 2,
           positionType: PositionType.beforeFillingNeutralPoints,
-          sequenceLength: 0,
+          minSequenceLength: 0,
+          maxSequenceLength: 0,
           sequenceVisualization: SequenceVisualizationType.numbers,
           timePerMoveSeconds: 1.0,
           initialTimeSeconds: 1.0,
@@ -82,7 +85,8 @@ class DatasetConfiguration {
           timePerProblemSeconds: 90,
           predictionType: PredictionType.winnerPrediction,
           positionType: PositionType.beforeFillingNeutralPoints,
-          sequenceLength: 0,
+          minSequenceLength: 0,
+          maxSequenceLength: 0,
           sequenceVisualization: SequenceVisualizationType.numbers,
           timePerMoveSeconds: 1.0,
           initialTimeSeconds: 1.0,
@@ -95,7 +99,8 @@ class DatasetConfiguration {
           thresholdClose: 7.0,
           timePerProblemSeconds: 30,
           predictionType: PredictionType.roughLeadPrediction,
-          sequenceLength: 5,
+          minSequenceLength: 5,
+          maxSequenceLength: 5,
           ownershipDisplayMode: OwnershipDisplayMode.squares,
           gameStage: GameStage.all,
           autoAdvanceMode: AutoAdvanceMode.always,
@@ -120,7 +125,8 @@ class DatasetConfiguration {
     int? timePerProblemSeconds,
     // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
     // bool? hideGameInfoBar,
-    int? sequenceLength,
+    int? minSequenceLength,
+    int? maxSequenceLength,
     OwnershipDisplayMode? ownershipDisplayMode,
     bool? timerEnabled,
     PredictionType? predictionType,
@@ -139,7 +145,8 @@ class DatasetConfiguration {
       timePerProblemSeconds: timePerProblemSeconds ?? this.timePerProblemSeconds,
       // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
       // hideGameInfoBar: hideGameInfoBar ?? this.hideGameInfoBar,
-      sequenceLength: sequenceLength ?? this.sequenceLength,
+      minSequenceLength: minSequenceLength ?? this.minSequenceLength,
+      maxSequenceLength: maxSequenceLength ?? this.maxSequenceLength,
       ownershipDisplayMode: ownershipDisplayMode ?? this.ownershipDisplayMode,
       timerEnabled: timerEnabled ?? this.timerEnabled,
       predictionType: predictionType ?? this.predictionType,
@@ -161,7 +168,8 @@ class DatasetConfiguration {
       'timePerProblemSeconds': timePerProblemSeconds,
       // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
       // 'hideGameInfoBar': hideGameInfoBar,
-      'sequenceLength': sequenceLength,
+      'minSequenceLength': minSequenceLength,
+      'maxSequenceLength': maxSequenceLength,
       'ownershipDisplayMode': ownershipDisplayMode.name,
       'timerEnabled': timerEnabled,
       'predictionType': predictionType.value,
@@ -186,13 +194,19 @@ class DatasetConfiguration {
       }
     }
 
+    // Handle backward compatibility: if 'sequenceLength' exists (old format), use it for both min and max
+    final legacySequenceLength = json['sequenceLength'] as int?;
+    final minSeqLength = json['minSequenceLength'] as int? ?? legacySequenceLength ?? 0;
+    final maxSeqLength = json['maxSequenceLength'] as int? ?? legacySequenceLength ?? 0;
+
     return DatasetConfiguration(
       thresholdGood: (json['thresholdGood'] as num?)?.toDouble() ?? 0.0,
       thresholdClose: (json['thresholdClose'] as num?)?.toDouble() ?? 0.0,
       timePerProblemSeconds: json['timePerProblemSeconds'] as int? ?? 30,
       // REMOVED: hideGameInfoBar - GameInfo functionality has been removed
       // hideGameInfoBar: json['hideGameInfoBar'] as bool? ?? false,
-      sequenceLength: json['sequenceLength'] as int? ?? 0,
+      minSequenceLength: minSeqLength,
+      maxSequenceLength: maxSeqLength,
       ownershipDisplayMode: ownershipDisplayMode,
       timerEnabled: json['timerEnabled'] as bool? ?? true,
       predictionType: PredictionType.fromString(json['predictionType'] as String?) ?? PredictionType.winnerPrediction,
@@ -211,7 +225,26 @@ class DatasetConfiguration {
   bool isValidConfiguration() {
     return thresholdClose >= thresholdGood &&
            timePerProblemSeconds > 0 &&
-           sequenceLength >= 0 &&
+           minSequenceLength >= 0 &&
+           maxSequenceLength >= 0 &&
+           (maxSequenceLength == 0 || maxSequenceLength >= minSequenceLength) &&
            scoreGranularity > 0;
+  }
+
+  /// Get the sequence length for display purposes (for backward compatibility)
+  int get sequenceLength => minSequenceLength;
+
+  /// Check if this configuration uses a sequence range
+  bool get hasSequenceRange => minSequenceLength > 0 && maxSequenceLength > minSequenceLength;
+
+  /// Get display string for sequence length (e.g., "25" or "25-30")
+  String getSequenceLengthDisplay() {
+    if (minSequenceLength == 0 && maxSequenceLength == 0) {
+      return '0';
+    } else if (minSequenceLength == maxSequenceLength || maxSequenceLength == 0) {
+      return minSequenceLength.toString();
+    } else {
+      return '$minSequenceLength-$maxSequenceLength';
+    }
   }
 }

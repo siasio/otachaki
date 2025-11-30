@@ -65,7 +65,7 @@ class PositionManager {
       final configManager = await ConfigurationManager.getInstance();
       final config = configManager.getConfigurationForDataset(_currentCustomDataset!);
       final positionType = config.positionType;
-      final sequenceLength = config.sequenceLength;
+      final minSequenceLength = config.minSequenceLength;
 
       // Check if this is a midgame dataset to use game stage filtering
       final isMidgameDataset = DatasetRegistry.isMiddleGameDataset(_currentCustomDataset!.baseDatasetType);
@@ -73,10 +73,10 @@ class PositionManager {
       if (isMidgameDataset) {
         // For midgame datasets, use game stage filtering
         final gameStage = config.gameStage;
-        _currentTrainingPosition = await PositionLoader.getRandomPositionByGameStage(gameStage, sequenceLength: sequenceLength);
+        _currentTrainingPosition = await PositionLoader.getRandomPositionByGameStage(gameStage, minSequenceLength: minSequenceLength);
       } else {
         // For other datasets, use the existing logic
-        _currentTrainingPosition = await PositionLoader.getRandomPositionWithMinMoves(sequenceLength);
+        _currentTrainingPosition = await PositionLoader.getRandomPositionWithMinMoves(minSequenceLength);
       }
 
       // Create GoPosition with appropriate position type
@@ -86,7 +86,7 @@ class PositionManager {
         context: 'PositionManager');
       LoggerService.debug('Position details: ID=${_currentTrainingPosition!.id}, '
         'Type=${positionType.value}, Result=${_currentTrainingPosition!.getResult(positionType)}, '
-        'Dataset=${_currentCustomDataset!.name} (${_currentCustomDataset!.baseDatasetType}), SequenceLength=$sequenceLength', context: 'PositionManager');
+        'Dataset=${_currentCustomDataset!.name} (${_currentCustomDataset!.baseDatasetType}), MinSequenceLength=$minSequenceLength', context: 'PositionManager');
 
       return _currentPosition!;
     } catch (e, stackTrace) {

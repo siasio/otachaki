@@ -973,7 +973,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
       // Check if we need to animate move sequence dots
       final shouldAnimateDots = _currentConfig != null &&
-          _currentConfig!.sequenceLength > 0 &&
+          _currentConfig!.minSequenceLength > 0 &&
           _currentConfig!.sequenceVisualization == SequenceVisualizationType.dots &&
           !_showWelcomeOverlay;
 
@@ -1411,9 +1411,22 @@ class _TrainingScreenState extends State<TrainingScreen> {
     );
   }
 
-  /// Get the sequence length from current configuration
+  /// Get the sequence length from current configuration and position
+  /// For ranges, this computes the actual length to display
   int get _currentSequenceLength {
-    return _currentConfig?.sequenceLength ?? 0;
+    if (_currentConfig == null) return 0;
+    
+    final minSeqLen = _currentConfig!.minSequenceLength;
+    final maxSeqLen = _currentConfig!.maxSequenceLength;
+    final trainingPos = _positionManager.currentTrainingPosition;
+    
+    if (trainingPos == null) {
+      // No position loaded yet, return min as default
+      return minSeqLen;
+    }
+    
+    // Get the actual sequence length based on range and available moves
+    return trainingPos.getActualSequenceLength(minSeqLen, maxSeqLen);
   }
 
   /// Determine if sequence length controls are defined/available for the current dataset

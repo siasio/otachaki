@@ -128,16 +128,16 @@ class PositionLoader {
   }
 
   /// Get a random position from the dataset that has at least the required number of moves
-  /// for the given sequence length (sequenceLength + 1 for the triangle marker)
-  static Future<TrainingPosition> getRandomPositionWithMinMoves(int sequenceLength) async {
+  /// for the given minimum sequence length (minSequenceLength + 1 for the triangle marker)
+  static Future<TrainingPosition> getRandomPositionWithMinMoves(int minSequenceLength) async {
     final dataset = await loadDataset();
 
     // Filter positions that have enough moves
     final validPositions = dataset.positions.where((position) =>
-        position.hasEnoughMovesForSequence(sequenceLength)).toList();
+        position.hasEnoughMovesForSequence(minSequenceLength)).toList();
 
     if (validPositions.isEmpty) {
-      LoggerService.warning('No positions found with at least ${sequenceLength + 1} moves, '
+      LoggerService.warning('No positions found with at least ${minSequenceLength + 1} moves, '
         'falling back to any random position', context: 'PositionLoader');
       // Fallback to any random position if no valid positions found
       final randomIndex = _random.nextInt(dataset.positions.length);
@@ -149,7 +149,7 @@ class PositionLoader {
   }
 
   /// Get a random position filtered by game stage (for midgame datasets)
-  static Future<TrainingPosition> getRandomPositionByGameStage(GameStage gameStage, {int sequenceLength = 0}) async {
+  static Future<TrainingPosition> getRandomPositionByGameStage(GameStage gameStage, {int minSequenceLength = 0}) async {
     final dataset = await loadDataset();
 
     // Get the move numbers for this game stage
@@ -161,13 +161,13 @@ class PositionLoader {
     if (targetMoveNumbers == null) {
       // GameStage.all - use all positions, but still filter by sequence length if needed
       validPositions = dataset.positions.where((position) =>
-          position.hasEnoughMovesForSequence(sequenceLength)).toList();
+          position.hasEnoughMovesForSequence(minSequenceLength)).toList();
     } else {
       // Filter by specific move numbers and sequence length
       validPositions = dataset.positions.where((position) {
         final moveNumber = position.moveNumber;
         final hasValidMoveNumber = moveNumber != null && targetMoveNumbers.contains(moveNumber);
-        final hasEnoughMoves = position.hasEnoughMovesForSequence(sequenceLength);
+        final hasEnoughMoves = position.hasEnoughMovesForSequence(minSequenceLength);
 
 
         return hasValidMoveNumber && hasEnoughMoves;

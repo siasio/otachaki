@@ -203,5 +203,154 @@ void main() {
       final config = DatasetConfiguration.fromJson(json);
       expect(config.problemFeedbackType, ProblemFeedbackType.result);
     });
+
+    group('Sequence Length Range', () {
+      test('should support sequence length range with min and max', () {
+        const config = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 25,
+          maxSequenceLength: 30,
+        );
+
+        expect(config.minSequenceLength, 25);
+        expect(config.maxSequenceLength, 30);
+        expect(config.hasSequenceRange, isTrue);
+      });
+
+      test('should support single sequence length value', () {
+        const config = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 5,
+          maxSequenceLength: 5,
+        );
+
+        expect(config.minSequenceLength, 5);
+        expect(config.maxSequenceLength, 5);
+        expect(config.hasSequenceRange, isFalse);
+        expect(config.sequenceLength, 5); // Backward compatibility
+      });
+
+      test('should display sequence length correctly for single value', () {
+        const config = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 5,
+          maxSequenceLength: 5,
+        );
+
+        expect(config.getSequenceLengthDisplay(), '5');
+      });
+
+      test('should display sequence length correctly for range', () {
+        const config = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 25,
+          maxSequenceLength: 30,
+        );
+
+        expect(config.getSequenceLengthDisplay(), '25-30');
+      });
+
+      test('should display "0" when sequence is disabled', () {
+        const config = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 0,
+          maxSequenceLength: 0,
+        );
+
+        expect(config.getSequenceLengthDisplay(), '0');
+      });
+
+      test('should validate sequence length range in isValidConfiguration', () {
+        const validRange = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 25,
+          maxSequenceLength: 30,
+        );
+
+        const invalidRange = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 30,
+          maxSequenceLength: 25, // Max < Min is invalid
+        );
+
+        expect(validRange.isValidConfiguration(), isTrue);
+        expect(invalidRange.isValidConfiguration(), isFalse);
+      });
+
+      test('should serialize sequence range to JSON correctly', () {
+        const config = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 25,
+          maxSequenceLength: 30,
+        );
+
+        final json = config.toJson();
+        expect(json['minSequenceLength'], 25);
+        expect(json['maxSequenceLength'], 30);
+      });
+
+      test('should deserialize sequence range from JSON correctly', () {
+        final json = {
+          'thresholdGood': 1.0,
+          'thresholdClose': 2.0,
+          'timePerProblemSeconds': 30,
+          'minSequenceLength': 25,
+          'maxSequenceLength': 30,
+        };
+
+        final config = DatasetConfiguration.fromJson(json);
+        expect(config.minSequenceLength, 25);
+        expect(config.maxSequenceLength, 30);
+      });
+
+      test('should maintain backward compatibility with old sequenceLength field', () {
+        final json = {
+          'thresholdGood': 1.0,
+          'thresholdClose': 2.0,
+          'timePerProblemSeconds': 30,
+          'sequenceLength': 5, // Old format
+        };
+
+        final config = DatasetConfiguration.fromJson(json);
+        expect(config.minSequenceLength, 5);
+        expect(config.maxSequenceLength, 5);
+        expect(config.sequenceLength, 5);
+      });
+
+      test('copyWith should update sequence range correctly', () {
+        const original = DatasetConfiguration(
+          thresholdGood: 1.0,
+          thresholdClose: 2.0,
+          timePerProblemSeconds: 30,
+          minSequenceLength: 5,
+          maxSequenceLength: 5,
+        );
+
+        final modified = original.copyWith(
+          minSequenceLength: 25,
+          maxSequenceLength: 30,
+        );
+
+        expect(modified.minSequenceLength, 25);
+        expect(modified.maxSequenceLength, 30);
+        expect(modified.thresholdGood, 1.0); // Should preserve other values
+      });
+    });
   });
 }

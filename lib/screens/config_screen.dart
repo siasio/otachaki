@@ -178,7 +178,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       _thresholdGoodController.text = compatibleConfig.thresholdGood.toString();
       _thresholdCloseController.text = compatibleConfig.thresholdClose.toString();
       _timeProblemController.text = compatibleConfig.timePerProblemSeconds.toString();
-      _sequenceLengthController.text = compatibleConfig.sequenceLength.toString();
+      _sequenceLengthController.text = compatibleConfig.getSequenceLengthDisplay();
       _scoreGranularityController.text = compatibleConfig.scoreGranularity.toString();
     });
 
@@ -224,25 +224,50 @@ class _ConfigScreenState extends State<ConfigScreen> {
     final thresholdGood = double.tryParse(_thresholdGoodController.text);
     final thresholdClose = double.tryParse(_thresholdCloseController.text);
     final timeProblem = int.tryParse(_timeProblemController.text);
-    final sequenceLength = int.tryParse(_sequenceLengthController.text);
     final scoreGranularity = int.tryParse(_scoreGranularityController.text);
+    
+    // Parse sequence length - can be a single number or range (e.g., "25" or "25-30")
+    final sequenceLengthText = _sequenceLengthController.text.trim();
+    int? minSequenceLength;
+    int? maxSequenceLength;
+    
+    if (sequenceLengthText.contains('-')) {
+      // Parse as range
+      final parts = sequenceLengthText.split('-');
+      if (parts.length == 2) {
+        minSequenceLength = int.tryParse(parts[0].trim());
+        maxSequenceLength = int.tryParse(parts[1].trim());
+      }
+    } else {
+      // Parse as single value
+      final singleValue = int.tryParse(sequenceLengthText);
+      if (singleValue != null) {
+        minSequenceLength = singleValue;
+        maxSequenceLength = singleValue;
+      }
+    }
 
     if (thresholdGood != null &&
         thresholdClose != null &&
         timeProblem != null &&
-        sequenceLength != null &&
+        minSequenceLength != null &&
+        maxSequenceLength != null &&
         scoreGranularity != null &&
         thresholdClose >= thresholdGood &&
         (!_currentDatasetConfig!.timerEnabled || timeProblem > 0) &&
-        sequenceLength >= 0 &&
-        sequenceLength <= 50 &&
+        minSequenceLength >= 0 &&
+        maxSequenceLength >= 0 &&
+        minSequenceLength <= 50 &&
+        maxSequenceLength <= 50 &&
+        (maxSequenceLength == 0 || maxSequenceLength >= minSequenceLength) &&
         scoreGranularity > 0) {
 
       final newConfig = _currentDatasetConfig!.copyWith(
         thresholdGood: thresholdGood,
         thresholdClose: thresholdClose,
         timePerProblemSeconds: timeProblem,
-        sequenceLength: sequenceLength,
+        minSequenceLength: minSequenceLength,
+        maxSequenceLength: maxSequenceLength,
         scoreGranularity: scoreGranularity,
       );
 
@@ -684,19 +709,19 @@ class _ConfigScreenState extends State<ConfigScreen> {
                             controller: _sequenceLengthController,
                             decoration: const InputDecoration(
                               labelText: 'Move Sequence Length',
-                              helperText: 'Number of recent moves to show as numbered sequence (0-50, 0 = disabled)',
+                              helperText: 'Number or range (e.g., "5" or "25-30"). Shows recent moves as sequence. 0 = disabled',
                               border: OutlineInputBorder(),
                               suffix: Text('moves'),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: TextInputType.text,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                              FilteringTextInputFormatter.allow(RegExp(r'[\d\-]')),
                             ],
                           ),
                           const SizedBox(height: 16),
 
                           // Show Sequence As dropdown (only when sequence length > 0)
-                          if (_currentDatasetConfig!.sequenceLength > 0) ...[
+                          if (_currentDatasetConfig!.minSequenceLength > 0) ...[
                             DropdownButtonFormField<SequenceVisualizationType>(
                               value: _currentDatasetConfig!.sequenceVisualization,
                               decoration: const InputDecoration(

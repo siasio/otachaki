@@ -334,6 +334,25 @@ class TrainingPosition {
   bool hasEnoughMovesForSequence(int sequenceLength) {
     return numberOfMoves >= sequenceLength + 1; // +1 for last move marker
   }
+
+  /// Get the actual sequence length to display based on config range and available moves
+  /// For a range like 25-30: shows at least 25 moves (filtering criterion)
+  /// but caps display at min(30, numberOfMoves - 1)
+  int getActualSequenceLength(int minSequenceLength, int maxSequenceLength) {
+    if (minSequenceLength == 0 && maxSequenceLength == 0) {
+      return 0; // Sequence display disabled
+    }
+    
+    // If maxSequenceLength is 0 or same as min, use min
+    if (maxSequenceLength == 0 || maxSequenceLength == minSequenceLength) {
+      return minSequenceLength;
+    }
+    
+    // Cap at the maximum of the range or available moves (whichever is smaller)
+    // numberOfMoves - 1 because we need 1 move for the last move marker
+    final maxAvailable = numberOfMoves - 1;
+    return maxAvailable < maxSequenceLength ? maxAvailable : maxSequenceLength;
+  }
 }
 
 
