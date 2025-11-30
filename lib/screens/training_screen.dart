@@ -455,9 +455,21 @@ class _TrainingScreenState extends State<TrainingScreen> {
       // The welcome overlay (if shown) will be displayed over the game screen
       _stateManager.transitionTo(TrainingState.solving);
 
-      // Start timing the problem only if welcome overlay is not shown
-      if (!_showWelcomeOverlay) {
-        _problemStartTime = DateTime.now();
+      // Check if we need to animate move sequence dots
+      final shouldAnimateDots = _currentConfig != null &&
+          _currentConfig!.minSequenceLength > 0 &&
+          _currentConfig!.sequenceVisualization == SequenceVisualizationType.dots &&
+          !_showWelcomeOverlay;
+
+      if (shouldAnimateDots) {
+        // Set animation flag to prevent timer from starting
+        _stateManager.isAnimatingDots = true;
+        // Timer will be started after animation completes via callback
+      } else {
+        // Start timing the new problem only if welcome overlay is not shown
+        if (!_showWelcomeOverlay) {
+          _problemStartTime = DateTime.now();
+        }
       }
       // Request focus for keyboard input
       WidgetsBinding.instance.addPostFrameCallback((_) {
