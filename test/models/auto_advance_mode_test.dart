@@ -19,8 +19,8 @@ void main() {
 
     test('should have correct display names', () {
       expect(AutoAdvanceMode.always.displayName, 'Auto-advance to the next problem');
-      expect(AutoAdvanceMode.never.displayName, 'Don\'t auto-advance to the next problem');
-      expect(AutoAdvanceMode.onCorrectOnly.displayName, 'Auto-advance to the next problem after correct solutions');
+      expect(AutoAdvanceMode.never.displayName, 'Pause to review the problem');
+      expect(AutoAdvanceMode.onCorrectOnly.displayName, 'Pause on mistakes');
     });
   });
 }
