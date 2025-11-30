@@ -180,8 +180,8 @@ class PositionLoader {
         : dataset.positions.length;
 
       LoggerService.warning('No positions found for game stage ${gameStage.displayName} '
-        'with at least ${sequenceLength + 1} moves (found $totalForStage positions for this stage, '
-        'but none have enough recorded moves for sequence length $sequenceLength). '
+        'with at least ${minSequenceLength + 1} moves (found $totalForStage positions for this stage, '
+        'but none have enough recorded moves for sequence length $minSequenceLength). '
         'Consider reducing sequence length or selecting a different game stage. '
         'Falling back to any random position.', context: 'PositionLoader');
 
