@@ -342,9 +342,10 @@ class GoBoardPainter extends CustomPainter {
           }
 
           // Draw sequence numbers on stones (for stonesWithNumbers mode)
-          // Skip when using dot visualization (handled by animator)
+          // Skip when using dot visualization in problem view (handled by animator)
+          // But always show in review view regardless of visualization type
           if (isSequencePosition && sequenceDisplayMode == SequenceDisplayMode.stonesWithNumbers &&
-              sequenceVisualization != SequenceVisualizationType.dots) {
+              (viewMode == BoardViewMode.review || sequenceVisualization != SequenceVisualizationType.dots)) {
             final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
             if (sequenceMove.moveNumber > 0) { // Only draw if not hidden
               _drawSequenceNumberOnStone(canvas, x, y, sequenceMove.moveNumber, stoneRadius, stone);
@@ -353,8 +354,9 @@ class GoBoardPainter extends CustomPainter {
         }
 
         // Draw sequence numbers based on view mode and sequence display mode
-        // Skip when using dot visualization (handled by animator)
-        if (isSequencePosition && sequenceVisualization != SequenceVisualizationType.dots) {
+        // Skip when using dot visualization in problem view (handled by animator)
+        // But always show in review view regardless of visualization type
+        if (isSequencePosition && (viewMode == BoardViewMode.review || sequenceVisualization != SequenceVisualizationType.dots)) {
           final sequenceMove = sequenceMoves.firstWhere((move) => move.row == row && move.col == col);
           final double x = boardStart + (col - displayStartCol) * cellSize;
           final double y = boardStart + (row - displayStartRow) * cellSize;
